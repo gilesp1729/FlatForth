@@ -158,12 +158,11 @@ BMASK   EQU     80000000H
 ; Initial value of link
 Link    =     0
 
+; Code entry (where code follows directly after entry)
 CODE_ENTRY    MACRO   Label, Count, Ref, Last
 
 N_&Label& DB  Count
-        IFNB <Ref>
         DB  Ref
-        ENDIF
         DB  Last
         DD  Link
 Link    = N_&Label&
@@ -171,12 +170,33 @@ Label   DD  C_&Label&
 C_&Label&:
 ENDM
 
+; Code entry as above, but with only a 1 character name (there is no Ref).
+; This saves the IFNB test which causes problems with escaping special chars.
+CODE_ENTRY_1  MACRO   Label, Count, Last
+
+N_&Label& DB  Count
+        DB  Last
+        DD  Link
+Link    = N_&Label&
+Label   DD  C_&Label&
+C_&Label&:
+ENDM
+
+; Forth word entry (Docode and other Forth words follow)
 ENTRY    MACRO   Label, Count, Ref, Last, DoCode
 
 N_&Label& DB  Count
-        IFNB <Ref>
         DB  Ref
-        ENDIF
+        DB  Last
+        DD  Link
+Link    = N_&Label&
+Label   DD  DoCode
+ENDM
+
+; Forth word entry (1 char version as above)
+ENTRY_1    MACRO   Label, Count, Last, DoCode
+
+N_&Label& DB  Count
         DB  Last
         DD  Link
 Link    = N_&Label&
@@ -521,7 +541,7 @@ XDO      DD     $+CW
 ;  ********* 
 ;  
 %if 1
-        CODE_ENTRY IDO, 80H+1, , "I"+80H
+        CODE_ENTRY_1 IDO, 80H+1, "I"+80H
 %else
 N_IDO      DB   80H+1
          DB     "I"+80H
@@ -1124,7 +1144,7 @@ FROMR      DD     $+CW
 ;  TODO: Is this OK or do I need to copy code?
 
 %if 1
-        ENTRY RR, 80H+1, , "R"+80H, IDO+(CW*1)
+        ENTRY_1 RR, 80H+1, "R"+80H, IDO+(CW*1)
 %else
 N_RR      DB   80H+1
          DB     "R"+80H
@@ -1186,7 +1206,7 @@ ZLESS1: PUSH    EAX
 ;  ********* 
 ;  
 %if 1
-        CODE_ENTRY PLUS, 80H+1, , "+"+80H
+        CODE_ENTRY_1 PLUS, 80H+1, "+"+80H
 %else
 N_PLUS      DB   80H+1
          DB     "+"+80H
