@@ -146,8 +146,14 @@ SECSTRT EQU     1
 ;
 BMASK   EQU     80000000H
 
-
-; ENTRY macros to define dictionary headers.
+; ########################################################################################
+; ENTRY macros to define dictionary headers. There is one for code immediately
+; following, and another for DOCOL etc. Forth routines.
+; NOTE WELL the C_Label - MASM silently (!) fails on the original code:
+;   label DD $+4
+;
+; with a value of 4 instead of currentlocation + 4. These things, along with bizarre behaviour
+; of colon/no-colon on labels, are sent to try us.
 
 ; Initial value of link
 Link    =     0
@@ -155,16 +161,30 @@ Link    =     0
 CODE_ENTRY    MACRO   Label, Count, Ref, Last
 
 N_&Label& DB  Count
+        IFNB <Ref>
         DB  Ref
+        ENDIF
         DB  Last
         DD  Link
 Link    = N_&Label&
 Label   DD  C_&Label&
 C_&Label&:
+ENDM
 
+ENTRY    MACRO   Label, Count, Ref, Last, DoCode
+
+N_&Label& DB  Count
+        IFNB <Ref>
+        DB  Ref
+        ENDIF
+        DB  Last
+        DD  Link
+Link    = N_&Label&
+Label   DD  DoCode
 ENDM
 
 
+; ########################################################################################
 
 .386
 .model flat, c
@@ -329,12 +349,15 @@ DP0:
 ;  *   LIT   *
 ;  *********** 
 ;  
+%if 1
+        CODE_ENTRY LIT, 80H+3, "LI", "T"+80H
+%else
 N_LIT      DB   80H+3
          DB      "LI"
          DB     "T"+80H
          DD    0
 LIT      DD     $+CW
-                           
+%endif                           
         LODSD           ; AX <- LITERAL
         PUSH    EAX
         LODSD                 ; NEXT
@@ -346,12 +369,15 @@ LIT      DD     $+CW
 ;  *   EXECUTE   *
 ;  *************** 
 ;  
+%if 1
+        CODE_ENTRY EXEC, 80H+7, "EXECUT", "E"+80H
+%else
 N_EXEC      DB   80H+7
          DB      "EXECUT"
          DB     "E"+80H
          DD    N_LIT
 EXEC      DD     $+CW
-                           
+%endif                           
         POP     EBX      ; GET CFA
         JMP      DWORD PTR[EBX]
 ;
@@ -360,12 +386,15 @@ EXEC      DD     $+CW
 ;  *   BRANCH   *
 ;  ************** 
 ;  
+%if 1
+        CODE_ENTRY BRAN, 80H+6, "BRANC", "H"+80H
+%else
 N_BRAN      DB   80H+6
          DB      "BRANC"
          DB     "H"+80H
          DD    N_EXEC
 BRAN      DD     $+CW
-                           
+%endif                           
 BRAN1:  ADD     ESI,[ESI]
         LODSD                 ; NEXT
         MOV     EBX,EAX                  
@@ -376,12 +405,15 @@ BRAN1:  ADD     ESI,[ESI]
 ;  *   0BRANCH   *
 ;  *************** 
 ;  
+%if 1
+        CODE_ENTRY ZBRAN, 80H+7, "0BRANC", "H"+80H
+%else
 N_ZBRAN      DB   80H+7
          DB      "0BRANC"
          DB     "H"+80H
          DD    N_BRAN
 ZBRAN      DD     $+CW
-                           
+%endif                           
         POP     EAX      ; GET STACK VALUE
         OR      EAX,EAX   ; ZERO?
         JZ      BRAN1   ; YES, BRANCH
@@ -395,18 +427,23 @@ ZBRAN      DD     $+CW
 ;  *   NOOP   *
 ;  ************ 
 ;  
+%if 1
+        CODE_ENTRY NOOP, 80H+4, "NOO", "P"+80H
+%else
 N_NOOP      DB   80H+4
          DB      "NOO"
          DB     "P"+80H
          DD    N_ZBRAN
 NOOP      DD     $+4
-                           
+%endif
+%if 0   ;  Clean out the rubbish.
 ;      DEBUG STUFF
 NOP0      DD      $+(CW*1)
         JMP SHORT     NEXT
 NOP1      DD      $+(CW*1)
         JMP SHORT     NEXT
 NOP2      DD      $+(CW*1)
+%endif
         JMP SHORT     NEXT
 ;
 
@@ -414,12 +451,15 @@ NOP2      DD      $+(CW*1)
 ;  *   (LOOP)   *
 ;  ************** 
 ;  
+%if 1
+        CODE_ENTRY XLOOP, 80H+6, "(LOOP", ")"+80H
+%else
 N_XLOOP      DB   80H+6
          DB      "(LOOP"
          DB     ")"+80H
          DD    N_NOOP
 XLOOP      DD     $+CW
-                           
+%endif                           
         MOV     EBX,1    ; INCREMENT
 XLOO1:  ADD     [EBP],EBX ; INDEX = INDEX + INCR
         MOV     EAX,[EBP] ; GET NEW INDEX
@@ -439,12 +479,15 @@ XLOO1:  ADD     [EBP],EBX ; INDEX = INDEX + INCR
 ;  *   (+LOOP)   *
 ;  *************** 
 ;  
+%if 1
+        CODE_ENTRY XPLOO, 80H+7, "(+LOOP", ")"+80H
+%else
 N_XPLOO      DB   80H+7
          DB      "(+LOOP"
          DB     ")"+80H
          DD    N_XLOOP
 XPLOO      DD     $+CW
-                           
+%endif                           
         POP     EBX      ; GET LOOP VALUE
         JMP SHORT     XLOO1
 ;
@@ -453,12 +496,15 @@ XPLOO      DD     $+CW
 ;  *   (DO)   *
 ;  ************ 
 ;  
+%if 1
+        CODE_ENTRY XDO, 80H+4, "(DO", ")"+80H
+%else
 N_XDO      DB   80H+4
          DB      "(DO"
          DB     ")"+80H
          DD    N_XPLOO
 XDO      DD     $+CW
-                           
+%endif                           
         POP     EDX      ; INITIAL INDEX VALUE
         POP     EAX      ; LIMIT VALUE
         XCHG    EBP,ESP   ; GET RETURN STACK
@@ -474,11 +520,14 @@ XDO      DD     $+CW
 ;  *   I   *
 ;  ********* 
 ;  
+%if 1
+        CODE_ENTRY IDO, 80H+1, , "I"+80H
+%else
 N_IDO      DB   80H+1
          DB     "I"+80H
          DD    N_XDO
 IDO      DD     $+CW
-                           
+%endif                           
         MOV     EAX,[EBP] ; GET INDEX VALUE
         PUSH    EAX
         LODSD                 ; NEXT
@@ -490,12 +539,15 @@ IDO      DD     $+CW
 ;  *   +ORIGIN   *
 ;  *************** 
 ;  
+%if 1
+        ENTRY PORIG, 80H+7, "+ORIGI", "N"+80H, DOCOL
+%else
 N_PORIG      DB   80H+7
          DB      "+ORIGI"
          DB     "N"+80H
          DD    N_IDO
 PORIG      DD     DOCOL
-                           
+%endif                           
         DD      LIT
         DD      USINI
         DD      PLUS
@@ -552,19 +604,23 @@ CPUNM      DD      0CDH,1856H       ; '80386'     12 13
 ;
 ;
 ;      <<<<< end of data used by cold start >>>>>
-        BYTE    US-($ - USINI) DUP(?)        ; All user can be initialised.
+; TODO WHY is this here? CPU name should be immutable.
+;        BYTE    US-($ - USINI) DUP(?)        ; All user can be initialised.
 ;
 
 ;  ************* 
 ;  *   DIGIT   *
 ;  ************* 
 ;  
+%if 1
+        CODE_ENTRY DIGIT, 80H+5, "DIGI", "T"+80H
+%else
 N_DIGIT      DB   80H+5
          DB      "DIGI"
          DB     "T"+80H
          DD    N_PORIG
 DIGIT  DD     $+CW
-                           
+%endif                           
         POP     EDX      ;NUMBER BASE
         POP     EAX      ;ASCII DIGIT
         SUB     AL,'0'
@@ -596,12 +652,15 @@ DIGI2:  SUB     EAX,EAX   ;FALSE FLAG
 ;  *   (FIND)   *
 ;  ************** 
 ;  
+%if 1
+        CODE_ENTRY PFIND, 80H+6, "(FIND", ")"+80H
+%else
 N_PFIND      DB   80H+6
          DB      "(FIND"
          DB     ")"+80H
          DD    N_DIGIT
 PFIND  DD     $+CW
-                           
+%endif                           
 ;       MOV     AX,DS
 ;       MOV    ES,AX   ;ES = DS
         POP     EBX      ;NFA
@@ -662,12 +721,15 @@ PFIN6:  MOV     EBX,[EBX] ; GET LINK FIELD ADDR
 ;  *   ENCLOSE   *
 ;  *************** 
 ;  
+%if 1
+        CODE_ENTRY ENCL, 80H+7, "ENCLOS", "E"+80H
+%else
 N_ENCL      DB   80H+7
          DB      "ENCLOS"
          DB     "E"+80H
          DD    N_PFIND
 ENCL  DD     $+CW
-                           
+%endif                           
         POP     EAX      ;S1 - TERMINATOR CHAR
         POP     EBX      ;S2 - TEXT ADDR
         PUSH    EBX      ;ADDR - BACK TO STACK ( IT RHYMES )
@@ -723,12 +785,15 @@ ENCL4:  MOV     EAX,EDX
 ;  *   CR   *
 ;  ********** 
 ;  
+%if 1
+        ENTRY CR, 80H+2, "C", "R"+80H, DOCOL
+%else
 N_CR      DB   80H+2
          DB      "C"
          DB     "R"+80H
          DD    N_ENCL
 CR  DD     DOCOL
-                           
+%endif                           
         DD      LIT,LF
         DD      EMIT
         DD      SEMIS
@@ -738,12 +803,15 @@ CR  DD     DOCOL
 ;  *   CMOVE   *
 ;  ************* 
 ;  
+%if 1
+        CODE_ENTRY LCMOVE, 80H+5, "CMOV", "E"+80H
+%else
 N_LCMOVE      DB   80H+5
          DB      "CMOV"
          DB     "E"+80H
          DD    N_CR
 LCMOVE      DD     $+CW
-                           
+%endif                           
         CLD             ;INC DIRECTION
         MOV     EBX,ESI   ;SAVE IF
         POP     ECX      ;COUNT
@@ -762,12 +830,15 @@ LCMOVE      DD     $+CW
 ;  *   U*   *
 ;  ********** 
 ;  
+%if 1
+        CODE_ENTRY USTAR, 80H+2, "U", "*"+80H
+%else
 N_USTAR      DB   80H+2
          DB      "U"
          DB     "*"+80H
          DD    N_LCMOVE
 USTAR      DD     $+CW
-                           
+%endif                           
         POP     EAX
         POP     EBX
         MUL     EBX      ;UNSIGNED
@@ -783,12 +854,15 @@ USTAR      DD     $+CW
 ;  *   U/   *
 ;  ********** 
 ;  
+%if 1
+        CODE_ENTRY USLAS, 80H+2, "U", "/"+80H
+%else
 N_USLAS      DB   80H+2
          DB      "U"
          DB     "/"+80H
          DD    N_USTAR
 USLAS      DD     $+CW
-                           
+%endif                           
         POP     EBX      ;DIVISOR
         POP     EDX      ;MSW OF DIVIDEND
         POP     EAX      ;LSW OF DIVIDEND
@@ -815,12 +889,15 @@ DZERO:  MOV     EAX,-1
 ;  *   AND   *
 ;  *********** 
 ;  
+%if 1
+        CODE_ENTRY LAND, 80H+3, "AN", "D"+80H
+%else
 N_LAND      DB   80H+3
          DB      "AN"
          DB     "D"+80H
          DD    N_USLAS
 LAND      DD     $+CW
-                           
+%endif                           
         POP     EAX
         POP     EBX
         AND     EAX,EBX
@@ -834,12 +911,15 @@ LAND      DD     $+CW
 ;  *   OR   *
 ;  ********** 
 ;  
+%if 1
+        CODE_ENTRY LOR, 80H+2, "O", "R"+80H
+%else
 N_LOR      DB   80H+2
          DB      "O"
          DB     "R"+80H
          DD    N_LAND
 LOR      DD     $+CW
-                           
+%endif                           
         POP     EAX      ; (S1) <- (S1) OR (S2)
         POP     EBX
         OR      EAX,EBX
@@ -853,12 +933,15 @@ LOR      DD     $+CW
 ;  *   XOR   *
 ;  *********** 
 ;  
+%if 1
+        CODE_ENTRY LXOR, 80H+3, "XO", "R"+80H
+%else
 N_LXOR      DB   80H+3
          DB      "XO"
          DB     "R"+80H
          DD    N_LOR
 LXOR      DD     $+CW
-                           
+%endif                           
         POP     EAX      ; (S1) <- (S1) XOR (S2)
         POP     EBX
         XOR     EAX,EBX
@@ -872,12 +955,15 @@ LXOR      DD     $+CW
 ;  *   SP@   *
 ;  *********** 
 ;  
+%if 1
+        CODE_ENTRY SPFET, 80H+3, "SP", "@"+80H
+%else
 N_SPFET      DB   80H+3
          DB      "SP"
          DB     "@"+80H
          DD    N_LXOR
 SPFET      DD     $+CW
-                           
+%endif                           
         MOV     EAX,ESP   ; (S1) <- (SP)
         PUSH    EAX
         LODSD                 ; NEXT
@@ -889,12 +975,15 @@ SPFET      DD     $+CW
 ;  *   SP!   *
 ;  *********** 
 ;  
+%if 1
+        CODE_ENTRY SPSTO, 80H+3, "SP", "!"+80H
+%else
 N_SPSTO      DB   80H+3
          DB      "SP"
          DB     "!"+80H
          DD    N_SPFET
 SPSTO      DD     $+CW
-                           
+%endif                           
         MOV     EBX, DWORD PTR[USINI+(CW*1)]   ;USER VAR BASE ADDR
         MOV     ESP,[EBX+(CW*3)]        ;RESET PARAM STACK POINTER
         LODSD                 ; NEXT
@@ -906,12 +995,16 @@ SPSTO      DD     $+CW
 ;  *   RP@   *
 ;  *********** 
 ;  
+%if 1
+        CODE_ENTRY RPFET, 80H+3, "RP", "@"+80H
+%else
 N_RPFET      DB   80H+3
          DB      "RP"
          DB     "@"+80H
          DD    N_SPSTO
 RPFET      DD     $+CW
-                                 ;(S1) <- (RP)
+%endif
+                           ;(S1) <- (RP)
         MOV     EAX,EBP   ;RETURN STACK ADDR
         PUSH    EAX
         LODSD                 ; NEXT
@@ -923,12 +1016,15 @@ RPFET      DD     $+CW
 ;  *   RP!   *
 ;  *********** 
 ;  
+%if 1
+        CODE_ENTRY RPSTO, 80H+3, "RP", "!"+80H
+%else
 N_RPSTO      DB   80H+3
          DB      "RP"
          DB     "!"+80H
          DD    N_RPFET
 RPSTO      DD     $+CW
-                           
+%endif                           
         MOV     EBX, DWORD PTR[USINI+(CW*1)]   ;(AX) <- USR VAR BASE
         MOV     EBP,[EBX+(CW*4)]        ;RESET RETURN STACK PTR
         LODSD                 ; NEXT
@@ -940,12 +1036,15 @@ RPSTO      DD     $+CW
 ;  *   ;S   *
 ;  ********** 
 ;  
+%if 1
+        CODE_ENTRY SEMIS, 80H+2, ";", "S"+80H
+%else
 N_SEMIS      DB   80H+2
          DB      ";"
          DB     "S"+80H
          DD    N_RPSTO
 SEMIS      DD     $+CW
-                           
+%endif                           
         MOV     ESI,[EBP] ;(IP) <- (R1)
         LEA     EBP,[EBP+(CW*1)]
         LODSD                 ; NEXT
@@ -957,12 +1056,16 @@ SEMIS      DD     $+CW
 ;  *   LEAVE   *
 ;  ************* 
 ;  
+%if 1
+        CODE_ENTRY LLEAV, 80H+5, "LEAV", "E"+80H
+%else
 N_LLEAV      DB   80H+5
          DB      "LEAV"
          DB     "E"+80H
          DD    N_SEMIS
 LLEAV      DD     $+CW
-                             ;LIMIT <- INDEX
+%endif
+                           ;LIMIT <- INDEX
         MOV     EAX,[EBP] ;GET INDEX
         MOV     [EBP+(CW*1)],EAX        ;STORE IT AT LIMIT
         LODSD                 ; NEXT
@@ -974,13 +1077,17 @@ LLEAV      DD     $+CW
 ;  ********** 
 ;  *   >R   *
 ;  ********** 
-;  
+;  TODO: the ">" confuses MASM. IFNB <">">
+%if 1
+        CODE_ENTRY TOR, 80H+2, ">", "R"+80H
+%else
 N_TOR      DB   80H+2
          DB      ">"
          DB     "R"+80H
          DD    N_LLEAV
 TOR      DD     $+CW
-                                   ; (R1) <- (S1)
+%endif
+                        ; (R1) <- (S1)
         POP     EBX      ;GET STACK PARAMETER
         LEA     EBP,[EBP-(CW*1)]    ;MOVE RETURN STACK DOWN
         MOV     [EBP],EBX ;ADD TO RETURN STACK
@@ -993,12 +1100,16 @@ TOR      DD     $+CW
 ;  *   R>   *
 ;  ********** 
 ;  
+%if 1
+        CODE_ENTRY FROMR, 80H+2, "R", ">"+80H
+%else
 N_FROMR      DB   80H+2
          DB      "R"
          DB     ">"+80H
          DD    N_TOR
 FROMR      DD     $+CW
-                                 ;(S1) <- (R1)
+%endif
+                          ;(S1) <- (R1)
         MOV     EAX,[EBP] ; GET RETURN STACK VALUE
         LEA     EBP,[EBP+(CW*1)]
         PUSH    EAX
@@ -1010,24 +1121,31 @@ FROMR      DD     $+CW
 ;  ********* 
 ;  *   R   *
 ;  ********* 
-;  
+;  TODO: Is this OK or do I need to copy code?
+
+%if 1
+        ENTRY RR, 80H+1, , "R"+80H, IDO+(CW*1)
+%else
 N_RR      DB   80H+1
          DB     "R"+80H
          DD    N_FROMR
 RR      DD     IDO+(CW*1)
-                           
+%endif                           
 ;
 
 ;  ********** 
 ;  *   0=   *
 ;  ********** 
 ;  
+%if 1
+        CODE_ENTRY ZEQU, 80H+2, "0", "="+80H
+%else
 N_ZEQU      DB   80H+2
          DB      "0"
          DB     "="+80H
          DD    N_RR
 ZEQU      DD     $+CW
-                           
+%endif                           
         POP     EAX
         OR      EAX,EAX   ;DO TEST
         MOV     EAX,1    ;TRUE
@@ -1043,12 +1161,15 @@ ZEQU1:  PUSH    EAX
 ;  *   0<   *
 ;  ********** 
 ;  
+%if 1
+        CODE_ENTRY ZLESS, 80H+2, "0", "<"+80H
+%else
 N_ZLESS      DB   80H+2
          DB      "0"
          DB     "<"+80H
          DD    N_ZEQU
 ZLESS      DD     $+CW
-                           
+%endif                           
         POP     EAX
         OR      EAX,EAX   ;SET FLAGS
         MOV     EAX,1    ;TRUE
@@ -1064,11 +1185,14 @@ ZLESS1: PUSH    EAX
 ;  *   +   *
 ;  ********* 
 ;  
+%if 1
+        CODE_ENTRY PLUS, 80H+1, , "+"+80H
+%else
 N_PLUS      DB   80H+1
          DB     "+"+80H
          DD    N_ZLESS
 PLUS      DD     $+CW
-                           
+%endif                           
         POP     EAX      ;(S1) <- (S1) + (S2)
         POP     EBX
         ADD     EAX,EBX
@@ -1082,12 +1206,15 @@ PLUS      DD     $+CW
 ;  *   D+   *
 ;  ********** 
 ;  
+%if 1
+        CODE_ENTRY DPLUS, 80H+2, "D", "+"+80H
+%else
 N_DPLUS      DB   80H+2
          DB      "D"
          DB     "+"+80H
          DD    N_PLUS
 DPLUS      DD     $+CW
-                           
+%endif                           
         POP     EAX      ; YHW
         POP     EDX      ; YLW
         POP     EBX      ; XHW
@@ -1104,13 +1231,16 @@ DPLUS      DD     $+CW
 ;  ************* 
 ;  *   MINUS   *
 ;  ************* 
-;  
+;  TODO: Why is this spelling "MINUS" out?
+%if 1
+        CODE_ENTRY MINUS, 80H+5, "MINU", "S"+80H
+%else
 N_MINUS      DB   80H+5
          DB      "MINU"
          DB     "S"+80H
          DD    N_DPLUS
 MINUS      DD     $+CW
-                           
+%endif                           
         POP     EAX
         NEG     EAX
         PUSH    EAX
@@ -1123,12 +1253,15 @@ MINUS      DD     $+CW
 ;  *   DMINUS   *
 ;  ************** 
 ;  
+%if 1
+        CODE_ENTRY DMINU, 80H+6, "DMINU", "S"+80H
+%else
 N_DMINU      DB   80H+6
          DB      "DMINU"
          DB     "S"+80H
          DD    N_MINUS
 DMINU      DD     $+CW
-                           
+%endif                           
         POP     EBX
         POP     ECX
         SUB     EAX,EAX
@@ -1149,8 +1282,7 @@ DMINU      DD     $+CW
 ;  
 %if 1
         CODE_ENTRY    OVER, 80H+4, "OVE", "R"+80H
-%endif
-%if 0
+%else
 				; Original code:
  0000052C 84			N_OVER      DB   80H+4
  0000052D  4F 56 45		         DB      "OVE"
