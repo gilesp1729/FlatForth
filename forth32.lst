@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.29.30159.0	    09/29/26 14:33:28
+Microsoft (R) Macro Assembler Version 14.29.30159.0	    09/30/26 10:06:56
 forth32.asm						     Page 1 - 1
 
 
@@ -1228,12 +1228,16 @@ forth32.asm						     Page 1 - 1
 				;  *   DROP   *
 				;  ************ 
 				;  
- 0000046B 84			N_DROP      DB   80H+4
- 0000046C  44 52 4F		         DB      "DRO"
- 0000046F  D0			         DB     "P"+80H
- 00000470  00000454 R		         DD    N_OVER
- 00000474 00000004 R		DROP      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY    DROP, 80H+4, "DRO", "P"+80H
+ 0000046B 84		     1	N_DROP DB  80H+4
+ 0000046C  44 52 4F	     1	        DB  "DRO"
+ 0000046F  D0		     1	        DB  "P"+80H
+ 00000470  00000454 R	     1	        DD  Link
+ 00000474 00000478 R	     1	DROP   DD  C_DROP
+ 00000478		     1	C_DROP:
+				%else
+				%endif                           
  00000478  58			        POP     EAX
  00000479  AD			        LODSD                 ; NEXT
  0000047A  8B D8		        MOV     EBX,EAX                  
@@ -1244,12 +1248,16 @@ forth32.asm						     Page 1 - 1
 				;  *   SWAP   *
 				;  ************ 
 				;  
- 0000047E 84			N_SWAP      DB   80H+4
- 0000047F  53 57 41		         DB      "SWA"
- 00000482  D0			         DB     "P"+80H
- 00000483  0000046B R		         DD    N_DROP
- 00000487 00000004 R		SWAP      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY    SWAP, 80H+4, "SWA", "P"+80H
+ 0000047E 84		     1	N_SWAP DB  80H+4
+ 0000047F  53 57 41	     1	        DB  "SWA"
+ 00000482  D0		     1	        DB  "P"+80H
+ 00000483  0000046B R	     1	        DD  Link
+ 00000487 0000048B R	     1	SWAP   DD  C_SWAP
+ 0000048B		     1	C_SWAP:
+				%else
+				%endif                           
  0000048B  5A			        POP     EDX
  0000048C  58			        POP     EAX
  0000048D  52			        PUSH    EDX
@@ -1263,12 +1271,16 @@ forth32.asm						     Page 1 - 1
 				;  *   DUP   *
 				;  *********** 
 				;  
- 00000494 83			N_LDUP      DB   80H+3
- 00000495  44 55		         DB      "DU"
- 00000497  D0			         DB     "P"+80H
- 00000498  0000047E R		         DD    N_SWAP
- 0000049C 00000004 R		LDUP      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY    LDUP, 80H+4, "DU", "P"+80H
+ 00000494 84		     1	N_LDUP DB  80H+4
+ 00000495  44 55	     1	        DB  "DU"
+ 00000497  D0		     1	        DB  "P"+80H
+ 00000498  0000047E R	     1	        DD  Link
+ 0000049C 000004A0 R	     1	LDUP   DD  C_LDUP
+ 000004A0		     1	C_LDUP:
+				%else
+				%endif                           
  000004A0  58			        POP     EAX
  000004A1  50			        PUSH    EAX
  000004A2  50			        PUSH    EAX
@@ -1281,12 +1293,16 @@ forth32.asm						     Page 1 - 1
 				;  *   2DUP   *
 				;  ************ 
 				;  
- 000004A8 84			N_TDUP      DB   80H+4
- 000004A9  32 44 55		         DB      "2DU"
- 000004AC  D0			         DB     "P"+80H
- 000004AD  00000494 R		         DD    N_LDUP
- 000004B1 00000004 R		TDUP      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY    TDUP, 80H+4, "2DU", "P"+80H
+ 000004A8 84		     1	N_TDUP DB  80H+4
+ 000004A9  32 44 55	     1	        DB  "2DU"
+ 000004AC  D0		     1	        DB  "P"+80H
+ 000004AD  00000494 R	     1	        DD  Link
+ 000004B1 000004B5 R	     1	TDUP   DD  C_TDUP
+ 000004B5		     1	C_TDUP:
+				%else
+				%endif                           
  000004B5  58			        POP     EAX
  000004B6  5A			        POP     EDX
  000004B7  52			        PUSH    EDX
@@ -1302,12 +1318,16 @@ forth32.asm						     Page 1 - 1
 				;  *   +!   *
 				;  ********** 
 				;  
- 000004C0 82			N_PSTOR      DB   80H+2
- 000004C1  2B			         DB      "+"
- 000004C2  A1			         DB     "!"+80H
- 000004C3  000004A8 R		         DD    N_TDUP
- 000004C7 00000004 R		PSTOR      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY    PSTOR, 80H+2, "+", "!"+80H
+ 000004C0 82		     1	N_PSTOR DB  80H+2
+ 000004C1  2B		     1	        DB  "+"
+ 000004C2  A1		     1	        DB  "!"+80H
+ 000004C3  000004A8 R	     1	        DD  Link
+ 000004C7 000004CB R	     1	PSTOR   DD  C_PSTOR
+ 000004CB		     1	C_PSTOR:
+				%else
+				%endif                           
  000004CB  5B			        POP     EBX      ;ADDRESS
  000004CC  58			        POP     EAX      ;INCREMENT
  000004CD  01 03		        ADD     [EBX],EAX
@@ -1320,12 +1340,16 @@ forth32.asm						     Page 1 - 1
 				;  *   TOGGLE   *
 				;  ************** 
 				;  
- 000004D4 86			N_TOGGL      DB   80H+6
- 000004D5  54 4F 47 47 4C	         DB      "TOGGL"
- 000004DA  C5			         DB     "E"+80H
- 000004DB  000004C0 R		         DD    N_PSTOR
- 000004DF 00000004 R		TOGGL      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY    TOGGL, 80H+6, "TOGGL", "E"+80H
+ 000004D4 86		     1	N_TOGGL DB  80H+6
+ 000004D5  54 4F 47 47 4C    1	        DB  "TOGGL"
+ 000004DA  C5		     1	        DB  "E"+80H
+ 000004DB  000004C0 R	     1	        DD  Link
+ 000004DF 000004E3 R	     1	TOGGL   DD  C_TOGGL
+ 000004E3		     1	C_TOGGL:
+				%else
+				%endif                           
  000004E3  58			        POP     EAX      ;BIT PATTERN
  000004E4  5B			        POP     EBX      ;ADDR
  000004E5  31 03		        XOR     [EBX],EAX ;
@@ -1338,11 +1362,15 @@ forth32.asm						     Page 1 - 1
 				;  *   @   *
 				;  ********* 
 				;  
- 000004EC 81			N_FETCH      DB   80H+1
- 000004ED  C0			         DB     "@"+80H
- 000004EE  000004D4 R		         DD    N_TOGGL
- 000004F2 00000004 R		FETCH      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY_1    FETCH, 80H+1, "@"+80H
+ 000004EC 81		     1	N_FETCH DB  80H+1
+ 000004ED  C0		     1	        DB  "@"+80H
+ 000004EE  000004D4 R	     1	        DD  Link
+ 000004F2 000004F6 R	     1	FETCH   DD  C_FETCH
+ 000004F6		     1	C_FETCH:
+				%else
+				%endif                           
  000004F6  5B			        POP     EBX
  000004F7  8B 03		        MOV     EAX,[EBX]
  000004F9  50			        PUSH    EAX
@@ -1355,12 +1383,16 @@ forth32.asm						     Page 1 - 1
 				;  *   C@   *
 				;  ********** 
 				;  
- 000004FF 82			N_CFET      DB   80H+2
- 00000500  43			         DB      "C"
- 00000501  C0			         DB     "@"+80H
- 00000502  000004EC R		         DD    N_FETCH
- 00000506 00000004 R		CFET      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY    CFET, 80H+2, "C", "@"+80H
+ 000004FF 82		     1	N_CFET DB  80H+2
+ 00000500  43		     1	        DB  "C"
+ 00000501  C0		     1	        DB  "@"+80H
+ 00000502  000004EC R	     1	        DD  Link
+ 00000506 0000050A R	     1	CFET   DD  C_CFET
+ 0000050A		     1	C_CFET:
+				%else
+				%endif                           
  0000050A  5B			        POP     EBX
  0000050B  33 C0		        XOR     EAX,EAX
  0000050D  8A 03		        MOV     AL,[EBX]
@@ -1374,12 +1406,16 @@ forth32.asm						     Page 1 - 1
 				;  *   2@   *
 				;  ********** 
 				;  
- 00000515 82			N_TFET      DB   80H+2
- 00000516  32			         DB      "2"
- 00000517  C0			         DB     "@"+80H
- 00000518  000004FF R		         DD    N_CFET
- 0000051C 00000004 R		TFET      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY    TFET, 80H+2, "2", "@"+80H
+ 00000515 82		     1	N_TFET DB  80H+2
+ 00000516  32		     1	        DB  "2"
+ 00000517  C0		     1	        DB  "@"+80H
+ 00000518  000004FF R	     1	        DD  Link
+ 0000051C 00000520 R	     1	TFET   DD  C_TFET
+ 00000520		     1	C_TFET:
+				%else
+				%endif                           
  00000520  5B			        POP     EBX      ;ADDR
  00000521  8B 03		        MOV     EAX,[EBX] ;MSW
  00000523  8B 53 04		        MOV     EDX,[EBX+(CW*1)]        ;LSW
@@ -1394,11 +1430,15 @@ forth32.asm						     Page 1 - 1
 				;  *   !   *
 				;  ********* 
 				;  
- 0000052D 81			N_STORE      DB   80H+1
- 0000052E  A1			         DB     "!"+80H
- 0000052F  00000515 R		         DD    N_TFET
- 00000533 00000004 R		STORE      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY_1    STORE, 80H+1, "!"+80H
+ 0000052D 81		     1	N_STORE DB  80H+1
+ 0000052E  A1		     1	        DB  "!"+80H
+ 0000052F  00000515 R	     1	        DD  Link
+ 00000533 00000537 R	     1	STORE   DD  C_STORE
+ 00000537		     1	C_STORE:
+				%else
+				%endif                           
  00000537  5B			        POP     EBX      ;ADDR
  00000538  58			        POP     EAX      ;DATA
  00000539  89 03		        MOV     [EBX],EAX
@@ -1411,12 +1451,16 @@ forth32.asm						     Page 1 - 1
 				;  *   C!   *
 				;  ********** 
 				;  
- 00000540 82			N_CSTOR      DB   80H+2
- 00000541  43			         DB      "C"
- 00000542  A1			         DB     "!"+80H
- 00000543  0000052D R		         DD    N_STORE
- 00000547 00000004 R		CSTOR      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY    CSTOR, 80H+2, "C", "!"+80H
+ 00000540 82		     1	N_CSTOR DB  80H+2
+ 00000541  43		     1	        DB  "C"
+ 00000542  A1		     1	        DB  "!"+80H
+ 00000543  0000052D R	     1	        DD  Link
+ 00000547 0000054B R	     1	CSTOR   DD  C_CSTOR
+ 0000054B		     1	C_CSTOR:
+				%else
+				%endif                           
  0000054B  5B			        POP     EBX      ;ADDR
  0000054C  58			        POP     EAX      ;DATA
  0000054D  88 03		        MOV     [EBX],AL
@@ -1429,12 +1473,16 @@ forth32.asm						     Page 1 - 1
 				;  *   2!   *
 				;  ********** 
 				;  
- 00000554 82			N_TSTOR      DB   80H+2
- 00000555  32			         DB      "2"
- 00000556  A1			         DB     "!"+80H
- 00000557  00000540 R		         DD    N_CSTOR
- 0000055B 00000004 R		TSTOR      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY    TSTOR, 80H+2, "2", "!"+80H
+ 00000554 82		     1	N_TSTOR DB  80H+2
+ 00000555  32		     1	        DB  "2"
+ 00000556  A1		     1	        DB  "!"+80H
+ 00000557  00000540 R	     1	        DD  Link
+ 0000055B 0000055F R	     1	TSTOR   DD  C_TSTOR
+ 0000055F		     1	C_TSTOR:
+				%else
+				%endif                           
  0000055F  5B			        POP     EBX      ;ADDR
  00000560  58			        POP     EAX      ;MSW
  00000561  89 03		        MOV     [EBX],EAX
@@ -1448,14 +1496,16 @@ forth32.asm						     Page 1 - 1
 				;  *   L@   *
 				;  ********** 
 				;  
- 0000056C 82			N_LFET      DB   80H+2
- 0000056D  4C			         DB      "L"
- 0000056E  C0			         DB     "@"+80H
- 0000056F  00000554 R		         DD    N_TSTOR
- 00000573 00000004 R		LFET      DD     $+CW
-				                           
-				
-				
+				%if 1
+				        CODE_ENTRY    LFET, 80H+2, "L", "@"+80H
+ 0000056C 82		     1	N_LFET DB  80H+2
+ 0000056D  4C		     1	        DB  "L"
+ 0000056E  C0		     1	        DB  "@"+80H
+ 0000056F  00000554 R	     1	        DD  Link
+ 00000573 00000577 R	     1	LFET   DD  C_LFET
+ 00000577		     1	C_LFET:
+				%else
+				%endif                           
  00000577  5B			        POP     EBX      ;MEM LOC
  00000578  58			        POP     EAX      ;SEG REG VAL
  00000579  BA 00000010		        MOV     EDX,10H
@@ -1473,14 +1523,16 @@ forth32.asm						     Page 1 - 1
 				;  *   L!   *
 				;  ********** 
 				;  
- 0000058A 82			N_LSTORE      DB   80H+2
- 0000058B  4C			         DB      "L"
- 0000058C  A1			         DB     "!"+80H
- 0000058D  0000056C R		         DD    N_LFET
- 00000591 00000004 R		LSTORE      DD     $+CW
-				                           
-				
-				
+				%if 1
+				        CODE_ENTRY    LSTORE, 80H+2, "L", "!"+80H
+ 0000058A 82		     1	N_LSTORE DB  80H+2
+ 0000058B  4C		     1	        DB  "L"
+ 0000058C  A1		     1	        DB  "!"+80H
+ 0000058D  0000056C R	     1	        DD  Link
+ 00000591 00000595 R	     1	LSTORE   DD  C_LSTORE
+ 00000595		     1	C_LSTORE:
+				%else
+				%endif
  00000595  5B			        POP     EBX      ;MEM LOC
  00000596  58			        POP     EAX      ;SEG REG VAL
  00000597  BA 00000010		        MOV     EDX,10H
@@ -1499,11 +1551,14 @@ forth32.asm						     Page 1 - 1
 				;  *   :   *
 				;  ********* 
 				;  
- 000005A8 C1			N_COLON      DB   80H+1+40H
- 000005A9  BA			         DB     ":"+80H
- 000005AA  0000058A R		         DD    N_LSTORE
- 000005AE 000005D6 R		COLON      DD     DOCOL
-				                           
+				%if 1
+				        ENTRY_1    COLON, 80H+1+40H, ":"+80H, DOCOL
+ 000005A8 C1		     1	N_COLON DB  80H+1+40H
+ 000005A9  BA		     1	        DB  ":"+80H
+ 000005AA  0000058A R	     1	        DD  Link
+ 000005AE 000005D6 R	     1	COLON   DD  DOCOL
+				%else
+				%endif                           
  000005B2  00000BE9 R		        DD      QEXEC
  000005B6  00000B72 R		        DD      SCSP
  000005BA  0000082F R		        DD      CURR
@@ -1527,11 +1582,14 @@ forth32.asm						     Page 1 - 1
 				;  *   ;   *
 				;  ********* 
 				;  
- 000005E4 C1			N_SEMI      DB   80H+1+40H
- 000005E5  BB			         DB     ";"+80H
- 000005E6  000005A8 R		         DD    N_COLON
- 000005EA 000005D6 R		SEMI      DD     DOCOL
-				                           
+				%if 1
+				        ENTRY_1    SEMI, 80H+1+40H, ";"+80H, DOCOL
+ 000005E4 C1		     1	N_SEMI DB  80H+1+40H
+ 000005E5  BB		     1	        DB  ";"+80H
+ 000005E6  000005A8 R	     1	        DD  Link
+ 000005EA 000005D6 R	     1	SEMI   DD  DOCOL
+				%else
+				%endif                           
  000005EE  00000C31 R		        DD      QCSP
  000005F2  00000C8E R		        DD      COMP
  000005F6  00000357 R		        DD      SEMIS
@@ -1544,13 +1602,16 @@ forth32.asm						     Page 1 - 1
 				;  *   CONSTANT   *
 				;  **************** 
 				;  
- 00000606 88			N_CON      DB   80H+8
- 00000607  43 4F 4E 53 54	         DB      "CONSTAN"
+				%if 1
+				        ENTRY    CON, 80H+8, "CONSTAN", "T"+80H, DOCOL
+ 00000606 88		     1	N_CON DB  80H+8
+ 00000607  43 4F 4E 53 54    1	        DB  "CONSTAN"
 	   41 4E
- 0000060E  D4			         DB     "T"+80H
- 0000060F  000005E4 R		         DD    N_SEMI
- 00000613 000005D6 R		CON      DD     DOCOL
-				                           
+ 0000060E  D4		     1	        DB  "T"+80H
+ 0000060F  000005E4 R	     1	        DD  Link
+ 00000613 000005D6 R	     1	CON   DD  DOCOL
+				%else
+				%endif                           
  00000617  00001340 R		        DD      CREAT
  0000061B  00000CF5 R		        DD      SMUDG
  0000061F  00000951 R		        DD      COMMA
@@ -1566,13 +1627,16 @@ forth32.asm						     Page 1 - 1
 				;  *   VARIABLE   *
 				;  **************** 
 				;  
- 00000630 88			N_VAR      DB   80H+8
- 00000631  56 41 52 49 41	         DB      "VARIABL"
+				%if 1
+				        ENTRY    VAR, 80H+8, "VARIABL", "E"+80H, DOCOL
+ 00000630 88		     1	N_VAR DB  80H+8
+ 00000631  56 41 52 49 41    1	        DB  "VARIABL"
 	   42 4C
- 00000638  C5			         DB     "E"+80H
- 00000639  00000606 R		         DD    N_CON
- 0000063D 000005D6 R		VAR      DD     DOCOL
-				                           
+ 00000638  C5		     1	        DB  "E"+80H
+ 00000639  00000606 R	     1	        DD  Link
+ 0000063D 000005D6 R	     1	VAR   DD  DOCOL
+				%else
+				%endif                           
  00000641  00000613 R		        DD      CON
  00000645  00000D5D R		        DD      PSCOD
  00000649  8D 43 04		DOVAR:  LEA     EAX,[EBX+(CW*1)] ;(AX) <- PFA
@@ -1586,12 +1650,15 @@ forth32.asm						     Page 1 - 1
 				;  *   USER   *
 				;  ************ 
 				;  
- 00000652 84			N_USER      DB   80H+4
- 00000653  55 53 45		         DB      "USE"
- 00000656  D2			         DB     "R"+80H
- 00000657  00000630 R		         DD    N_VAR
- 0000065B 000005D6 R		USER      DD     DOCOL
-				                           
+				%if 1
+				        ENTRY    USER, 80H+4, "USE", "R"+80H, DOCOL
+ 00000652 84		     1	N_USER DB  80H+4
+ 00000653  55 53 45	     1	        DB  "USE"
+ 00000656  D2		     1	        DB  "R"+80H
+ 00000657  00000630 R	     1	        DD  Link
+ 0000065B 000005D6 R	     1	USER   DD  DOCOL
+				%else
+				%endif                           
  0000065F  00000613 R		        DD      CON
  00000663  00000D5D R		        DD      PSCOD
  00000667  8B 5B 04		DOUSE:  MOV     EBX,[EBX+(CW*1)] ;PFA  
@@ -1607,11 +1674,15 @@ forth32.asm						     Page 1 - 1
 				;  *   0   *
 				;  ********* 
 				;  
- 00000679 81			N_ZERO      DB   80H+1
- 0000067A  B0			         DB     "0"+80H
- 0000067B  00000652 R		         DD    N_USER
- 0000067F 00000004 R		ZERO      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY_1    ZERO, 80H+1, "0"+80H
+ 00000679 81		     1	N_ZERO DB  80H+1
+ 0000067A  B0		     1	        DB  "0"+80H
+ 0000067B  00000652 R	     1	        DD  Link
+ 0000067F 00000683 R	     1	ZERO   DD  C_ZERO
+ 00000683		     1	C_ZERO:
+				%else
+				%endif                           
  00000683  33 C0		        XOR     EAX,EAX
  00000685  50			        PUSH    EAX
  00000686  AD			        LODSD                 ; NEXT
@@ -1623,11 +1694,15 @@ forth32.asm						     Page 1 - 1
 				;  *   1   *
 				;  ********* 
 				;  
- 0000068B 81			N_ONE      DB   80H+1
- 0000068C  B1			         DB     "1"+80H
- 0000068D  00000679 R		         DD    N_ZERO
- 00000691 00000004 R		ONE      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY_1    ONE, 80H+1, "1"+80H
+ 0000068B 81		     1	N_ONE DB  80H+1
+ 0000068C  B1		     1	        DB  "1"+80H
+ 0000068D  00000679 R	     1	        DD  Link
+ 00000691 00000695 R	     1	ONE   DD  C_ONE
+ 00000695		     1	C_ONE:
+				%else
+				%endif                           
  00000695  B8 00000001		        MOV     EAX,1
  0000069A  50			        PUSH    EAX
  0000069B  AD			        LODSD                 ; NEXT
@@ -1639,11 +1714,15 @@ forth32.asm						     Page 1 - 1
 				;  *   2   *
 				;  ********* 
 				;  
- 000006A0 81			N_TWO      DB   80H+1
- 000006A1  B2			         DB     "2"+80H
- 000006A2  0000068B R		         DD    N_ONE
- 000006A6 00000004 R		TWO      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY_1    TWO, 80H+1, "2"+80H
+ 000006A0 81		     1	N_TWO DB  80H+1
+ 000006A1  B2		     1	        DB  "2"+80H
+ 000006A2  0000068B R	     1	        DD  Link
+ 000006A6 000006AA R	     1	TWO   DD  C_TWO
+ 000006AA		     1	C_TWO:
+				%else
+				%endif                           
  000006AA  B8 00000002		        MOV     EAX,2
  000006AF  50			        PUSH    EAX
  000006B0  AD			        LODSD                 ; NEXT
@@ -1655,11 +1734,15 @@ forth32.asm						     Page 1 - 1
 				;  *   3   *
 				;  ********* 
 				;  
- 000006B5 81			N_THREE      DB   80H+1
- 000006B6  B3			         DB     "3"+80H
- 000006B7  000006A0 R		         DD    N_TWO
- 000006BB 00000004 R		THREE      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY_1    THREE, 80H+1, "3"+80H
+ 000006B5 81		     1	N_THREE DB  80H+1
+ 000006B6  B3		     1	        DB  "3"+80H
+ 000006B7  000006A0 R	     1	        DD  Link
+ 000006BB 000006BF R	     1	THREE   DD  C_THREE
+ 000006BF		     1	C_THREE:
+				%else
+				%endif                           
  000006BF  B8 00000003		        MOV     EAX,3
  000006C4  50			        PUSH    EAX
  000006C5  AD			        LODSD                 ; NEXT
@@ -1670,13 +1753,16 @@ forth32.asm						     Page 1 - 1
 				;  *   BL   *
 				;  ********** 
 				;  
- 000006CA 82			N_BLS      DB   80H+2
- 000006CB  42			         DB      "B"
- 000006CC  CC			         DB     "L"+80H
- 000006CD  000006B5 R		         DD    N_THREE
- 000006D1 00000627 R		BLS      DD     DOCON
-				                           
-				; THIS IS ONLY A SPAC
+				%if 1
+				        ENTRY    BLS, 80H+2, "B", "L"+80H, DOCON
+ 000006CA 82		     1	N_BLS DB  80H+2
+ 000006CB  42		     1	        DB  "B"
+ 000006CC  CC		     1	        DB  "L"+80H
+ 000006CD  000006B5 R	     1	        DD  Link
+ 000006D1 00000627 R	     1	BLS   DD  DOCON
+				%else
+				%endif                           
+				; THIS IS ONLY A SPACE CHAR
  000006D5  00000020		    DD 20H
 				;
 				
@@ -1684,12 +1770,15 @@ forth32.asm						     Page 1 - 1
 				;  *   C/L   *
 				;  *********** 
 				;  
- 000006D9 83			N_CSLL      DB   80H+3
- 000006DA  43 2F		         DB      "C/"
- 000006DC  CC			         DB     "L"+80H
- 000006DD  000006CA R		         DD    N_BLS
- 000006E1 00000627 R		CSLL      DD     DOCON
-				                           
+				%if 1
+				        ENTRY    CSLL, 80H+3, "C/", "L"+80H, DOCON
+ 000006D9 83		     1	N_CSLL DB  80H+3
+ 000006DA  43 2F	     1	        DB  "C/"
+ 000006DC  CC		     1	        DB  "L"+80H
+ 000006DD  000006CA R	     1	        DD  Link
+ 000006E1 00000627 R	     1	CSLL   DD  DOCON
+				%else
+				%endif                           
  000006E5  00000040		        DD      64
 				;
 				
@@ -1698,12 +1787,15 @@ forth32.asm						     Page 1 - 1
 				;  *   FIRST   *
 				;  ************* 
 				;  
- 000006E9 85			N_FIRST      DB   80H+5
- 000006EA  46 49 52 53		         DB      "FIRS"
- 000006EE  D4			         DB     "T"+80H
- 000006EF  000006D9 R		         DD    N_CSLL
- 000006F3 00000627 R		FIRST      DD     DOCON
-				                           
+				%if 1
+				        ENTRY    FIRST, 80H+5, "FIRS", "T"+80H, DOCON
+ 000006E9 85		     1	N_FIRST DB  80H+5
+ 000006EA  46 49 52 53	     1	        DB  "FIRS"
+ 000006EE  D4		     1	        DB  "T"+80H
+ 000006EF  000006D9 R	     1	        DD  Link
+ 000006F3 00000627 R	     1	FIRST   DD  DOCON
+				%else
+				%endif                           
  000006F7  000FF7F0 R		        DD      BUF1
 				 ;
 				;
@@ -1714,12 +1806,15 @@ forth32.asm						     Page 1 - 1
 				;  *   LIMIT   *
 				;  ************* 
 				;  
- 000006FB 85			N_LIMIT      DB   80H+5
- 000006FC  4C 49 4D 49		         DB      "LIMI"
- 00000700  D4			         DB     "T"+80H
- 00000701  000006E9 R		         DD    N_FIRST
- 00000705 00000627 R		LIMIT      DD     DOCON
-				                           
+				%if 1
+				        ENTRY    LIMIT, 80H+5, "LIMI", "T"+80H, DOCON
+ 000006FB 85		     1	N_LIMIT DB  80H+5
+ 000006FC  4C 49 4D 49	     1	        DB  "LIMI"
+ 00000700  D4		     1	        DB  "T"+80H
+ 00000701  000006E9 R	     1	        DD  Link
+ 00000705 00000627 R	     1	LIMIT   DD  DOCON
+				%else
+				%endif                           
  00000709  00100000 R		        DD      BUF1+(KBBUF+2*CW)*NBUF
 				; THE END  OF THE MEMORY 
 				
@@ -1727,12 +1822,15 @@ forth32.asm						     Page 1 - 1
 				;  *   EM   *
 				;  ********** 
 				;  
- 0000070D 82			N_LEM      DB   80H+2
- 0000070E  45			         DB      "E"
- 0000070F  CD			         DB     "M"+80H
- 00000710  000006FB R		         DD    N_LIMIT
- 00000714 00000627 R		LEM      DD     DOCON
-				                           
+				%if 1
+				        ENTRY    LEM, 80H+2, "E", "M"+80H, DOCON
+ 0000070D 82		     1	N_LEM DB  80H+2
+ 0000070E  45		     1	        DB  "E"
+ 0000070F  CD		     1	        DB  "M"+80H
+ 00000710  000006FB R	     1	        DD  Link
+ 00000714 00000627 R	     1	LEM   DD  DOCON
+				%else
+				%endif                           
  00000718  00100000 R		        DD      EM
 				;
 				
@@ -1740,12 +1838,15 @@ forth32.asm						     Page 1 - 1
 				;  *   B/BUF   *
 				;  ************* 
 				;  
- 0000071C 85			N_BBUF      DB   80H+5
- 0000071D  42 2F 42 55		         DB      "B/BU"
- 00000721  C6			         DB     "F"+80H
- 00000722  0000070D R		         DD    N_LEM
- 00000726 00000627 R		BBUF      DD     DOCON
-				                           
+				%if 1
+				        ENTRY    BBUF, 80H+5, "B/BU", "F"+80H, DOCON
+ 0000071C 85		     1	N_BBUF DB  80H+5
+ 0000071D  42 2F 42 55	     1	        DB  "B/BU"
+ 00000721  C6		     1	        DB  "F"+80H
+ 00000722  0000070D R	     1	        DD  Link
+ 00000726 00000627 R	     1	BBUF   DD  DOCON
+				%else
+				%endif                           
  0000072A  00000400		        DD      KBBUF
 				;
 				
@@ -1753,12 +1854,15 @@ forth32.asm						     Page 1 - 1
 				;  *   B/SCR   *
 				;  ************* 
 				;  
- 0000072E 85			N_BSCR      DB   80H+5
- 0000072F  42 2F 53 43		         DB      "B/SC"
- 00000733  D2			         DB     "R"+80H
- 00000734  0000071C R		         DD    N_BBUF
- 00000738 00000627 R		BSCR      DD     DOCON
-				                           
+				%if 1
+				        ENTRY    BSCR, 80H+5, "B/SC", "R"+80H, DOCON
+ 0000072E 85		     1	N_BSCR DB  80H+5
+ 0000072F  42 2F 53 43	     1	        DB  "B/SC"
+ 00000733  D2		     1	        DB  "R"+80H
+ 00000734  0000071C R	     1	        DD  Link
+ 00000738 00000627 R	     1	BSCR   DD  DOCON
+				%else
+				%endif                           
  0000073C  00000001		        DD      400H/KBBUF
 				;
 				        ;
@@ -1772,12 +1876,15 @@ forth32.asm						     Page 1 - 1
 				;  *   U0   *
 				;  ********** 
 				;  
- 00000740 82			N_UZERO      DB   80H+2
- 00000741  55			         DB      "U"
- 00000742  B0			         DB     "0"+80H
- 00000743  0000072E R		         DD    N_BSCR
- 00000747 00000667 R		UZERO      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    UZERO, 80H+2, "U", "0"+80H, DOUSE
+ 00000740 82		     1	N_UZERO DB  80H+2
+ 00000741  55		     1	        DB  "U"
+ 00000742  B0		     1	        DB  "0"+80H
+ 00000743  0000072E R	     1	        DD  Link
+ 00000747 00000667 R	     1	UZERO   DD  DOUSE
+				%else
+				%endif                           
  0000074B  00000004		        DD      (CW*1)
 				;
 				
@@ -1785,12 +1892,15 @@ forth32.asm						     Page 1 - 1
 				;  *   RUBOUT   *
 				;  ************** 
 				;  
- 0000074F 86			N_RUBOUT      DB   80H+6
- 00000750  52 55 42 4F 55	         DB      "RUBOU"
- 00000755  D4			         DB     "T"+80H
- 00000756  00000740 R		         DD    N_UZERO
- 0000075A 00000667 R		RUBOUT      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    RUBOUT, 80H+6, "RUBOU", "T"+80H, DOUSE
+ 0000074F 86		     1	N_RUBOUT DB  80H+6
+ 00000750  52 55 42 4F 55    1	        DB  "RUBOU"
+ 00000755  D4		     1	        DB  "T"+80H
+ 00000756  00000740 R	     1	        DD  Link
+ 0000075A 00000667 R	     1	RUBOUT   DD  DOUSE
+				%else
+				%endif                           
  0000075E  00000008		        DD      (CW*2)
 				;
 				
@@ -1798,12 +1908,15 @@ forth32.asm						     Page 1 - 1
 				;  *   S0   *
 				;  ********** 
 				;  
- 00000762 82			N_SZERO      DB   80H+2
- 00000763  53			         DB      "S"
- 00000764  B0			         DB     "0"+80H
- 00000765  0000074F R		         DD    N_RUBOUT
- 00000769 00000667 R		SZERO      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    SZERO, 80H+2, "S", "0"+80H, DOUSE
+ 00000762 82		     1	N_SZERO DB  80H+2
+ 00000763  53		     1	        DB  "S"
+ 00000764  B0		     1	        DB  "0"+80H
+ 00000765  0000074F R	     1	        DD  Link
+ 00000769 00000667 R	     1	SZERO   DD  DOUSE
+				%else
+				%endif                           
  0000076D  0000000C		        DD      (CW*3)
 				;
 				
@@ -1811,12 +1924,15 @@ forth32.asm						     Page 1 - 1
 				;  *   R0   *
 				;  ********** 
 				;  
- 00000771 82			N_RZERO      DB   80H+2
- 00000772  52			         DB      "R"
- 00000773  B0			         DB     "0"+80H
- 00000774  00000762 R		         DD    N_SZERO
- 00000778 00000667 R		RZERO      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    RZERO, 80H+2, "R", "0"+80H, DOUSE
+ 00000771 82		     1	N_RZERO DB  80H+2
+ 00000772  52		     1	        DB  "R"
+ 00000773  B0		     1	        DB  "0"+80H
+ 00000774  00000762 R	     1	        DD  Link
+ 00000778 00000667 R	     1	RZERO   DD  DOUSE
+				%else
+				%endif                           
  0000077C  00000010		        DD      (CW*4)
 				;
 				
@@ -1824,12 +1940,15 @@ forth32.asm						     Page 1 - 1
 				;  *   TIB   *
 				;  *********** 
 				;  
- 00000780 83			N_TIB      DB   80H+3
- 00000781  54 49		         DB      "TI"
- 00000783  C2			         DB     "B"+80H
- 00000784  00000771 R		         DD    N_RZERO
- 00000788 00000667 R		TIB      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    TIB, 80H+3, "TI", "B"+80H, DOUSE
+ 00000780 83		     1	N_TIB DB  80H+3
+ 00000781  54 49	     1	        DB  "TI"
+ 00000783  C2		     1	        DB  "B"+80H
+ 00000784  00000771 R	     1	        DD  Link
+ 00000788 00000667 R	     1	TIB   DD  DOUSE
+				%else
+				%endif                           
  0000078C  00000014		        DD      (CW*5)
 				;
 				
@@ -1837,12 +1956,15 @@ forth32.asm						     Page 1 - 1
 				;  *   WIDTH   *
 				;  ************* 
 				;  
- 00000790 85			N_WIDTHE      DB   80H+5
- 00000791  57 49 44 54		         DB      "WIDT"
- 00000795  C8			         DB     "H"+80H
- 00000796  00000780 R		         DD    N_TIB
- 0000079A 00000667 R		WIDTHE      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    WIDTHE, 80H+5, "WIDT", "H"+80H, DOUSE
+ 00000790 85		     1	N_WIDTHE DB  80H+5
+ 00000791  57 49 44 54	     1	        DB  "WIDT"
+ 00000795  C8		     1	        DB  "H"+80H
+ 00000796  00000780 R	     1	        DD  Link
+ 0000079A 00000667 R	     1	WIDTHE   DD  DOUSE
+				%else
+				%endif                           
  0000079E  00000018		        DD      (CW*6)
 				;
 				
@@ -1850,13 +1972,16 @@ forth32.asm						     Page 1 - 1
 				;  *   WARNING   *
 				;  *************** 
 				;  
- 000007A2 87			N_WARN      DB   80H+7
- 000007A3  57 41 52 4E 49	         DB      "WARNIN"
+				%if 1
+				        ENTRY    WARN, 80H+7, "WARNIN", "G"+80H, DOUSE
+ 000007A2 87		     1	N_WARN DB  80H+7
+ 000007A3  57 41 52 4E 49    1	        DB  "WARNIN"
 	   4E
- 000007A9  C7			         DB     "G"+80H
- 000007AA  00000790 R		         DD    N_WIDTHE
- 000007AE 00000667 R		WARN      DD     DOUSE
-				                           
+ 000007A9  C7		     1	        DB  "G"+80H
+ 000007AA  00000790 R	     1	        DD  Link
+ 000007AE 00000667 R	     1	WARN   DD  DOUSE
+				%else
+				%endif                           
  000007B2  0000001C		        DD      (CW*7)
 				;
 				
@@ -1864,12 +1989,15 @@ forth32.asm						     Page 1 - 1
 				;  *   FENCE   *
 				;  ************* 
 				;  
- 000007B6 85			N_FENCE      DB   80H+5
- 000007B7  46 45 4E 43		         DB      "FENC"
- 000007BB  C5			         DB     "E"+80H
- 000007BC  000007A2 R		         DD    N_WARN
- 000007C0 00000667 R		FENCE      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    FENCE, 80H+5, "FENC", "E"+80H, DOUSE
+ 000007B6 85		     1	N_FENCE DB  80H+5
+ 000007B7  46 45 4E 43	     1	        DB  "FENC"
+ 000007BB  C5		     1	        DB  "E"+80H
+ 000007BC  000007A2 R	     1	        DD  Link
+ 000007C0 00000667 R	     1	FENCE   DD  DOUSE
+				%else
+				%endif                           
  000007C4  00000020		        DD      (CW*8)
 				;
 				
@@ -1877,12 +2005,15 @@ forth32.asm						     Page 1 - 1
 				;  *   DP   *
 				;  ********** 
 				;  
- 000007C8 82			N_LDP      DB   80H+2
- 000007C9  44			         DB      "D"
- 000007CA  D0			         DB     "P"+80H
- 000007CB  000007B6 R		         DD    N_FENCE
- 000007CF 00000667 R		LDP      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    LDP, 80H+2, "D", "P"+80H, DOUSE
+ 000007C8 82		     1	N_LDP DB  80H+2
+ 000007C9  44		     1	        DB  "D"
+ 000007CA  D0		     1	        DB  "P"+80H
+ 000007CB  000007B6 R	     1	        DD  Link
+ 000007CF 00000667 R	     1	LDP   DD  DOUSE
+				%else
+				%endif                           
  000007D3  00000024		        DD      (CW*9)
 				;
 				
@@ -1890,13 +2021,16 @@ forth32.asm						     Page 1 - 1
 				;  *   VOC-LINK   *
 				;  **************** 
 				;  
- 000007D7 88			N_VOCL      DB   80H+8
- 000007D8  56 4F 43 2D 4C	         DB      "VOC-LIN"
+				%if 1
+				        ENTRY    VOCL, 80H+8, "VOC-LIN", "K"+80H, DOUSE
+ 000007D7 88		     1	N_VOCL DB  80H+8
+ 000007D8  56 4F 43 2D 4C    1	        DB  "VOC-LIN"
 	   49 4E
- 000007DF  CB			         DB     "K"+80H
- 000007E0  000007C8 R		         DD    N_LDP
- 000007E4 00000667 R		VOCL      DD     DOUSE
-				                           
+ 000007DF  CB		     1	        DB  "K"+80H
+ 000007E0  000007C8 R	     1	        DD  Link
+ 000007E4 00000667 R	     1	VOCL   DD  DOUSE
+				%else
+				%endif                           
  000007E8  00000028		        DD      (CW*10)
 				;
 				
@@ -1904,12 +2038,15 @@ forth32.asm						     Page 1 - 1
 				;  *   OFFSET   *
 				;  ************** 
 				;  
- 000007EC 86			N_OFSET      DB   80H+6
- 000007ED  4F 46 46 53 45	         DB      "OFFSE"
- 000007F2  D4			         DB     "T"+80H
- 000007F3  000007D7 R		         DD    N_VOCL
- 000007F7 00000667 R		OFSET      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    OFSET, 80H+6, "OFFSE", "T"+80H, DOUSE
+ 000007EC 86		     1	N_OFSET DB  80H+6
+ 000007ED  4F 46 46 53 45    1	        DB  "OFFSE"
+ 000007F2  D4		     1	        DB  "T"+80H
+ 000007F3  000007D7 R	     1	        DD  Link
+ 000007F7 00000667 R	     1	OFSET   DD  DOUSE
+				%else
+				%endif                           
  000007FB  0000002C		        DD      (CW*11)
 				;
 				; End of user variables with fixed place.
@@ -1919,12 +2056,15 @@ forth32.asm						     Page 1 - 1
 				;  *   SCR   *
 				;  *********** 
 				;  
- 000007FF 83			N_SCR      DB   80H+3
- 00000800  53 43		         DB      "SC"
- 00000802  D2			         DB     "R"+80H
- 00000803  000007EC R		         DD    N_OFSET
- 00000807 00000667 R		SCR      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    SCR, 80H+3, "SC", "R"+80H, DOUSE
+ 000007FF 83		     1	N_SCR DB  80H+3
+ 00000800  53 43	     1	        DB  "SC"
+ 00000802  D2		     1	        DB  "R"+80H
+ 00000803  000007EC R	     1	        DD  Link
+ 00000807 00000667 R	     1	SCR   DD  DOUSE
+				%else
+				%endif                           
  0000080B  00000038		        DD      (CW*14)
 				;
 				
@@ -1932,13 +2072,16 @@ forth32.asm						     Page 1 - 1
 				;  *   CONTEXT   *
 				;  *************** 
 				;  
- 0000080F 87			N_CONT      DB   80H+7
- 00000810  43 4F 4E 54 45	         DB      "CONTEX"
+				%if 1
+				        ENTRY    CONT, 80H+7, "CONTEX", "T"+80H, DOUSE
+ 0000080F 87		     1	N_CONT DB  80H+7
+ 00000810  43 4F 4E 54 45    1	        DB  "CONTEX"
 	   58
- 00000816  D4			         DB     "T"+80H
- 00000817  000007FF R		         DD    N_SCR
- 0000081B 00000667 R		CONT      DD     DOUSE
-				                           
+ 00000816  D4		     1	        DB  "T"+80H
+ 00000817  000007FF R	     1	        DD  Link
+ 0000081B 00000667 R	     1	CONT   DD  DOUSE
+				%else
+				%endif                           
  0000081F  00000040		        DD      (CW*16)
 				;
 				
@@ -1946,13 +2089,16 @@ forth32.asm						     Page 1 - 1
 				;  *   CURRENT   *
 				;  *************** 
 				;  
- 00000823 87			N_CURR      DB   80H+7
- 00000824  43 55 52 52 45	         DB      "CURREN"
+				%if 1
+				        ENTRY    CURR, 80H+7, "CURREN", "T"+80H, DOUSE
+ 00000823 87		     1	N_CURR DB  80H+7
+ 00000824  43 55 52 52 45    1	        DB  "CURREN"
 	   4E
- 0000082A  D4			         DB     "T"+80H
- 0000082B  0000080F R		         DD    N_CONT
- 0000082F 00000667 R		CURR      DD     DOUSE
-				                           
+ 0000082A  D4		     1	        DB  "T"+80H
+ 0000082B  0000080F R	     1	        DD  Link
+ 0000082F 00000667 R	     1	CURR   DD  DOUSE
+				%else
+				%endif                           
  00000833  00000044		        DD      (CW*17)
 				;
 				
@@ -1960,12 +2106,15 @@ forth32.asm						     Page 1 - 1
 				;  *   STATE   *
 				;  ************* 
 				;  
- 00000837 85			N_STATE      DB   80H+5
- 00000838  53 54 41 54		         DB      "STAT"
- 0000083C  C5			         DB     "E"+80H
- 0000083D  00000823 R		         DD    N_CURR
- 00000841 00000667 R		STATE      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    STATE, 80H+5, "STAT", "E"+80H, DOUSE
+ 00000837 85		     1	N_STATE DB  80H+5
+ 00000838  53 54 41 54	     1	        DB  "STAT"
+ 0000083C  C5		     1	        DB  "E"+80H
+ 0000083D  00000823 R	     1	        DD  Link
+ 00000841 00000667 R	     1	STATE   DD  DOUSE
+				%else
+				%endif                           
  00000845  00000048		        DD      (CW*18)
 				;
 				
@@ -1973,12 +2122,15 @@ forth32.asm						     Page 1 - 1
 				;  *   BASE   *
 				;  ************ 
 				;  
- 00000849 84			N_BASE      DB   80H+4
- 0000084A  42 41 53		         DB      "BAS"
- 0000084D  C5			         DB     "E"+80H
- 0000084E  00000837 R		         DD    N_STATE
- 00000852 00000667 R		BASE      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    BASE, 80H+4, "BAS", "E"+80H, DOUSE
+ 00000849 84		     1	N_BASE DB  80H+4
+ 0000084A  42 41 53	     1	        DB  "BAS"
+ 0000084D  C5		     1	        DB  "E"+80H
+ 0000084E  00000837 R	     1	        DD  Link
+ 00000852 00000667 R	     1	BASE   DD  DOUSE
+				%else
+				%endif                           
  00000856  0000004C		        DD      (CW*19)
 				;
 				
@@ -1986,12 +2138,15 @@ forth32.asm						     Page 1 - 1
 				;  *   DPL   *
 				;  *********** 
 				;  
- 0000085A 83			N_DPL      DB   80H+3
- 0000085B  44 50		         DB      "DP"
- 0000085D  CC			         DB     "L"+80H
- 0000085E  00000849 R		         DD    N_BASE
- 00000862 00000667 R		DPL      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    DPL, 80H+3, "DP", "L"+80H, DOUSE
+ 0000085A 83		     1	N_DPL DB  80H+3
+ 0000085B  44 50	     1	        DB  "DP"
+ 0000085D  CC		     1	        DB  "L"+80H
+ 0000085E  00000849 R	     1	        DD  Link
+ 00000862 00000667 R	     1	DPL   DD  DOUSE
+				%else
+				%endif                           
  00000866  00000050		        DD      (CW*20)
 				;
 				
@@ -1999,12 +2154,15 @@ forth32.asm						     Page 1 - 1
 				;  *   FLD   *
 				;  *********** 
 				;  
- 0000086A 83			N_LFLD      DB   80H+3
- 0000086B  46 4C		         DB      "FL"
- 0000086D  C4			         DB     "D"+80H
- 0000086E  0000085A R		         DD    N_DPL
- 00000872 00000667 R		LFLD      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    LFLD, 80H+3, "FL", "D"+80H, DOUSE
+ 0000086A 83		     1	N_LFLD DB  80H+3
+ 0000086B  46 4C	     1	        DB  "FL"
+ 0000086D  C4		     1	        DB  "D"+80H
+ 0000086E  0000085A R	     1	        DD  Link
+ 00000872 00000667 R	     1	LFLD   DD  DOUSE
+				%else
+				%endif                           
  00000876  00000054		        DD      (CW*21)
 				;
 				
@@ -2012,12 +2170,15 @@ forth32.asm						     Page 1 - 1
 				;  *   CSP   *
 				;  *********** 
 				;  
- 0000087A 83			N_LCSP      DB   80H+3
- 0000087B  43 53		         DB      "CS"
- 0000087D  D0			         DB     "P"+80H
- 0000087E  0000086A R		         DD    N_LFLD
- 00000882 00000667 R		LCSP      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    LCSP, 80H+3, "CS", "P"+80H, DOUSE
+ 0000087A 83		     1	N_LCSP DB  80H+3
+ 0000087B  43 53	     1	        DB  "CS"
+ 0000087D  D0		     1	        DB  "P"+80H
+ 0000087E  0000086A R	     1	        DD  Link
+ 00000882 00000667 R	     1	LCSP   DD  DOUSE
+				%else
+				%endif                           
  00000886  00000058		        DD      (CW*22)
 				;
 				
@@ -2025,12 +2186,15 @@ forth32.asm						     Page 1 - 1
 				;  *   R#   *
 				;  ********** 
 				;  
- 0000088A 82			N_RNUM      DB   80H+2
- 0000088B  52			         DB      "R"
- 0000088C  A3			         DB     "#"+80H
- 0000088D  0000087A R		         DD    N_LCSP
- 00000891 00000667 R		RNUM      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    RNUM, 80H+2, "R", "#"+80H, DOUSE
+ 0000088A 82		     1	N_RNUM DB  80H+2
+ 0000088B  52		     1	        DB  "R"
+ 0000088C  A3		     1	        DB  "#"+80H
+ 0000088D  0000087A R	     1	        DD  Link
+ 00000891 00000667 R	     1	RNUM   DD  DOUSE
+				%else
+				%endif                           
  00000895  0000005C		        DD      (CW*23)
 				;
 				
@@ -2038,12 +2202,15 @@ forth32.asm						     Page 1 - 1
 				;  *   HLD   *
 				;  *********** 
 				;  
- 00000899 83			N_HLD      DB   80H+3
- 0000089A  48 4C		         DB      "HL"
- 0000089C  C4			         DB     "D"+80H
- 0000089D  0000088A R		         DD    N_RNUM
- 000008A1 00000667 R		HLD      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    HLD, 80H+3, "HL", "D"+80H, DOUSE
+ 00000899 83		     1	N_HLD DB  80H+3
+ 0000089A  48 4C	     1	        DB  "HL"
+ 0000089C  C4		     1	        DB  "D"+80H
+ 0000089D  0000088A R	     1	        DD  Link
+ 000008A1 00000667 R	     1	HLD   DD  DOUSE
+				%else
+				%endif                           
  000008A5  00000060		        DD      (CW*24)
 				;
 				
@@ -2051,12 +2218,15 @@ forth32.asm						     Page 1 - 1
 				;  *   IN   *
 				;  ********** 
 				;  
- 000008A9 82			N_LIN      DB   80H+2
- 000008AA  49			         DB      "I"
- 000008AB  CE			         DB     "N"+80H
- 000008AC  00000899 R		         DD    N_HLD
- 000008B0 00000667 R		LIN      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    LIN, 80H+2, "I", "N"+80H, DOUSE
+ 000008A9 82		     1	N_LIN DB  80H+2
+ 000008AA  49		     1	        DB  "I"
+ 000008AB  CE		     1	        DB  "N"+80H
+ 000008AC  00000899 R	     1	        DD  Link
+ 000008B0 00000667 R	     1	LIN   DD  DOUSE
+				%else
+				%endif                           
  000008B4  00000064		        DD      (CW*25)
 				;
 				
@@ -2064,12 +2234,15 @@ forth32.asm						     Page 1 - 1
 				;  *   OUT   *
 				;  *********** 
 				;  
- 000008B8 83			N_LOUT      DB   80H+3
- 000008B9  4F 55		         DB      "OU"
- 000008BB  D4			         DB     "T"+80H
- 000008BC  000008A9 R		         DD    N_LIN
- 000008C0 00000667 R		LOUT      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    LOUT, 80H+3, "OU", "T"+80H, DOUSE
+ 000008B8 83		     1	N_LOUT DB  80H+3
+ 000008B9  4F 55	     1	        DB  "OU"
+ 000008BB  D4		     1	        DB  "T"+80H
+ 000008BC  000008A9 R	     1	        DD  Link
+ 000008C0 00000667 R	     1	LOUT   DD  DOUSE
+				%else
+				%endif                           
  000008C4  00000068		        DD      (CW*26)
 				;
 				
@@ -2077,12 +2250,15 @@ forth32.asm						     Page 1 - 1
 				;  *   BLK   *
 				;  *********** 
 				;  
- 000008C8 83			N_BLK      DB   80H+3
- 000008C9  42 4C		         DB      "BL"
- 000008CB  CB			         DB     "K"+80H
- 000008CC  000008B8 R		         DD    N_LOUT
- 000008D0 00000667 R		BLK      DD     DOUSE
-				                           
+				%if 1
+				        ENTRY    BLK, 80H+3, "BL", "K"+80H, DOUSE
+ 000008C8 83		     1	N_BLK DB  80H+3
+ 000008C9  42 4C	     1	        DB  "BL"
+ 000008CB  CB		     1	        DB  "K"+80H
+ 000008CC  000008B8 R	     1	        DD  Link
+ 000008D0 00000667 R	     1	BLK   DD  DOUSE
+				%else
+				%endif                           
  000008D4  0000006C		        DD      (CW*27)
 				;
 				;========== END USER VARIABLES =============;
@@ -2092,12 +2268,16 @@ forth32.asm						     Page 1 - 1
 				;  *   1+   *
 				;  ********** 
 				;  
- 000008D8 82			N_ONEP      DB   80H+2
- 000008D9  31			         DB      "1"
- 000008DA  AB			         DB     "+"+80H
- 000008DB  000008C8 R		         DD    N_BLK
- 000008DF 00000004 R		ONEP      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY    ONEP, 80H+2, "1", "+"+80H
+ 000008D8 82		     1	N_ONEP DB  80H+2
+ 000008D9  31		     1	        DB  "1"
+ 000008DA  AB		     1	        DB  "+"+80H
+ 000008DB  000008C8 R	     1	        DD  Link
+ 000008DF 000008E3 R	     1	ONEP   DD  C_ONEP
+ 000008E3		     1	C_ONEP:
+				%else
+				%endif                           
  000008E3  58			        POP     EAX
  000008E4  40			        INC     EAX
  000008E5  50			        PUSH    EAX
@@ -2110,12 +2290,16 @@ forth32.asm						     Page 1 - 1
 				;  *   2+   *
 				;  ********** 
 				;  
- 000008EB 82			N_TWOP      DB   80H+2
- 000008EC  32			         DB      "2"
- 000008ED  AB			         DB     "+"+80H
- 000008EE  000008D8 R		         DD    N_ONEP
- 000008F2 00000004 R		TWOP      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY    TWOP, 80H+2, "2", "+"+80H
+ 000008EB 82		     1	N_TWOP DB  80H+2
+ 000008EC  32		     1	        DB  "2"
+ 000008ED  AB		     1	        DB  "+"+80H
+ 000008EE  000008D8 R	     1	        DD  Link
+ 000008F2 000008F6 R	     1	TWOP   DD  C_TWOP
+ 000008F6		     1	C_TWOP:
+				%else
+				%endif                           
  000008F6  58			        POP     EAX
  000008F7  83 C0 02		        ADD     EAX,2
  000008FA  50			        PUSH    EAX
@@ -2128,12 +2312,16 @@ forth32.asm						     Page 1 - 1
 				;  *   CELL+   *
 				;  ************* 
 				;  
- 00000900 85			N_CELLP      DB   80H+5
- 00000901  43 45 4C 4C		         DB      "CELL"
- 00000905  AB			         DB     "+"+80H
- 00000906  000008EB R		         DD    N_TWOP
- 0000090A 00000004 R		CELLP      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY    CELLP, 80H+5, "CELL", "+"+80H
+ 00000900 85		     1	N_CELLP DB  80H+5
+ 00000901  43 45 4C 4C	     1	        DB  "CELL"
+ 00000905  AB		     1	        DB  "+"+80H
+ 00000906  000008EB R	     1	        DD  Link
+ 0000090A 0000090E R	     1	CELLP   DD  C_CELLP
+ 0000090E		     1	C_CELLP:
+				%else
+				%endif                           
  0000090E  58			        POP     EAX
  0000090F  83 C0 04		        ADD     EAX,CW
  00000912  50			        PUSH    EAX
@@ -2146,12 +2334,15 @@ forth32.asm						     Page 1 - 1
 				;  *   HERE   *
 				;  ************ 
 				;  
- 00000918 84			N_HERE      DB   80H+4
- 00000919  48 45 52		         DB      "HER"
- 0000091C  C5			         DB     "E"+80H
- 0000091D  00000900 R		         DD    N_CELLP
- 00000921 000005D6 R		HERE      DD     DOCOL
-				                           
+				%if 1
+				        ENTRY    HERE, 80H+4, "HER", "E"+80H, DOCOL
+ 00000918 84		     1	N_HERE DB  80H+4
+ 00000919  48 45 52	     1	        DB  "HER"
+ 0000091C  C5		     1	        DB  "E"+80H
+ 0000091D  00000900 R	     1	        DD  Link
+ 00000921 000005D6 R	     1	HERE   DD  DOCOL
+				%else
+				%endif                           
  00000925  000007CF R		        DD      LDP
  00000929  000004F2 R		        DD      FETCH
  0000092D  00000357 R		        DD      SEMIS
@@ -2161,12 +2352,15 @@ forth32.asm						     Page 1 - 1
 				;  *   ALLOT   *
 				;  ************* 
 				;  
- 00000931 85			N_ALLOT      DB   80H+5
- 00000932  41 4C 4C 4F		         DB      "ALLO"
- 00000936  D4			         DB     "T"+80H
- 00000937  00000918 R		         DD    N_HERE
- 0000093B 000005D6 R		ALLOT      DD     DOCOL
-				                           
+				%if 1
+				        ENTRY    ALLOT, 80H+5, "ALLO", "T"+80H, DOCOL
+ 00000931 85		     1	N_ALLOT DB  80H+5
+ 00000932  41 4C 4C 4F	     1	        DB  "ALLO"
+ 00000936  D4		     1	        DB  "T"+80H
+ 00000937  00000918 R	     1	        DD  Link
+ 0000093B 000005D6 R	     1	ALLOT   DD  DOCOL
+				%else
+				%endif                           
  0000093F  000007CF R		        DD      LDP
  00000943  000004C7 R		        DD      PSTOR
  00000947  00000357 R		        DD      SEMIS
@@ -2176,11 +2370,14 @@ forth32.asm						     Page 1 - 1
 				;  *   ,   *
 				;  ********* 
 				;  
- 0000094B 81			N_COMMA      DB   80H+1
- 0000094C  AC			         DB     ","+80H
- 0000094D  00000931 R		         DD    N_ALLOT
- 00000951 000005D6 R		COMMA      DD     DOCOL
-				                           
+				%if 1
+				        ENTRY_1    COMMA, 80H+1, ","+80H, DOCOL
+ 0000094B 81		     1	N_COMMA DB  80H+1
+ 0000094C  AC		     1	        DB  ","+80H
+ 0000094D  00000931 R	     1	        DD  Link
+ 00000951 000005D6 R	     1	COMMA   DD  DOCOL
+				%else
+				%endif                           
  00000955  00000921 R		        DD      HERE
  00000959  00000533 R		        DD      STORE
  0000095D  00000023 R		        DD      LIT, CW
@@ -2193,12 +2390,15 @@ forth32.asm						     Page 1 - 1
 				;  *   C,   *
 				;  ********** 
 				;  
- 0000096D 82			N_CCOMM      DB   80H+2
- 0000096E  43			         DB      "C"
- 0000096F  AC			         DB     ","+80H
- 00000970  0000094B R		         DD    N_COMMA
- 00000974 000005D6 R		CCOMM      DD     DOCOL
-				                           
+				%if 1
+				        ENTRY    CCOMM, 80H+2, "C", ","+80H, DOCOL
+ 0000096D 82		     1	N_CCOMM DB  80H+2
+ 0000096E  43		     1	        DB  "C"
+ 0000096F  AC		     1	        DB  ","+80H
+ 00000970  0000094B R	     1	        DD  Link
+ 00000974 000005D6 R	     1	CCOMM   DD  DOCOL
+				%else
+				%endif                           
  00000978  00000921 R		        DD      HERE
  0000097C  00000547 R		        DD      CSTOR
  00000980  00000691 R		        DD      ONE
@@ -2210,11 +2410,15 @@ forth32.asm						     Page 1 - 1
 				;  *   -   *
 				;  ********* 
 				;  
- 0000098C 81			N_LSUB      DB   80H+1
- 0000098D  AD			         DB     "-"+80H
- 0000098E  0000096D R		         DD    N_CCOMM
- 00000992 00000004 R		LSUB      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY_1    LSUB, 80H+1, "-"+80H
+ 0000098C 81		     1	N_LSUB DB  80H+1
+ 0000098D  AD		     1	        DB  "-"+80H
+ 0000098E  0000096D R	     1	        DD  Link
+ 00000992 00000996 R	     1	LSUB   DD  C_LSUB
+ 00000996		     1	C_LSUB:
+				%else
+				%endif                           
  00000996  5A			        POP     EDX      ;S1
  00000997  58			        POP     EAX
  00000998  2B C2		        SUB     EAX,EDX
@@ -3259,7 +3463,7 @@ forth32.asm						     Page 1 - 1
 				
 				;  *********** 
 				;  *   ID.   *
-				;  *********** 
+;  *********** 
 				;  
  000012E1 83			N_IDDOT      DB   80H+3
  000012E2  49 44		         DB      "ID"
@@ -5691,7 +5895,7 @@ forth32.asm						     Page 1 - 1
 				
  00100000			figforth endp
 				end 
-Microsoft (R) Macro Assembler Version 14.29.30159.0	    09/29/26 14:33:28
+Microsoft (R) Macro Assembler Version 14.29.30159.0	    09/30/26 10:06:56
 forth32.asm						     Symbols 2 - 1
 
 
@@ -5779,10 +5983,32 @@ figforth . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000000 Public 
   C_MINUS  . . . . . . . . . . .	L Near	 0000042B _TEXT	
   C_DMINU  . . . . . . . . . . .	L Near	 00000443 _TEXT	
   C_OVER . . . . . . . . . . . .	L Near	 00000461 _TEXT	
+  C_DROP . . . . . . . . . . . .	L Near	 00000478 _TEXT	
+  C_SWAP . . . . . . . . . . . .	L Near	 0000048B _TEXT	
+  C_LDUP . . . . . . . . . . . .	L Near	 000004A0 _TEXT	
+  C_TDUP . . . . . . . . . . . .	L Near	 000004B5 _TEXT	
+  C_PSTOR  . . . . . . . . . . .	L Near	 000004CB _TEXT	
+  C_TOGGL  . . . . . . . . . . .	L Near	 000004E3 _TEXT	
+  C_FETCH  . . . . . . . . . . .	L Near	 000004F6 _TEXT	
+  C_CFET . . . . . . . . . . . .	L Near	 0000050A _TEXT	
+  C_TFET . . . . . . . . . . . .	L Near	 00000520 _TEXT	
+  C_STORE  . . . . . . . . . . .	L Near	 00000537 _TEXT	
+  C_CSTOR  . . . . . . . . . . .	L Near	 0000054B _TEXT	
+  C_TSTOR  . . . . . . . . . . .	L Near	 0000055F _TEXT	
+  C_LFET . . . . . . . . . . . .	L Near	 00000577 _TEXT	
+  C_LSTORE . . . . . . . . . . .	L Near	 00000595 _TEXT	
   DOCOL  . . . . . . . . . . . .	L Near	 000005D6 _TEXT	
   DOCON  . . . . . . . . . . . .	L Near	 00000627 _TEXT	
   DOVAR  . . . . . . . . . . . .	L Near	 00000649 _TEXT	
   DOUSE  . . . . . . . . . . . .	L Near	 00000667 _TEXT	
+  C_ZERO . . . . . . . . . . . .	L Near	 00000683 _TEXT	
+  C_ONE  . . . . . . . . . . . .	L Near	 00000695 _TEXT	
+  C_TWO  . . . . . . . . . . . .	L Near	 000006AA _TEXT	
+  C_THREE  . . . . . . . . . . .	L Near	 000006BF _TEXT	
+  C_ONEP . . . . . . . . . . . .	L Near	 000008E3 _TEXT	
+  C_TWOP . . . . . . . . . . . .	L Near	 000008F6 _TEXT	
+  C_CELLP  . . . . . . . . . . .	L Near	 0000090E _TEXT	
+  C_LSUB . . . . . . . . . . . .	L Near	 00000996 _TEXT	
   LES1 . . . . . . . . . . . . .	L Near	 000009CA _TEXT	
   LES2 . . . . . . . . . . . . .	L Near	 000009D4 _TEXT	
   DODOE  . . . . . . . . . . . .	L Near	 00000DDD _TEXT	
@@ -6003,7 +6229,7 @@ LSUB . . . . . . . . . . . . . .	DWord	 00000992 _TEXT
 LTYPE  . . . . . . . . . . . . .	DWord	 00001E32 _TEXT	
 LWORD  . . . . . . . . . . . . .	DWord	 0000104E _TEXT	
 LXOR . . . . . . . . . . . . . .	DWord	 000002E6 _TEXT	
-Link . . . . . . . . . . . . . .	Number	 00000454h   
+Link . . . . . . . . . . . . . .	Number	 0000098Ch   
 MATCH  . . . . . . . . . . . . .	DWord	 0000284F _TEXT	
 MAX1 . . . . . . . . . . . . . .	DWord	 00001894 _TEXT	
 MAX  . . . . . . . . . . . . . .	DWord	 0000187C _TEXT	
