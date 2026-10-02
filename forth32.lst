@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/02/26 16:31:57
+Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/02/26 18:40:59
 forth32.asm						     Page 1 - 1
 
 
@@ -3262,12 +3262,16 @@ forth32.asm						     Page 1 - 1
 				;  *   FILL   *
 				;  ************ 
 				;  
- 00000FAB 84			N_FILL      DB   80H+4
- 00000FAC  46 49 4C		         DB      "FIL"
- 00000FAF  CC			         DB     "L"+80H
- 00000FB0  00000F35 R		         DD    N_NULL
- 00000FB4 00000004 R		FILL      DD     $+CW
-				                           
+				%if 1
+				        CODE_ENTRY    FILL, 80H+4, "FIL", "L"+80H
+ 00000FAB 84		     1	N_FILL DB  80H+4
+ 00000FAC  46 49 4C	     1	        DB  "FIL"
+ 00000FAF  CC		     1	        DB  "L"+80H
+ 00000FB0  00000F35 R	     1	        DD  Link
+ 00000FB4 00000FB8 R	     1	FILL   DD  C_FILL
+ 00000FB8		     1	C_FILL:
+				%else
+				%endif                           
  00000FB8  58			        POP     EAX      ; FILL CHAR
  00000FB9  59			        POP     ECX      ; FILL COUNT
  00000FBA  5F			        POP     EDI      ; BEGIN ADDR
@@ -5704,7 +5708,7 @@ forth32.asm						     Page 1 - 1
  00002654  00000023 R		        DD      LIT, IDDOT
 	   000012E9 R
  0000265C  00002581 R		        DD      FORW
- 00002660  00000357 R		        DD      SEMIS
+ 00002660  00000357 R        DD      SEMIS
 				;
 				;
 				;
@@ -6006,7 +6010,7 @@ forth32.asm						     Page 1 - 1
 
  00100000			figforth endp
 				end 
-Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/02/26 16:31:57
+Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/02/26 18:40:59
 forth32.asm						     Symbols 2 - 1
 
 
@@ -6125,6 +6129,7 @@ figforth . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000000 Public 
   LES2 . . . . . . . . . . . . .	L Near	 000009D4 _TEXT	
   C_ROT  . . . . . . . . . . . .	L Near	 00000A3B _TEXT	
   DODOE  . . . . . . . . . . . .	L Near	 00000DDD _TEXT	
+  C_FILL . . . . . . . . . . . .	L Near	 00000FB8 _TEXT	
   WRM  . . . . . . . . . . . . .	L Near	 00001718 _TEXT	
   LCLD . . . . . . . . . . . . .	L Near	 0000173C _TEXT	
   CLD1 . . . . . . . . . . . . .	L Near	 00001753 _TEXT	
@@ -6342,7 +6347,7 @@ LSUB . . . . . . . . . . . . . .	DWord	 00000992 _TEXT
 LTYPE  . . . . . . . . . . . . .	DWord	 00001E32 _TEXT	
 LWORD  . . . . . . . . . . . . .	DWord	 0000104E _TEXT	
 LXOR . . . . . . . . . . . . . .	DWord	 000002E6 _TEXT	
-Link . . . . . . . . . . . . . .	Number	 00000F35h   
+Link . . . . . . . . . . . . . .	Number	 00000FABh   
 MATCH  . . . . . . . . . . . . .	DWord	 0000284F _TEXT	
 MAX1 . . . . . . . . . . . . . .	DWord	 00001894 _TEXT	
 MAX  . . . . . . . . . . . . . .	DWord	 0000187C _TEXT	

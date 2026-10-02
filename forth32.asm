@@ -3302,12 +3302,15 @@ NULL3      DD      SEMIS
 ;  *   FILL   *
 ;  ************ 
 ;  
+%if 1
+        CODE_ENTRY    FILL, 80H+4, "FIL", "L"+80H
+%else
 N_FILL      DB   80H+4
          DB      "FIL"
          DB     "L"+80H
          DD    N_NULL
 FILL      DD     $+CW
-                           
+%endif                           
         POP     EAX      ; FILL CHAR
         POP     ECX      ; FILL COUNT
         POP     EDI      ; BEGIN ADDR
