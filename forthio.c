@@ -90,11 +90,12 @@ int c_block_init( int count, char filename[] )
 
   /* turn into c-string */
   char zname[MAX_COMMAND];
-  strncpy_s(zname, count, filename, MAX_COMMAND);
+  strncpy_s(zname, MAX_COMMAND, filename, 10);
   zname[count] = 0;
 
-  fclose(block_fid);    /* Silently. */
-  rc = fopen_s(&block_fid, zname, "rw");
+  if (block_fid != NULL)
+    fclose(block_fid);    
+  rc = fopen_s(&block_fid, zname, "r+");
 
   return block_fid > 0 ? 0 : rc;
 }       

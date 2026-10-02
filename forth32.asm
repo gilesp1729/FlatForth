@@ -624,8 +624,8 @@ CPUNM      DD      0CDH,1856H       ; '80386'     12 13
 ;
 ;
 ;      <<<<< end of data used by cold start >>>>>
-; TODO WHY is this here? CPU name should be immutable.
-;        BYTE    US-($ - USINI) DUP(?)        ; All user can be initialised.
+; Pad out to US (100H) bytes for the CMOVE
+        BYTE    US-($ - USINI) DUP(0)        ; All user can be initialised.
 ;
 
 ;  ************* 
@@ -4911,11 +4911,11 @@ N_BLINI      DB   80H+10
          DB      "BLOCK-INI"
          DB     "T"+80H
          DD    N_DERR
-BLINI      DD     $+CW
-                           
+BLINI      DD     c_BLINI   ; ################## TEMP ##############
+c_BLINI:                           
         XOR     EAX,EAX
         MOV     AL,BYTE PTR[(BLFL+CW)]
-        MOV     EBX,(BLFL+CW)+1
+        LEA     EBX,(BLFL+CW)+1
         PUSH    EBX
         PUSH    EAX
         CALL    c_block_init
