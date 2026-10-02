@@ -2732,12 +2732,15 @@ CFA      DD     DOCOL
 ;  *   NFA   *
 ;  *********** 
 ;  
+%if 1
+        ENTRY    NFA, 80H+3, "NF", "A"+80H, DOCOL
+%else
 N_NFA      DB   80H+3
          DB      "NF"
          DB     "A"+80H
          DD    N_CFA
 NFA      DD     DOCOL
-                           
+%endif                           
         DD      LIT,1+(CW*2)
         DD      LSUB
         DD      LIT,-1
@@ -2749,12 +2752,15 @@ NFA      DD     DOCOL
 ;  *   PFA   *
 ;  *********** 
 ;  
+%if 1
+        ENTRY    PFA, 80H+3, "PF", "A"+80H, DOCOL
+%else
 N_PFA      DB   80H+3
          DB      "PF"
          DB     "A"+80H
          DD    N_NFA
 PFA      DD     DOCOL
-                           
+%endif                           
         DD      ONE
         DD      TRAV
         DD      LIT,1+(CW*2)
@@ -2768,12 +2774,15 @@ PFA      DD     DOCOL
 ;  *   !CSP   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY    SCSP, 80H+4, "!CS", "P"+80H, DOCOL
+%else
 N_SCSP      DB   80H+4
          DB      "!CS"
          DB     "P"+80H
          DD    N_PFA
 SCSP      DD     DOCOL
-                           
+%endif                           
         DD      SPFET
         DD      LCSP
         DD      STORE
@@ -2784,12 +2793,15 @@ SCSP      DD     DOCOL
 ;  *   ?ERROR   *
 ;  ************** 
 ;  
+%if 1
+        ENTRY    QERR, 80H+6, "?ERRO", "R"+80H, DOCOL
+%else
 N_QERR      DB   80H+6
          DB      "?ERRO"
          DB     "R"+80H
          DD    N_SCSP
 QERR      DD     DOCOL
-                           
+%endif                           
         DD      SWAP
         DD      ZBRAN
         DD      QERR1-$ ;IF
@@ -2804,12 +2816,15 @@ QERR2      DD      SEMIS
 ;  *   ?COMP   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY    QCOMP, 80H+5, "?COM", "P"+80H, DOCOL
+%else
 N_QCOMP      DB   80H+5
          DB      "?COM"
          DB     "P"+80H
          DD    N_QERR
 QCOMP      DD     DOCOL
-                           
+%endif                           
         DD      STATE
         DD      FETCH
         DD      ZEQU
@@ -2822,12 +2837,15 @@ QCOMP      DD     DOCOL
 ;  *   ?EXEC   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY    QEXEC, 80H+5, "?EXE", "C"+80H, DOCOL
+%else
 N_QEXEC      DB   80H+5
          DB      "?EXE"
          DB     "C"+80H
          DD    N_QCOMP
 QEXEC      DD     DOCOL
-                           
+%endif                           
         DD      STATE
         DD      FETCH
         DD      LIT,12H
@@ -2839,12 +2857,15 @@ QEXEC      DD     DOCOL
 ;  *   ?PAIRS   *
 ;  ************** 
 ;  
+%if 1
+        ENTRY    QPAIR, 80H+6, "?PAIR", "S"+80H, DOCOL
+%else
 N_QPAIR      DB   80H+6
          DB      "?PAIR"
          DB     "S"+80H
          DD    N_QEXEC
 QPAIR      DD     DOCOL
-                           
+%endif                           
         DD      LSUB
         DD      LIT,13H
         DD      QERR
@@ -2855,12 +2876,15 @@ QPAIR      DD     DOCOL
 ;  *   ?CSP   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY    QCSP, 80H+4, "?CS", "P"+80H, DOCOL
+%else
 N_QCSP      DB   80H+4
          DB      "?CS"
          DB     "P"+80H
          DD    N_QPAIR
 QCSP      DD     DOCOL
-                           
+%endif                           
         DD      SPFET
         DD      LCSP
         DD      FETCH
@@ -2874,12 +2898,15 @@ QCSP      DD     DOCOL
 ;  *   ?LOADING   *
 ;  **************** 
 ;  
+%if 1
+        ENTRY    QLOAD, 80H+8, "?LOADIN", "G"+80H, DOCOL
+%else
 N_QLOAD      DB   80H+8
          DB      "?LOADIN"
          DB     "G"+80H
          DD    N_QCSP
 QLOAD      DD     DOCOL
-                           
+%endif                           
         DD      BLK
         DD      FETCH
         DD      ZEQU
@@ -2892,12 +2919,15 @@ QLOAD      DD     DOCOL
 ;  *   COMPILE   *
 ;  *************** 
 ;  
+%if 1
+        ENTRY    COMP, 80H+7, "COMPIL", "E"+80H, DOCOL
+%else
 N_COMP      DB   80H+7
          DB      "COMPIL"
          DB     "E"+80H
          DD    N_QLOAD
 COMP      DD     DOCOL
-                           
+%endif                           
         DD      QCOMP
         DD      FROMR
         DD      LDUP
@@ -2912,11 +2942,14 @@ COMP      DD     DOCOL
 ;  *   [   *
 ;  ********* 
 ;  
+%if 1
+        ENTRY_1    LBRAC, 80H+1+40H, "["+80H, DOCOL
+%else
 N_LBRAC      DB   80H+1+40H
          DB     "["+80H
          DD    N_COMP
 LBRAC      DD     DOCOL
-                           
+%endif                           
         DD      ZERO
         DD      STATE
         DD      STORE
@@ -2927,11 +2960,14 @@ LBRAC      DD     DOCOL
 ;  *   ]   *
 ;  ********* 
 ;  
+%if 1
+        ENTRY_1    RBRAC, 80H+1, "]"+80H, DOCOL
+%else
 N_RBRAC      DB   80H+1
          DB     "]"+80H
          DD    N_LBRAC
 RBRAC      DD     DOCOL
-                           
+%endif                           
         DD      LIT,0C0H
         DD      STATE
         DD      STORE
@@ -2942,12 +2978,15 @@ RBRAC      DD     DOCOL
 ;  *   SMUDGE   *
 ;  ************** 
 ;  
+%if 1
+        ENTRY    SMUDG, 80H+6, "SMUDG", "E"+80H, DOCOL
+%else
 N_SMUDG      DB   80H+6
          DB      "SMUDG"
          DB     "E"+80H
          DD    N_RBRAC
 SMUDG      DD     DOCOL
-                           
+%endif                           
         DD      LATES
         DD      LIT,20H
         DD      TOGGL
@@ -2958,12 +2997,15 @@ SMUDG      DD     DOCOL
 ;  *   HEX   *
 ;  *********** 
 ;  
+%if 1
+        ENTRY    HEX, 80H+3, "HE", "X"+80H, DOCOL
+%else
 N_HEX      DB   80H+3
          DB      "HE"
          DB     "X"+80H
          DD    N_SMUDG
 HEX      DD     DOCOL
-                           
+%endif                           
         DD      LIT,16
         DD      BASE
         DD      STORE
@@ -2974,12 +3016,15 @@ HEX      DD     DOCOL
 ;  *   DECIMAL   *
 ;  *************** 
 ;  
+%if 1
+        ENTRY    DECA, 80H+7, "DECIMA", "L"+80H, DOCOL
+%else
 N_DECA      DB   80H+7
          DB      "DECIMA"
          DB     "L"+80H
          DD    N_HEX
 DECA      DD     DOCOL
-                           
+%endif                           
         DD      LIT,10
         DD      BASE
         DD      STORE
@@ -2990,12 +3035,15 @@ DECA      DD     DOCOL
 ;  *   (;CODE)   *
 ;  *************** 
 ;  
+%if 1
+        ENTRY    PSCOD, 80H+7, "(;CODE", ")"+80H, DOCOL
+%else
 N_PSCOD      DB   80H+7
          DB      "(;CODE"
          DB     ")"+80H
          DD    N_DECA
 PSCOD      DD     DOCOL
-                           
+%endif                           
         DD      FROMR
         DD      LATES
         DD      PFA
@@ -3008,12 +3056,15 @@ PSCOD      DD     DOCOL
 ;  *   ;CODE   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY    SEMIC, 80H+5+40H, ";COD", "E"+80H, DOCOL
+%else
 N_SEMIC      DB   80H+5+40H
          DB      ";COD"
          DB     "E"+80H
          DD    N_PSCOD
 SEMIC      DD     DOCOL
-                           
+%endif                           
         DD      QCSP
         DD      COMP
         DD      PSCOD
@@ -3026,12 +3077,15 @@ SEMI1      DD      NOOP    ; The code field of ASSEMBLER must be patched here.
 ;  *   <BUILDS   *
 ;  *************** 
 ;  
+%if 1
+        ENTRY    BUILD, 80H+7, "<BUILD", "S"+80H, DOCOL
+%else
 N_BUILD      DB   80H+7
          DB      "<BUILD"
          DB     "S"+80H
          DD    N_SEMIC
 BUILD      DD     DOCOL
-                           
+%endif                           
         DD      ZERO
         DD      CON
         DD      SEMIS
@@ -3041,12 +3095,15 @@ BUILD      DD     DOCOL
 ;  *   DOES>   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY    DOES, 80H+5, "DOES", ">"+80H, DOCOL
+%else
 N_DOES      DB   80H+5
          DB      "DOES"
          DB     ">"+80H
          DD    N_BUILD
 DOES      DD     DOCOL
-                           
+%endif                           
         DD      FROMR
         DD      LATES
         DD      PFA
@@ -3066,12 +3123,15 @@ DODOE:  LEA     EBP,[EBP-(CW*1)]
 ;  *   COUNT   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY    COUNT, 80H+5, "COUN", "T"+80H, DOCOL
+%else
 N_COUNT      DB   80H+5
          DB      "COUN"
          DB     "T"+80H
          DD    N_DOES
 COUNT      DD     DOCOL
-                           
+%endif                           
         DD      LDUP
         DD      ONEP
         DD      SWAP
@@ -3083,12 +3143,15 @@ COUNT      DD     DOCOL
 ;  *   -TRAILING   *
 ;  ***************** 
 ;  
+%if 1
+        ENTRY    DTRAI, 80H+9, "-TRAILIN", "G"+80H, DOCOL
+%else
 N_DTRAI      DB   80H+9
          DB      "-TRAILIN"
          DB     "G"+80H
          DD    N_COUNT
 DTRAI      DD     DOCOL
-                           
+%endif                           
         DD      LDUP
         DD      ZERO
         DD      XDO     ;DO
@@ -3117,13 +3180,16 @@ DTRA3      DD      XLOOP
 ;  ************ 
 ;  *   (.")   *
 ;  ************ 
-;  
-_PDOTQ      DB   80H+4
+;  TODO: Checkthat this string works with a diuble-quote in it.
+%if 1
+        ENTRY    PDOTQ, 80H+4, '(."', ")"+80H, DOCOL
+%else
+N_PDOTQ      DB   80H+4
          DB      '(."'
          DB     ')'+80H
         DD    N_DTRAI
 PDOTQ      DD     DOCOL
-                        
+%endif                        
         DD      RR
         DD      COUNT
         DD      LDUP
@@ -3140,12 +3206,15 @@ PDOTQ      DD     DOCOL
 ;  *   ."   *
 ;  ********** 
 ;  
-_DOTQ      DB   80H+2+40H
+%if 1
+        ENTRY    DOTQ, 80H+2+40H, '.', '"'+80H, DOCOL
+%else
+N_DOTQ      DB   80H+2+40H
          DB      '.'
          DB     '"'+80H
-        DD    _PDOTQ
+        DD    N_PDOTQ
 DOTQ      DD     DOCOL
-                        
+%endif                        
         DD      LIT,22H
         DD      STATE
         DD      FETCH
@@ -3171,12 +3240,15 @@ DOTQ2      DD      SEMIS
 ;  *   QUERY   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY    QUERY, 80H+5, "QUER", "Y"+80H, DOCOL
+%else
 N_QUERY      DB   80H+5
          DB      "QUER"
          DB     "Y"+80H
-         DD    _DOTQ
+         DD    N_DOTQ
 QUERY      DD     DOCOL
-                           
+%endif                           
         DD      TIB
         DD      FETCH
         DD      LIT,RTS/2
@@ -3187,11 +3259,15 @@ QUERY      DD     DOCOL
         DD      SEMIS
 ;
 
+; The macro might struggle with this one...
+%if 1
+        ENTRY_1    NULL, 80H+1+40H, 80H, DOCOL
+%else
 
-_NULL      DB      0C1H,80H
+N_NULL      DB      0C1H,80H
                 DD      N_QUERY
 NULL      DD      DOCOL
-
+%endif
 ;       Special header putting an ASCII NULL in the dictionary.
         DD      BLK
         DD      FETCH
@@ -3229,7 +3305,7 @@ NULL3      DD      SEMIS
 N_FILL      DB   80H+4
          DB      "FIL"
          DB     "L"+80H
-         DD    _NULL
+         DD    N_NULL
 FILL      DD     $+CW
                            
         POP     EAX      ; FILL CHAR
