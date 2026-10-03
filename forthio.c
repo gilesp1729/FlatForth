@@ -47,7 +47,7 @@ void break_quit(int signum)
 
 /* ?TERMINAL */
 /* The "any key" is the break key. */
-int c_qterm(void) 
+int c_qterminal(void) 
 {
     return 0;   // temporarily
 }
@@ -58,13 +58,6 @@ int c_key( void )
   return getchar();
 }
 
-/* EMIT */
-void c_emit(int ch)
-{
-  putchar(ch);
-  fflush(stdout);
-}
-
 /* TYPE */
 void c_type(int count, char buffer[])
 {
@@ -73,11 +66,14 @@ void c_type(int count, char buffer[])
 }
 
 /* EXPECT */
-int c_expec(int count, char buffer[])
+int c_expect(int count, char buffer[])
 {
+    int ll;
   fgets(buffer, count, stdin);
+  // strip the LF off.
+  ll = strlen(buffer);
+  buffer[ll - 1] = '\0';
   return count;     /* Ignored by fig-Forth, for ANSI ACCEPT you need the actual no of chars read.*/
-  //TODO: strip the CR/LF off if present.
 }
 
 FILE *block_fid = NULL;
@@ -103,7 +99,9 @@ int c_block_init( int count, char filename[] )
 /* Close block file earlier opened with c_block_init */
 int c_block_exit( void )
 {
-  return fclose( block_fid );
+  int rc = fclose( block_fid );
+  block_fid = NULL;
+  return rc;
 }
 
 /* RSLW */

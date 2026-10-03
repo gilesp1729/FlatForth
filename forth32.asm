@@ -212,9 +212,9 @@ ENDM
 
 ; I/O routines.
         extern  c_type:PROC
-        extern  c_expec:PROC
+        extern  c_expect:PROC
         extern  c_key:PROC
-        extern  c_qterm:PROC
+        extern  c_qterminal:PROC
         extern  c_rslw:PROC
         extern  c_block_exit:PROC
         extern  c_block_init:PROC
@@ -1368,7 +1368,7 @@ SWAP      DD     $+CW
 ;  *********** 
 ;  
 %if 1
-        CODE_ENTRY    LDUP, 80H+4, "DU", "P"+80H
+        CODE_ENTRY    LDUP, 80H+3, "DU", "P"+80H
 %else
 N_LDUP      DB   80H+3
          DB      "DU"
@@ -3327,12 +3327,15 @@ FILL      DD     $+CW
 ;  *   ERASE   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY    LERASE, 80H+5, "ERAS", "E"+80H, DOCOL
+%else
 N_LERASE      DB   80H+5
          DB      "ERAS"
          DB     "E"+80H
          DD    N_FILL
 LERASE      DD     DOCOL
-                           
+%endif                           
         DD      ZERO
         DD      FILL
         DD      SEMIS
@@ -3342,12 +3345,15 @@ LERASE      DD     DOCOL
 ;  *   BLANKS   *
 ;  ************** 
 ;  
+%if 1
+        ENTRY    BLANK, 80H+6, "BLANK", "S"+80H, DOCOL
+%else
 N_BLANK      DB   80H+6
          DB      "BLANK"
          DB     "S"+80H
          DD    N_LERASE
 BLANK      DD     DOCOL
-                           
+%endif                           
         DD      BLS
         DD      FILL
         DD      SEMIS
@@ -3357,12 +3363,15 @@ BLANK      DD     DOCOL
 ;  *   HOLD   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY    HOLD, 80H+4, "HOL", "D"+80H, DOCOL
+%else
 N_HOLD      DB   80H+4
          DB      "HOL"
          DB     "D"+80H
          DD    N_BLANK
 HOLD      DD     DOCOL
-                           
+%endif                           
         DD      LIT,-1
         DD      HLD
         DD      PSTOR
@@ -3376,12 +3385,15 @@ HOLD      DD     DOCOL
 ;  *   PAD   *
 ;  *********** 
 ;  
+%if 1
+        ENTRY    PAD, 80H+3, "PA", "D"+80H, DOCOL
+%else
 N_PAD      DB   80H+3
          DB      "PA"
          DB     "D"+80H
          DD    N_HOLD
 PAD      DD     DOCOL
-                           
+%endif                           
         DD      HERE
         DD      LIT,84
         DD      PLUS
@@ -3392,12 +3404,15 @@ PAD      DD     DOCOL
 ;  *   WORD   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY    LWORD, 80H+4, "WOR", "D"+80H, DOCOL
+%else
 N_LWORD      DB   80H+4
          DB      "WOR"
          DB     "D"+80H
          DD    N_PAD
 LWORD      DD     DOCOL
-                           
+%endif                           
         DD      BLK
         DD      FETCH
         DD      ZBRAN
@@ -3437,12 +3452,15 @@ WORD2      DD      LIN
 ;  *   (NUMBER)   *
 ;  **************** 
 ;  
+%if 1
+        ENTRY    PNUMB, 80H+8, "(NUMBER", ")"+80H, DOCOL
+%else
 N_PNUMB      DB   80H+8
          DB      "(NUMBER"
          DB     ")"+80H
          DD    N_LWORD
 PNUMB      DD     DOCOL
-                           
+%endif                           
 PNUM1      DD      ONEP    ; BEGIN
         DD      LDUP
         DD      TOR
@@ -3481,12 +3499,15 @@ PNUM2      DD      FROMR
 ;  *   NUMBER   *
 ;  ************** 
 ;  
+%if 1
+        ENTRY    NUMB, 80H+6, "NUMBE", "R"+80H, DOCOL
+%else
 N_NUMB      DB   80H+6
          DB      "NUMBE"
          DB     "R"+80H
          DD    N_PNUMB
 NUMB      DD     DOCOL
-                           
+%endif                           
         DD      ZERO
         DD      ZERO
         DD      ROT
@@ -3529,12 +3550,15 @@ NUMB3      DD      SEMIS
 ;  *   -FIND   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY    DFIND, 80H+5, "-FIN", "D"+80H, DOCOL
+%else
 N_DFIND      DB   80H+5
          DB      "-FIN"
          DB     "D"+80H
          DD    N_NUMB
 DFIND      DD     DOCOL
-                           
+%endif                           
         DD      BLS
         DD      LWORD
         DD      HERE
@@ -3557,12 +3581,15 @@ DFIN1      DD      SEMIS
 ;  *   (ABORT)   *
 ;  *************** 
 ;  
+%if 1
+        ENTRY    PABOR, 80H+7, "(ABORT", ")"+80H, DOCOL
+%else
 N_PABOR      DB   80H+7
          DB      "(ABORT"
          DB     ")"+80H
          DD    N_DFIND
 PABOR      DD     DOCOL
-                           
+%endif                           
         DD      ABORT
         DD      SEMIS
 ;
@@ -3571,12 +3598,15 @@ PABOR      DD     DOCOL
 ;  *   ERROR   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY    ERROR, 80H+5, "ERRO", "R"+80H, DOCOL
+%else
 N_ERROR      DB   80H+5
          DB      "ERRO"
          DB     "R"+80H
          DD    N_PABOR
 ERROR      DD     DOCOL
-                           
+%endif                           
         DD      WARN
         DD      FETCH
         DD      ZLESS
@@ -3609,12 +3639,15 @@ ERRO2      DD      QUIT
 ;  *   ID.   *
 ;  *********** 
 ;  
+%if 1
+        ENTRY    IDDOT, 80H+3, "ID", "."+80H, DOCOL
+%else
 N_IDDOT      DB   80H+3
          DB      "ID"
          DB     "."+80H
          DD    N_ERROR
 IDDOT      DD     DOCOL
-                           
+%endif                           
         DD      COUNT
         DD      LIT,1FH
         DD      LAND
@@ -3637,12 +3670,15 @@ IDDOT      DD     DOCOL
 ;  *   CREATE   *
 ;  ************** 
 ;  
+%if 1
+        ENTRY    CREAT, 80H+6, "CREAT", "E"+80H, DOCOL
+%else
 N_CREAT      DB   80H+6
          DB      "CREAT"
          DB     "E"+80H
          DD    N_IDDOT
 CREAT      DD     DOCOL
-                           
+%endif                           
         DD      DFIND
         DD      HERE
         DD      ONEP
@@ -3689,12 +3725,15 @@ CREA1      DD      HERE
 ;  *   [COMPILE]   *
 ;  ***************** 
 ;  
+%if 1
+        ENTRY    BCOMP, 80H+9+40H, "[COMPILE", "]"+80H, DOCOL
+%else
 N_BCOMP      DB   80H+9+40H
          DB      "[COMPILE"
          DB     "]"+80H
          DD    N_CREAT
 BCOMP      DD     DOCOL
-                           
+%endif                           
         DD      DFIND
         DD      ZEQU
         DD      ZERO
@@ -3709,12 +3748,15 @@ BCOMP      DD     DOCOL
 ;  *   LITERAL   *
 ;  *************** 
 ;  
+%if 1
+        ENTRY    LITER, 80H+7+40H, "LITERA", "L"+80H, DOCOL
+%else
 N_LITER      DB   80H+7+40H
          DB      "LITERA"
          DB     "L"+80H
          DD    N_BCOMP
 LITER      DD     DOCOL
-                           
+%endif                           
         DD      STATE
         DD      FETCH
         DD      ZBRAN
@@ -3730,12 +3772,15 @@ LITE1      DD      SEMIS
 ;  *   DLITERAL   *
 ;  **************** 
 ;  
+%if 1
+        ENTRY    DLITE, 80H+8+40H, "DLITERA", "L"+80H, DOCOL
+%else
 N_DLITE      DB   80H+8+40H
          DB      "DLITERA"
          DB     "L"+80H
          DD    N_LITER
 DLITE      DD     DOCOL
-                           
+%endif                           
         DD      STATE
         DD      FETCH
         DD      ZBRAN
@@ -3750,12 +3795,15 @@ DLIT1      DD      SEMIS
 ;  *   ?STACK   *
 ;  ************** 
 ;  
+%if 1
+        ENTRY    QSTAC, 80H+6, "?STAC", "K"+80H, DOCOL
+%else
 N_QSTAC      DB   80H+6
          DB      "?STAC"
          DB     "K"+80H
          DD    N_DLITE
 QSTAC      DD     DOCOL
-                           
+%endif                           
         DD      SPFET
         DD      SZERO
         DD      FETCH
@@ -3778,12 +3826,15 @@ QSTAC      DD     DOCOL
 ;  *   INTERPRET   *
 ;  ***************** 
 ;  
+%if 1
+        ENTRY   INTER, 80H+9, "INTERPRE", "T"+80H, DOCOL
+%else
 N_INTER      DB   80H+9
          DB      "INTERPRE"
          DB     "T"+80H
          DD    N_QSTAC
 INTER      DD     DOCOL
-                           
+%endif                           
 INTE1      DD      DFIND   ;BEGIN
         DD      ZBRAN
         DD      INTE2-$ ;IF
@@ -3822,12 +3873,15 @@ INTE5      DD      BRAN
 ;  *   IMMEDIATE   *
 ;  ***************** 
 ;  
+%if 1
+        ENTRY   IMMED, 80H+9, "IMMEDIAT", "E"+80H, DOCOL
+%else
 N_IMMED      DB   80H+9
          DB      "IMMEDIAT"
          DB     "E"+80H
          DD    N_INTER
 IMMED      DD     DOCOL
-                           
+%endif                           
         DD      LATES
         DD      LIT,40H
         DD      TOGGL
@@ -3838,12 +3892,15 @@ IMMED      DD     DOCOL
 ;  *   VOCABULARY   *
 ;  ****************** 
 ;  
+%if 1
+        ENTRY   VOCAB, 80H+10, "VOCABULAR", "Y"+80H, DOCOL
+%else
 N_VOCAB      DB   80H+10
          DB      "VOCABULAR"
          DB     "Y"+80H
          DD    N_IMMED
 VOCAB      DD     DOCOL
-                           
+%endif                           
         DD      BUILD
         DD      LIT, 80H+1, CCOMM    ; Dummy name field
         DD      LIT, " "+80H, CCOMM
@@ -3873,12 +3930,15 @@ DOVOC      DD      TWOP    ; i.e. Skip ' ' name.
 ;  *   FORTH   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   FORTH, 80H+5+40H, "FORT", "H"+80H, DODOE
+%else
 N_FORTH      DB   80H+5+40H
          DB      "FORT"
          DB     "H"+80H
          DD    N_VOCAB
 FORTH      DD     DODOE
-                           
+%endif                           
         DD      DOVOC
         DB      80H+1, " "+80H  ; Dummy name field
         DD      N_TASK
@@ -3889,12 +3949,15 @@ FORTH      DD     DODOE
 ;  *   DEFINITIONS   *
 ;  ******************* 
 ;  
+%if 1
+        ENTRY   DEFIN, 80H+11, "DEFINITION", "S"+80H, DOCOL
+%else
 N_DEFIN      DB   80H+11
          DB      "DEFINITION"
          DB     "S"+80H
          DD    N_FORTH
 DEFIN      DD     DOCOL
-                           
+%endif                           
         DD      CONT
         DD      FETCH
         DD      CURR
@@ -3906,11 +3969,14 @@ DEFIN      DD     DOCOL
 ;  *   (   *
 ;  ********* 
 ;  
+%if 1
+        ENTRY_1   PAREN, 80H+1+40H, "("+80H, DOCOL
+%else
 N_PAREN      DB   80H+1+40H
          DB     "("+80H
          DD    N_DEFIN
 PAREN      DD     DOCOL
-                           
+%endif                           
         DD      LIT,')'
         DD      LWORD
         DD      SEMIS
@@ -3920,12 +3986,15 @@ PAREN      DD     DOCOL
 ;  *   QUIT   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   QUIT, 80H+4, "QUI", "T"+80H, DOCOL
+%else
 N_QUIT      DB   80H+4
          DB      "QUI"
          DB     "T"+80H
          DD    N_PAREN
 QUIT      DD     DOCOL
-                           
+%endif                           
         DD      ZERO
         DD      BLK
         DD      STORE
@@ -3951,12 +4020,15 @@ QUIT2      DD      BRAN
 ;  *   ABORT   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   ABORT, 80H+5, "ABOR", "T"+80H, DOCOL
+%else
 N_ABORT      DB   80H+5
          DB      "ABOR"
          DB     "T"+80H
          DD    N_QUIT
 ABORT      DD     DOCOL
-                           
+%endif                           
         DD      SPSTO
         DD      DECA
         DD      QSTAC   ; IT DID TO & INCL THIS
@@ -3992,12 +4064,15 @@ WRM1      DD      WARM
 ;  *   WARM   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   WARM, 80H+4, "WAR", "M"+80H, DOCOL
+%else
 N_WARM      DB   80H+4
          DB      "WAR"
          DB     "M"+80H
          DD    N_ABORT
 WARM      DD     DOCOL
-                           
+%endif                           
         DD      MTBUF
         DD      ABORT
 ;
@@ -4022,12 +4097,15 @@ CLD1:
 ;  *   COLD   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   COLD, 80H+4, "COL", "D"+80H, DOCOL
+%else
 N_COLD      DB   80H+4
          DB      "COL"
          DB     "D"+80H
          DD    N_WARM
 COLD      DD     DOCOL
-                           
+%endif                           
         DD      MTBUF
         DD      FIRST
         DD      USE,STORE
@@ -4054,12 +4132,15 @@ COLD      DD     DOCOL
 ;  *   S->D   *
 ;  ************ 
 ;  
+%if 1
+        CODE_ENTRY   STOD, 80H+4, "S->", "D"+80H
+%else
 N_STOD      DB   80H+4
          DB      "S->"
          DB     "D"+80H
          DD    N_COLD
 STOD      DD     $+CW
-                           
+%endif                           
         POP     EDX      ;S1
         SUB     EAX,EAX
         OR      EDX,EDX
@@ -4764,9 +4845,9 @@ N_LTYPE      DB   80H+4
          DB      "TYP"
          DB     "E"+80H
          DD    N_LINOS
-LTYPE      DD     DOCOL
-                           
-        DD      $+(CW*1) ;  Turns this code word into high level.
+LTYPE      DD     C_LTYPE
+C_LTYPE:                           
+;        DD      $+(CW*1) ;  Turns this code word into high level.  ### TODO WTF is goin on here?
         CALL    c_type
         LEA     ESP,[ESP+(CW*2)]    ; remove input
         LODSD                 ; NEXT
@@ -4783,9 +4864,9 @@ N_EXPEC      DB   80H+6
          DB      "EXPEC"
          DB     "T"+80H
          DD    N_LTYPE
-EXPEC      DD     $+CW
-                           
-        CALL    c_expec
+EXPEC      DD     C_EXPEC
+C_EXPEC:                           
+        CALL    c_expect
         LEA     ESP,[ESP+(CW*2)]    ; remove input
         LODSD                 ; NEXT
         MOV     EBX,EAX                  
@@ -4819,7 +4900,7 @@ N_QTERM      DB   80H+9
          DD    N_KEY
 QTERM      DD     $+CW
                            
-        CALL    c_qterm
+        CALL    c_qterminal
         PUSH    EAX
         LODSD                 ; NEXT
         MOV     EBX,EAX                  
@@ -5637,6 +5718,7 @@ BYE      DD     DOCOL
                            
 ; Exit to linux, with okay status. 
         DD      ZERO, ZERO, ZERO, ONE, LINOS
+        ; TODO FIX this to just RET to C caller.
 ;
 ;
 
