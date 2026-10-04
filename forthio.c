@@ -122,6 +122,13 @@ int c_readwrite(int control, int block, void *pmem )
     }
 }
 
+/* EXIT (BYE) */
+void c_exit(void)
+{
+    exit(1);
+}
+
+
 /* Perform ANSI Forth 'SYSTEM' */
 /* Interpret the Forth string (`command',`count') as linux                   */
 /* command and execute it.                                                   */

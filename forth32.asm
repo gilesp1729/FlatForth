@@ -218,6 +218,7 @@ ENDM
         extern  c_readwrite:PROC
         extern  c_block_exit:PROC
         extern  c_block_init:PROC
+        extern  c_exit:PROC
  ;
 
 
@@ -355,6 +356,7 @@ APUSH:  PUSH    EAX
 ; ######################################################################
 ; NEXT, the Forth address (inner) interpreter.
 
+%if 0
 ; In 32 bit versions there may be no jumps to NEXT0 at all 
 ; The label NEXT1 is rarely relevant (for _OLDDEBUG_) 
 NEXT0:  LODSD           ;AX <- (IP), IP += 4
@@ -362,6 +364,7 @@ NEXT1:  MOV     EBX,EAX   ; (W) <- (IP)
 
         JMP      DWORD PTR[EBX]    ; TO `CFA'
         ;
+%endif
 
 ; NEXT macro goes at the end of code words. It is the same code as above.
 
@@ -527,9 +530,7 @@ XDO      DD     $+CW
         PUSH    EAX
         PUSH    EDX
         XCHG    EBP,ESP   ; GET PARAMETER STACK
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********* 
@@ -546,9 +547,7 @@ IDO      DD     $+CW
 %endif                           
         MOV     EAX,[EBP] ; GET INDEX VALUE
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]             ; TO PARAMETER STACK
+        NEXT
 ;
 
 ;  *************** 
@@ -653,15 +652,11 @@ DIGI1:  CMP     AL,DL   ; COMPARE NUMBER TO BASE
         MOV     AL,1    ;TRUE FLAG
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]             ;ADD TO STACK
+        NEXT
 ;   NUMBER ERROR
 DIGI2:  SUB     EAX,EAX   ;FALSE FLAG
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
         ;
 
 ;  ************** 
@@ -708,9 +703,7 @@ PFIN2:  INC     EBX
         SUB     DH,DH
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 ;   NO NAME MATCH - TRY ANOTHER
 ;
@@ -728,9 +721,7 @@ PFIN6:  MOV     EBX,[EBX] ; GET LINK FIELD ADDR
         JNZ     PFIN1   ; NO , LOOK MORE
         MOV     EAX,0    ; FALSE FLAG
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]             ; DONE ( NO MATCH FOUND )
+        NEXT
 ;
 
 ;  *************** 
@@ -767,9 +758,7 @@ ENCL1:  INC     EBX      ;ADDR+1
         INC     EDX      ; +1
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 ;   FOUND FIRST TEXT CHAR - COUNT THE CHARS
 ENCL2:  INC     EBX      ; ADDR+1
@@ -783,18 +772,14 @@ ENCL2:  INC     EBX      ; ADDR+1
 ENCL3:  MOV     EAX,EDX   ;COUNTERS ARE EQUAL
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 ;   FOUND TERMINATOR CHARACTER
 ENCL4:  MOV     EAX,EDX
         INC     EAX      ;COUNT+1
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -837,9 +822,7 @@ LCMOVE      DD     $+CW
 ;       MOV    ES,AX   ;ES <- DS
         REP     MOVSB   ;THAT'S THE MOVE
         MOV     ESI,EBX   ;GET BACK IP
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -861,9 +844,7 @@ USTAR      DD     $+CW
         XCHG    EAX,EDX   ;AX NOW = MSW
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]             ;STORE DOUBLE CELL
+        NEXT
 ;
 
 ;  ********** 
@@ -887,18 +868,14 @@ USLAS      DD     $+CW
         DIV     EBX      ;16 BIT DIVIDE
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]             ;STORE QUOT/REM
+        NEXT
 ;
 ;      DIVIDE BY ZERO ERROR - SHOW MAX NUMBERS
 DZERO:  MOV     EAX,-1
         MOV     EDX,EAX
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]             ;STORE QUOT/REM
+        NEXT
 ;
 
 ;  *********** 
@@ -918,9 +895,7 @@ LAND      DD     $+CW
         POP     EBX
         AND     EAX,EBX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -940,9 +915,7 @@ LOR      DD     $+CW
         POP     EBX
         OR      EAX,EBX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  *********** 
@@ -962,9 +935,7 @@ LXOR      DD     $+CW
         POP     EBX
         XOR     EAX,EBX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  *********** 
@@ -982,9 +953,7 @@ SPFET      DD     $+CW
 %endif                           
         MOV     EAX,ESP   ; (S1) <- (SP)
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  *********** 
@@ -1002,9 +971,7 @@ SPSTO      DD     $+CW
 %endif                           
         MOV     EBX, DWORD PTR[USINI+(CW*1)]   ;USER VAR BASE ADDR
         MOV     ESP,[EBX+(CW*3)]        ;RESET PARAM STACK POINTER
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  *********** 
@@ -1023,9 +990,7 @@ RPFET      DD     $+CW
                            ;(S1) <- (RP)
         MOV     EAX,EBP   ;RETURN STACK ADDR
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  *********** 
@@ -1043,9 +1008,7 @@ RPSTO      DD     $+CW
 %endif                           
         MOV     EBX, DWORD PTR[USINI+(CW*1)]   ;(AX) <- USR VAR BASE
         MOV     EBP,[EBX+(CW*4)]        ;RESET RETURN STACK PTR
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -1063,9 +1026,7 @@ SEMIS      DD     $+CW
 %endif                           
         MOV     ESI,[EBP] ;(IP) <- (R1)
         LEA     EBP,[EBP+(CW*1)]
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ************* 
@@ -1084,9 +1045,7 @@ LLEAV      DD     $+CW
                            ;LIMIT <- INDEX
         MOV     EAX,[EBP] ;GET INDEX
         MOV     [EBP+(CW*1)],EAX        ;STORE IT AT LIMIT
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
         ;
 ;
 
@@ -1106,9 +1065,7 @@ TOR      DD     $+CW
         POP     EBX      ;GET STACK PARAMETER
         LEA     EBP,[EBP-(CW*1)]    ;MOVE RETURN STACK DOWN
         MOV     [EBP],EBX ;ADD TO RETURN STACK
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -1128,9 +1085,7 @@ FROMR      DD     $+CW
         MOV     EAX,[EBP] ; GET RETURN STACK VALUE
         LEA     EBP,[EBP+(CW*1)]
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********* 
@@ -1167,9 +1122,7 @@ ZEQU      DD     $+CW
         JZ      ZEQU1   ;IT'S 0
         DEC     EAX      ;FALSE
 ZEQU1:  PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -1191,9 +1144,7 @@ ZLESS      DD     $+CW
         JS      ZLESS1
         DEC     EAX      ;FALSE
 ZLESS1: PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********* 
@@ -1212,9 +1163,7 @@ PLUS      DD     $+CW
         POP     EBX
         ADD     EAX,EBX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -1238,9 +1187,7 @@ DPLUS      DD     $+CW
         ADC     EAX,EBX   ; SHW
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ************* 
@@ -1259,9 +1206,7 @@ MINUS      DD     $+CW
         POP     EAX
         NEG     EAX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ************** 
@@ -1285,10 +1230,7 @@ DMINU      DD     $+CW
         SBB     EAX,EBX   ; HIGH CELL
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
-        ;
+        NEXT
 ;
 
 ;  ************ 
@@ -1312,9 +1254,7 @@ DMINU      DD     $+CW
         PUSH    EAX
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ************ 
@@ -1331,9 +1271,7 @@ N_DROP      DB   80H+4
 DROP      DD     $+CW
 %endif                           
         POP     EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ************ 
@@ -1353,9 +1291,7 @@ SWAP      DD     $+CW
         POP     EAX
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  *********** 
@@ -1374,9 +1310,7 @@ LDUP      DD     $+CW
         POP     EAX
         PUSH    EAX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ************ 
@@ -1398,9 +1332,7 @@ TDUP      DD     $+CW
         PUSH    EAX
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -1419,9 +1351,7 @@ PSTOR      DD     $+CW
         POP     EBX      ;ADDRESS
         POP     EAX      ;INCREMENT
         ADD     [EBX],EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ************** 
@@ -1440,9 +1370,7 @@ TOGGL      DD     $+CW
         POP     EAX      ;BIT PATTERN
         POP     EBX      ;ADDR
         XOR     [EBX],EAX ;
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********* 
@@ -1460,9 +1388,7 @@ FETCH      DD     $+CW
         POP     EBX
         MOV     EAX,[EBX]
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -1482,9 +1408,7 @@ CFET      DD     $+CW
         XOR     EAX,EAX
         MOV     AL,[EBX]
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -1505,9 +1429,7 @@ TFET      DD     $+CW
         MOV     EDX,[EBX+(CW*1)]        ;LSW
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********* 
@@ -1525,9 +1447,7 @@ STORE      DD     $+CW
         POP     EBX      ;ADDR
         POP     EAX      ;DATA
         MOV     [EBX],EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -1546,9 +1466,7 @@ CSTOR      DD     $+CW
         POP     EBX      ;ADDR
         POP     EAX      ;DATA
         MOV     [EBX],AL
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -1569,9 +1487,7 @@ TSTOR      DD     $+CW
         MOV     [EBX],EAX
         POP     EAX      ;LSW
         MOV     [EBX+(CW*1)],EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 ;  ********** 
 ;  *   L@   *
@@ -1593,9 +1509,7 @@ LFET      DD     $+CW
         ADD     EAX,EBX
         MOV     EAX,[EAX]
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 ;
 ;
@@ -1619,9 +1533,7 @@ LSTORE      DD     $+CW
         ADD     EAX,EBX
         POP     EBX
         MOV     [EAX],EBX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 ;
 ;
@@ -1652,9 +1564,7 @@ DOCOL:  LEA     EBP,[EBP-(CW*1)]
         LEA     ESI,[EBX+(CW*1)]  ;(IP) <- (PFA)
 ;        CALL    DISPLAYSI
 ;
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********* 
@@ -1696,9 +1606,7 @@ CON      DD     DOCOL
         DD      PSCOD
 DOCON:  MOV     EAX,[EBX+(CW*1)] ;GET DATA FROM PFA
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  **************** 
@@ -1718,9 +1626,7 @@ VAR      DD     DOCOL
         DD      PSCOD
 DOVAR:  LEA     EAX,[EBX+(CW*1)] ;(AX) <- PFA
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ************ 
@@ -1742,9 +1648,7 @@ DOUSE:  MOV     EBX,[EBX+(CW*1)] ;PFA
         MOV     EDI, DWORD PTR[USINI+(CW*1)]   ;USER VAR ADDRESS
         LEA     EAX,[EBX+EDI]      ;ADDR OF VARIABLE
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********* 
@@ -1761,9 +1665,7 @@ ZERO      DD     $+CW
 %endif                           
         XOR     EAX,EAX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********* 
@@ -1780,9 +1682,7 @@ ONE      DD     $+CW
 %endif                           
         MOV     EAX,1
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********* 
@@ -1799,9 +1699,7 @@ TWO      DD     $+CW
 %endif                           
         MOV     EAX,2
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********* 
@@ -1818,9 +1716,7 @@ THREE      DD     $+CW
 %endif                           
         MOV     EAX,3
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
  ;  ********** 
 ;  *   BL   *
@@ -2350,9 +2246,7 @@ ONEP      DD     $+CW
         POP     EAX
         INC     EAX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -2371,9 +2265,7 @@ TWOP      DD     $+CW
         POP     EAX
         ADD     EAX,2
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ************* 
@@ -2392,9 +2284,7 @@ CELLP      DD     $+CW
         POP     EAX
         ADD     EAX,CW
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ************ 
@@ -2488,9 +2378,7 @@ LSUB      DD     $+CW
         POP     EAX
         SUB     EAX,EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]      ;S1 = S2 - S1
+        NEXT
 ;
 
 ;  ********* 
@@ -2533,9 +2421,7 @@ LES1:   OR      EAX,EAX   ;TEST SIGN BIT
         JNS     LES2    ;NOT LESS THAN
         INC     EAX      ;TRUE (1)
 LES2:   PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -2599,9 +2485,7 @@ ROT      DD     $+CW
         PUSH    EBX
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ************* 
@@ -3110,9 +2994,7 @@ DODOE:  LEA     EBP,[EBP-(CW*1)]
         MOV     ESI,[EBX+(CW*1)] ;NEW IP 
         LEA     EAX,[EBX+2*(CW*1)]
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ************* 
@@ -3313,9 +3195,7 @@ FILL      DD     $+CW
 ;       MOV    ES,BX   ; ES <- DS
         CLD             ; INC DIRECTION
         REP     STOSB   ;STORE BYTE
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ************* 
@@ -4048,9 +3928,7 @@ ABORT      DD     DOCOL
 ;      WARM START VECTOR COMES HERE
 ;
 WRM:    MOV     ESI, WRM1
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 WRM1      DD      WARM
 ;
@@ -4080,9 +3958,7 @@ LCLD:    MOV     ESI, CLD1  ; (IP) <-
         CLD                     ; DIR = INC
         MOV     ESP, DWORD PTR[USINI+(CW*3)]    ;PARAM. STACK
         MOV     EBP, DWORD PTR[USINI+(CW*4)]    ;RETURN STACK
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 CLD1:
         DD      COLD
@@ -4143,9 +4019,7 @@ STOD      DD     $+CW
         DEC     EAX      ;NEG
 STOD1:  PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ********** 
@@ -4943,9 +4817,7 @@ C_LTYPE:
 %endif
         CALL    c_type
         LEA     ESP,[ESP+(CW*2)]    ; remove input
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;
@@ -4965,9 +4837,7 @@ C_EXPEC:
 %endif
         CALL    c_expect
         LEA     ESP,[ESP+(CW*2)]    ; remove input
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  *********** 
@@ -4985,9 +4855,7 @@ KEY      DD     $+CW
 %endif                           
         CALL    c_key
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ***************** 
@@ -5005,9 +4873,7 @@ QTERM      DD     $+CW
 %endif                           
         CALL    c_qterminal
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
  ;
 ;
@@ -5118,9 +4984,7 @@ c_BLINI:
         CALL    c_block_init
         MOV     [(DERR+CW)],EAX
         LEA     ESP,[ESP+(CW*2)]    ; remove input
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ****************** 
@@ -5137,9 +5001,7 @@ N_BLEXI      DB   80H+10
 BLEXI      DD     $+CW
 %endif                           
         CALL    c_block_exit
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;      ( ADDR  BLK#  FLAG (0=W, 1=R)
@@ -5159,9 +5021,7 @@ RSLW      DD     $+CW
         CALL c_readwrite
         MOV     [(DERR+CW)],EAX
         LEA     ESP,[ESP+(CW*3)]    ; remove input
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 
 
 
@@ -5929,9 +5789,8 @@ N_BYE      DB   80H+3
          DD    N_VLIST
 BYE      DD     DOCOL
 %endif                           
-; TODO: FIX this to just RET to C caller. This crashes as things stand - why?
 
-         RET
+         CALL c_exit
   
 ;
 
@@ -6120,9 +5979,7 @@ MAT4:   MOV     EAX,ESI   ;NEW CURSOR ADDR
         MOV     ESI,EDI   ;GET BACK UP
         PUSH    EDX
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]             ; BYE..BYE
+        NEXT
         ;
 ;
 ;
