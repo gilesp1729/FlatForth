@@ -5371,12 +5371,15 @@ DO      DD     DOCOL
 ;  *   LOOP   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   LLOOP, 80H+4+40H, "LOO", "P"+80H, DOCOL
+%else
 N_LLOOP      DB   80H+4+40H
          DB      "LOO"
          DB     "P"+80H
          DD    N_DO
 LLOOP      DD     DOCOL
-                           
+%endif                           
         DD      THREE   ; Magic number
         DD      QPAIR
         DD      COMP
@@ -5389,12 +5392,15 @@ LLOOP      DD     DOCOL
 ;  *   +LOOP   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   PLOOP, 80H+5+40H, "+LOO", "P"+80H, DOCOL
+%else
 N_PLOOP      DB   80H+5+40H
          DB      "+LOO"
          DB     "P"+80H
          DD    N_LLOOP
 PLOOP      DD     DOCOL
-                           
+%endif                           
         DD      THREE   ; Magic number
         DD      QPAIR
         DD      COMP
@@ -5407,12 +5413,15 @@ PLOOP      DD     DOCOL
 ;  *   UNTIL   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   UNTIL, 80H+5+40H, "UNTI", "L"+80H, DOCOL
+%else
 N_UNTIL      DB   80H+5+40H
          DB      "UNTI"
          DB     "L"+80H
          DD    N_PLOOP
 UNTIL      DD     DOCOL
-                           
+%endif                           
         DD      ONE
         DD      QPAIR
         DD      COMP
@@ -5425,12 +5434,15 @@ UNTIL      DD     DOCOL
 ;  *   END   *
 ;  *********** 
 ;  
+%if 1
+        ENTRY   LEND, 80H+3+40H, "EN", "D"+80H, DOCOL
+%else
 N_LEND      DB   80H+3+40H
          DB      "EN"
          DB     "D"+80H
          DD    N_UNTIL
 LEND      DD     DOCOL
-                           
+%endif                           
         DD      UNTIL
         DD      SEMIS
 ;
@@ -5439,12 +5451,15 @@ LEND      DD     DOCOL
 ;  *   AGAIN   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   AGAIN, 80H+5+40H, "AGAI", "N"+80H, DOCOL
+%else
 N_AGAIN      DB   80H+5+40H
          DB      "AGAI"
          DB     "N"+80H
          DD    N_LEND
 AGAIN      DD     DOCOL
-                           
+%endif                           
         DD      ONE
         DD      QPAIR
         DD      COMP
@@ -5457,12 +5472,15 @@ AGAIN      DD     DOCOL
 ;  *   REPEAT   *
 ;  ************** 
 ;  
+%if 1
+        ENTRY   REPEA, 80H+6+40H, "REPEA", "T"+80H, DOCOL
+%else
 N_REPEA      DB   80H+6+40H
          DB      "REPEA"
          DB     "T"+80H
          DD    N_AGAIN
 REPEA      DD     DOCOL
-                           
+%endif                           
         DD      TOR
         DD      TOR
         DD      AGAIN
@@ -5478,12 +5496,15 @@ REPEA      DD     DOCOL
 ;  *   IF   *
 ;  ********** 
 ;  
+%if 1
+        ENTRY   LIF, 80H+2+40H, "I", "F"+80H, DOCOL
+%else
 N_LIF      DB   80H+2+40H
          DB      "I"
          DB     "F"+80H
          DD    N_REPEA
 LIF      DD     DOCOL
-                           
+%endif                           
         DD      COMP
         DD      ZBRAN
         DD      HERE
@@ -5497,12 +5518,15 @@ LIF      DD     DOCOL
 ;  *   ELSE   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   LELSE, 80H+4+40H, "ELS", "E"+80H, DOCOL
+%else
 N_LELSE      DB   80H+4+40H
          DB      "ELS"
          DB     "E"+80H
          DD    N_LIF
 LELSE      DD     DOCOL
-                           
+%endif                           
         DD      TWO     ; Magic number 
         DD      QPAIR
         DD      COMP
@@ -5521,12 +5545,15 @@ LELSE      DD     DOCOL
 ;  *   WHILE   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   WHIL, 80H+5+40H, "WHIL", "E"+80H, DOCOL
+%else
 N_WHILE      DB   80H+5+40H
          DB      "WHIL"
          DB     "E"+80H
          DD    N_LELSE
 WHIL      DD     DOCOL      ; WHIEL is a reserved word.
-                           
+%endif                           
         DD      LIF
         DD      TWOP        ; Magic number           
         DD      SEMIS
@@ -5536,12 +5563,15 @@ WHIL      DD     DOCOL      ; WHIEL is a reserved word.
 ;  *   SPACES   *
 ;  ************** 
 ;  
+%if 1
+        ENTRY   SPACES, 80H+6, "SPACE", "S"+80H, DOCOL
+%else
 N_SPACES      DB   80H+6
          DB      "SPACE"
          DB     "S"+80H
          DD    N_WHILE
 SPACES      DD     DOCOL
-                           
+%endif                           
         DD      ZERO
         DD      MAX
         DD      DDUP
@@ -5559,12 +5589,15 @@ SPAX1      DD      SEMIS
 ;  *   <#   *
 ;  ********** 
 ;  
+%if 1
+        ENTRY   BDIGS, 80H+2, "<", "#"+80H, DOCOL
+%else
 N_BDIGS      DB   80H+2
          DB      "<"
          DB     "#"+80H
          DD    N_SPACES
 BDIGS      DD     DOCOL
-                           
+%endif                           
         DD      PAD
         DD      HLD
         DD      STORE
@@ -5575,12 +5608,15 @@ BDIGS      DD     DOCOL
 ;  *   #>   *
 ;  ********** 
 ;  
+%if 1
+        ENTRY   EDIGS, 80H+2, "#", ">"+80H, DOCOL
+%else
 N_EDIGS      DB   80H+2
          DB      "#"
          DB     ">"+80H
          DD    N_BDIGS
 EDIGS      DD     DOCOL
-                           
+%endif                           
         DD      DROP
         DD      DROP
         DD      HLD
@@ -5595,12 +5631,15 @@ EDIGS      DD     DOCOL
 ;  *   SIGN   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   SIGN, 80H+4, "SIG", "N"+80H, DOCOL
+%else
 N_SIGN      DB   80H+4
          DB      "SIG"
          DB     "N"+80H
          DD    N_EDIGS
 SIGN      DD     DOCOL
-                           
+%endif                           
         DD      ROT
         DD      ZLESS
         DD      ZBRAN
@@ -5614,11 +5653,14 @@ SIGN1      DD      SEMIS
 ;  *   #   *
 ;  ********* 
 ;  
+%if 1
+        ENTRY_1   DIG, 80H+1, "#"+80H, DOCOL
+%else
 N_DIG      DB   80H+1
          DB     "#"+80H
          DD    N_SIGN
 DIG      DD     DOCOL
-                           
+%endif                           
         DD      BASE
         DD      FETCH
         DD      MSMOD
@@ -5640,12 +5682,15 @@ DIG1      DD      LIT,30H
 ;  *   #S   *
 ;  ********** 
 ;  
+%if 1
+        ENTRY   DIGS, 80H+2, "#", "S"+80H, DOCOL
+%else
 N_DIGS      DB   80H+2
          DB      "#"
          DB     "S"+80H
          DD    N_DIG
 DIGS      DD     DOCOL
-                           
+%endif                           
 DIGS1      DD      DIG     ;BEGIN
         DD      OVER
         DD      OVER
@@ -5660,12 +5705,15 @@ DIGS1      DD      DIG     ;BEGIN
 ;  *   D.R   *
 ;  *********** 
 ;  
+%if 1
+        ENTRY   DDOTR, 80H+3, "D.", "R"+80H, DOCOL
+%else
 N_DDOTR      DB   80H+3
          DB      "D."
          DB     "R"+80H
          DD    N_DIGS
 DDOTR      DD     DOCOL
-                           
+%endif                           
         DD      TOR
         DD      SWAP
         DD      OVER
@@ -5686,12 +5734,15 @@ DDOTR      DD     DOCOL
 ;  *   .R   *
 ;  ********** 
 ;  
+%if 1
+        ENTRY   DOTR, 80H+2, ".", "R"+80H, DOCOL
+%else
 N_DOTR      DB   80H+2
          DB      "."
          DB     "R"+80H
          DD    N_DDOTR
 DOTR      DD     DOCOL
-                           
+%endif                           
         DD      TOR
         DD      STOD
         DD      FROMR
@@ -5703,12 +5754,15 @@ DOTR      DD     DOCOL
 ;  *   D.   *
 ;  ********** 
 ;  
+%if 1
+        ENTRY   DDOT, 80H+2, "D", "."+80H, DOCOL
+%else
 N_DDOT      DB   80H+2
          DB      "D"
          DB     "."+80H
          DD    N_DOTR
 DDOT      DD     DOCOL
-                           
+%endif                           
         DD      ZERO
         DD      DDOTR
         DD      SPACE
@@ -5719,11 +5773,14 @@ DDOT      DD     DOCOL
 ;  *   .   *
 ;  ********* 
 ;  
+%if 1
+        ENTRY_1   DOT, 80H+1, "."+80H, DOCOL
+%else
 N_DOT      DB   80H+1
          DB     "."+80H
          DD    N_DDOT
 DOT      DD     DOCOL
-                           
+%endif                           
         DD      STOD
         DD      DDOT
         DD      SEMIS
@@ -5733,11 +5790,14 @@ DOT      DD     DOCOL
 ;  *   ?   *
 ;  ********* 
 ;  
+%if 1
+        ENTRY_1   QUES, 80H+1, "?"+80H, DOCOL
+%else
 N_QUES      DB   80H+1
          DB     "?"+80H
          DD    N_DOT
 QUES      DD     DOCOL
-                           
+%endif                           
         DD      FETCH
         DD      DOT
         DD      SEMIS
@@ -5747,12 +5807,15 @@ QUES      DD     DOCOL
 ;  *   U.   *
 ;  ********** 
 ;  
+%if 1
+        ENTRY   UDOT, 80H+2, "U", "."+80H, DOCOL
+%else
 N_UDOT      DB   80H+2
          DB      "U"
          DB     "."+80H
          DD    N_QUES
 UDOT      DD     DOCOL
-                           
+%endif                           
         DD      ZERO
         DD      DDOT
         DD      SEMIS
@@ -5762,12 +5825,15 @@ UDOT      DD     DOCOL
 ;  *   FOR-WORDS   *
 ;  ***************** 
 ;  
+%if 1
+        ENTRY   FORW, 80H+9, "FOR-WORD", "S"+80H, DOCOL
+%else
 N_FORW      DB   80H+9
          DB      "FOR-WORD"
          DB     "S"+80H
          DD    N_UDOT
 FORW      DD     DOCOL
-                           
+%endif                           
         DD      TOR
         DD      CONT
         DD      FETCH
@@ -5796,12 +5862,15 @@ FORW1      DD      FROMR
 ;  *   FOR-VOCS   *
 ;  **************** 
 ;  
+%if 1
+        ENTRY   FORV, 80H+8, "FOR-VOC", "S"+80H, DOCOL
+%else
 N_FORV      DB   80H+8
          DB      "FOR-VOC"
          DB     "S"+80H
          DD    N_FORW
 FORV      DD     DOCOL
-                           
+%endif                           
         DD      TOR
         DD      VOCL
         DD      FETCH
@@ -5827,14 +5896,17 @@ FORV1      DD      FROMR
 ;  *   VLIST   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   VLIST, 80H+5, "VLIS", "T"+80H, DOCOL
+%else
 N_VLIST      DB   80H+5
          DB      "VLIS"
          DB     "T"+80H
          DD    N_FORV
 VLIST      DD     DOCOL
-                           
+%endif                           
         DD      CSLL
-        DD      LOUT                    ; ### TODO: This deosn't stick. And nonbody is looking at OUT anyway?
+        DD      LOUT                    ; ### TODO: nobody is looking at OUT anyway?
         DD      STORE
         DD      LIT, IDDOT
         DD      FORW
@@ -5848,30 +5920,34 @@ VLIST      DD     DOCOL
 ;  *   BYE   *
 ;  *********** 
 ;  
+%if 1
+        CODE_ENTRY   BYE, 80H+3, "BY", "E"+80H
+%else
 N_BYE      DB   80H+3
          DB      "BY"
          DB     "E"+80H
          DD    N_VLIST
 BYE      DD     DOCOL
-                           
-; Exit to linux, with okay status. 
-;        DD      ZERO, ZERO, ZERO, ONE, LINOS
-; TODO FIX this to just RET to C caller.
+%endif                           
+; TODO: FIX this to just RET to C caller. This crashes as things stand - why?
 
-         DD SEMIS
-;
+         RET
+  
 ;
 
 ;  ************ 
 ;  *   LIST   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   LLIST, 80H+4, "LIS", "T"+80H, DOCOL
+%else
 N_LLIST      DB   80H+4
          DB      "LIS"
          DB     "T"+80H
          DD    N_BYE
 LLIST      DD     DOCOL
-                           
+%endif                           
         DD      DECA
         DD      CR,LDUP
         DD      SCR,STORE
@@ -5900,12 +5976,15 @@ LIST2      DD      XLOOP
 ;  *   INDEX   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   INDEX, 80H+5, "INDE", "X"+80H, DOCOL
+%else
 N_INDEX      DB   80H+5
          DB      "INDE"
          DB     "X"+80H
          DD    N_LLIST
 INDEX      DD     DOCOL
-                           
+%endif                           
         DD      LIT,FF
         DD      EMIT,CR
         DD      ONEP,SWAP
@@ -5927,12 +6006,15 @@ INDE2      DD      XLOOP
 ;  *   TRIAD   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   TRIAD, 80H+5, "TRIA", "D"+80H, DOCOL
+%else
 N_TRIAD      DB   80H+5
          DB      "TRIA"
          DB     "D"+80H
          DD    N_INDEX
 TRIAD      DD     DOCOL
-                           
+%endif                           
         DD      LIT,FF
         DD      EMIT
         DD      LIT,3
@@ -5958,13 +6040,16 @@ TRIA2      DD      XLOOP
 ;  *   .CPU   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   DOTCPU, 80H+4, ".CP", "U"+80H, DOCOL
+%else
 N_DOTCPU      DB   80H+4
          DB      ".CP"
          DB     "U"+80H
          DD    N_TRIAD
 DOTCPU      DD     DOCOL
-                           
-; PRINT CPU TYPE (8088)
+%endif                           
+; PRINT CPU TYPE (80386)
         DD      BASE,FETCH
         DD      LIT,36
         DD      BASE,STORE
@@ -5984,12 +6069,15 @@ DOTCPU      DD     DOCOL
 ;  *   MATCH   *
 ;  ************* 
 ;  
+%if 1
+        CODE_ENTRY   MATCH, 80H+5, "MATC", "H"+80H
+%else
 N_MATCH      DB   80H+5
          DB      "MATC"
          DB     "H"+80H
          DD    N_DOTCPU
 MATCH      DD     $+CW
-                           
+%endif                           
         MOV     EDI,ESI   ; SAVE IP
         POP     ECX      ; STRING COUNT
         POP     EBX      ;STRING ADDR
@@ -6044,12 +6132,15 @@ MAT4:   MOV     EAX,ESI   ;NEW CURSOR ADDR
 ;  *   TASK   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   TASK, 80H+4, "TAS", "K"+80H, DOCOL
+%else
 N_TASK      DB   80H+4
          DB      "TAS"
          DB     "K"+80H
          DD    N_MATCH
 TASK      DD     DOCOL
-                           
+%endif                           
         DD      SEMIS
 ;
  ;

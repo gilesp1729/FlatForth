@@ -105,7 +105,7 @@ int c_block_exit( void )
 }
 
 /* RSLW */
-int c_rslw(int control, int block, void *pmem )
+int c_readwrite(int control, int block, void *pmem )
 {
 
     if (block_fid == 0)
