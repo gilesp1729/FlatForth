@@ -215,7 +215,7 @@ ENDM
         extern  c_expect:PROC
         extern  c_key:PROC
         extern  c_qterminal:PROC
-        extern  c_rslw:PROC
+        extern  c_readwrite:PROC
         extern  c_block_exit:PROC
         extern  c_block_init:PROC
  ;
@@ -352,16 +352,28 @@ ENDIF1:
 DPUSH:  PUSH    EDX
 APUSH:  PUSH    EAX
 
-;
+; ######################################################################
+; NEXT, the Forth address (inner) interpreter.
 
-; In 32 bit versions there may be no jumps to NEXT at all 
+; In 32 bit versions there may be no jumps to NEXT0 at all 
 ; The label NEXT1 is rarely relevant (for _OLDDEBUG_) 
-NEXT:   LODSD           ;AX <- (IP)
+NEXT0:  LODSD           ;AX <- (IP), IP += 4
 NEXT1:  MOV     EBX,EAX   ; (W) <- (IP)
 
         JMP      DWORD PTR[EBX]    ; TO `CFA'
         ;
-;
+
+; NEXT macro goes at the end of code words. It is the same code as above.
+
+NEXT    MACRO
+        LODSD 
+        MOV     EBX,EAX                  
+        JMP      DWORD PTR[EBX]   
+ENDM
+
+
+
+; #######################################################################
 ;       Dictionary starts here.
 
 DP0:
@@ -380,9 +392,7 @@ LIT      DD     $+CW
 %endif                           
         LODSD           ; AX <- LITERAL
         PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]             ; TO TOP OF STACK
+        NEXT
 ;
 
 ;  *************** 
@@ -416,9 +426,7 @@ N_BRAN      DB   80H+6
 BRAN      DD     $+CW
 %endif                           
 BRAN1:  ADD     ESI,[ESI]
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]       ; JUMP TO OFFSET
+        NEXT
 ;
 
 ;  *************** 
@@ -438,9 +446,7 @@ ZBRAN      DD     $+CW
         OR      EAX,EAX   ; ZERO?
         JZ      BRAN1   ; YES, BRANCH
         LEA     ESI,[ESI+(CW*1)]
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  ************ 
@@ -456,15 +462,7 @@ N_NOOP      DB   80H+4
          DD    N_ZBRAN
 NOOP      DD     $+4
 %endif
-%if 0   ;  Clean out the rubbish.
-;      DEBUG STUFF
-NOP0      DD      $+(CW*1)
-        JMP SHORT     NEXT
-NOP1      DD      $+(CW*1)
-        JMP SHORT     NEXT
-NOP2      DD      $+(CW*1)
-%endif
-        JMP SHORT     NEXT
+        NEXT
 ;
 
 ;  ************** 
@@ -488,11 +486,9 @@ XLOO1:  ADD     [EBP],EBX ; INDEX = INDEX + INCR
         JS      BRAN1   ; KEEP LOOPING
 ;
 ;  END OF `DO' LOOP
-        ADD     EBP,BYTE (CW*2)  ; ADJ RETURN STACK
+        ADD     EBP,(CW*2)             ; ADJ RETURN STACK
         LEA     ESI,[ESI+(CW*1)]       ; BYPASS BRANCH OFFSET
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]   
+        NEXT
 ;
 
 ;  *************** 
@@ -671,7 +667,7 @@ DIGI2:  SUB     EAX,EAX   ;FALSE FLAG
 ;  ************** 
 ;  *   (FIND)   *
 ;  ************** 
-;  
+;  ### TODO: make this (optiomnally) case insensitive.
 %if 1
         CODE_ENTRY PFIND, 80H+6, "(FIND", ")"+80H
 %else
@@ -1097,7 +1093,6 @@ LLEAV      DD     $+CW
 ;  ********** 
 ;  *   >R   *
 ;  ********** 
-;  TODO: the ">" confuses MASM. IFNB <">">
 %if 1
         CODE_ENTRY TOR, 80H+2, ">", "R"+80H
 %else
@@ -2336,6 +2331,7 @@ BLK      DD     DOUSE
         DD      (CW*27)
 ;
 ;========== END USER VARIABLES =============;
+; ### TODO: Should all these be initialised to something? e.g. OUT is junk.
 ;
 
 ;  ********** 
@@ -3180,7 +3176,6 @@ DTRA3      DD      XLOOP
 ;  ************ 
 ;  *   (.")   *
 ;  ************ 
-;  TODO: Checkthat this string works with a diuble-quote in it.
 %if 1
         ENTRY    PDOTQ, 80H+4, '(."', ")"+80H, DOCOL
 %else
@@ -4157,12 +4152,15 @@ STOD1:  PUSH    EDX
 ;  *   +-   *
 ;  ********** 
 ;  
+%if 1
+        ENTRY   PM, 80H+2, "+", "-"+80H, DOCOL
+%else
 N_PM      DB   80H+2
          DB      "+"
          DB     "-"+80H
          DD    N_STOD
 PM      DD     DOCOL
-                           
+%endif                           
         DD      ZLESS
         DD      ZBRAN
         DD      PM1-$   ;IF
@@ -4174,12 +4172,15 @@ PM1      DD      SEMIS
 ;  *   D+-   *
 ;  *********** 
 ;  
+%if 1
+        ENTRY   DPM, 80H+3, "D+", "-"+80H, DOCOL
+%else
 N_DPM      DB   80H+3
          DB      "D+"
          DB     "-"+80H
          DD    N_PM
 DPM      DD     DOCOL
-                           
+%endif                           
         DD      ZLESS
         DD      ZBRAN
         DD      DPM1-$  ;IF
@@ -4191,12 +4192,15 @@ DPM1      DD      SEMIS
 ;  *   ABS   *
 ;  *********** 
 ;  
+%if 1
+        ENTRY   LABS, 80H+3, "AB", "S"+80H, DOCOL
+%else
 N_LABS      DB   80H+3
          DB      "AB"
          DB     "S"+80H
          DD    N_DPM
 LABS      DD     DOCOL
-                           
+%endif                           
         DD      LDUP
         DD      PM
         DD      SEMIS
@@ -4206,12 +4210,15 @@ LABS      DD     DOCOL
 ;  *   DABS   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   DABS, 80H+4, "DAB", "S"+80H, DOCOL
+%else
 N_DABS      DB   80H+4
          DB      "DAB"
          DB     "S"+80H
          DD    N_LABS
 DABS      DD     DOCOL
-                           
+%endif                           
         DD      LDUP
         DD      DPM
         DD      SEMIS
@@ -4221,12 +4228,15 @@ DABS      DD     DOCOL
 ;  *   MIN   *
 ;  *********** 
 ;  
+%if 1
+        ENTRY   MIN, 80H+3, "MI", "N"+80H, DOCOL
+%else
 N_MIN      DB   80H+3
          DB      "MI"
          DB     "N"+80H
          DD    N_DABS
 MIN      DD     DOCOL
-                           
+%endif                           
         DD      TDUP
         DD      GREAT
         DD      ZBRAN
@@ -4240,12 +4250,15 @@ MIN1      DD      DROP
 ;  *   MAX   *
 ;  *********** 
 ;  
+%if 1
+        ENTRY   MAX, 80H+3, "MA", "X"+80H, DOCOL
+%else
 N_MAX      DB   80H+3
          DB      "MA"
          DB     "X"+80H
          DD    N_MIN
 MAX      DD     DOCOL
-                           
+%endif                           
         DD      TDUP
         DD      LESS
         DD      ZBRAN
@@ -4259,12 +4272,15 @@ MAX1      DD      DROP
 ;  *   M*   *
 ;  ********** 
 ;  
+%if 1
+        ENTRY   MSTAR, 80H+2, "M", "*"+80H, DOCOL
+%else
 N_MSTAR      DB   80H+2
          DB      "M"
          DB     "*"+80H
          DD    N_MAX
 MSTAR      DD     DOCOL
-                           
+%endif                           
         DD      TDUP
         DD      LXOR
         DD      TOR
@@ -4281,12 +4297,15 @@ MSTAR      DD     DOCOL
 ;  *   M/   *
 ;  ********** 
 ;  
+%if 1
+        ENTRY   MSLAS, 80H+2, "M", "/"+80H, DOCOL
+%else
 N_MSLAS      DB   80H+2
          DB      "M"
          DB     "/"+80H
          DD    N_MSTAR
 MSLAS      DD     DOCOL
-                           
+%endif                           
         DD      OVER
         DD      TOR
         DD      TOR
@@ -4309,11 +4328,14 @@ MSLAS      DD     DOCOL
 ;  *   *   *
 ;  ********* 
 ;  
+%if 1
+        ENTRY_1   STAR, 80H+1, "*"+80H, DOCOL
+%else
 N_STAR      DB   80H+1
          DB     "*"+80H
          DD    N_MSLAS
 STAR      DD     DOCOL
-                           
+%endif                           
         DD      MSTAR
         DD      DROP
         DD      SEMIS
@@ -4323,12 +4345,15 @@ STAR      DD     DOCOL
 ;  *   /MOD   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   SLMOD, 80H+4, "/MO", "D"+80H, DOCOL
+%else
 N_SLMOD      DB   80H+4
          DB      "/MO"
          DB     "D"+80H
          DD    N_STAR
 SLMOD      DD     DOCOL
-                           
+%endif                           
         DD      TOR
         DD      STOD
         DD      FROMR
@@ -4340,11 +4365,14 @@ SLMOD      DD     DOCOL
 ;  *   /   *
 ;  ********* 
 ;  
+%if 1
+        ENTRY_1   SLASH, 80H+1, "/"+80H, DOCOL
+%else
 N_SLASH      DB   80H+1
          DB     "/"+80H
          DD    N_SLMOD
 SLASH      DD     DOCOL
-                           
+%endif                           
         DD      SLMOD
         DD      SWAP
         DD      DROP
@@ -4355,12 +4383,15 @@ SLASH      DD     DOCOL
 ;  *   MOD   *
 ;  *********** 
 ;  
+%if 1
+        ENTRY   LMOD, 80H+3, "MO", "D"+80H, DOCOL
+%else
 N_LMOD      DB   80H+3
          DB      "MO"
          DB     "D"+80H
          DD    N_SLASH
 LMOD      DD     DOCOL
-                           
+%endif                           
         DD      SLMOD
         DD      DROP
         DD      SEMIS
@@ -4370,12 +4401,15 @@ LMOD      DD     DOCOL
 ;  *   */MOD   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   SSMOD, 80H+5, "*/MO", "D"+80H, DOCOL
+%else
 N_SSMOD      DB   80H+5
          DB      "*/MO"
          DB     "D"+80H
          DD    N_LMOD
 SSMOD      DD     DOCOL
-                           
+%endif                           
         DD      TOR
         DD      MSTAR
         DD      FROMR
@@ -4387,12 +4421,15 @@ SSMOD      DD     DOCOL
 ;  *   */   *
 ;  ********** 
 ;  
+%if 1
+        ENTRY   SSLA, 80H+2, "*", "/"+80H, DOCOL
+%else
 N_SSLA      DB   80H+2
          DB      "*"
          DB     "/"+80H
          DD    N_SSMOD
 SSLA      DD     DOCOL
-                           
+%endif                           
         DD      SSMOD
         DD      SWAP
         DD      DROP
@@ -4403,12 +4440,15 @@ SSLA      DD     DOCOL
 ;  *   M/MOD   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   MSMOD, 80H+5, "M/MO", "D"+80H, DOCOL
+%else
 N_MSMOD      DB   80H+5
          DB      "M/MO"
          DB     "D"+80H
          DD    N_SSLA
 MSMOD      DD     DOCOL
-                           
+%endif                           
         DD      TOR
         DD      ZERO
         DD      RR
@@ -4425,12 +4465,15 @@ MSMOD      DD     DOCOL
 ;  *   (LINE)   *
 ;  ************** 
 ;  
+%if 1
+        ENTRY   PLINE, 80H+6, "(LINE", ")"+80H, DOCOL
+%else
 N_PLINE      DB   80H+6
          DB      "(LINE"
          DB     ")"+80H
          DD    N_MSMOD
 PLINE      DD     DOCOL
-                           
+%endif                           
         DD      TOR
         DD      LIT,64
         DD      BBUF
@@ -4449,12 +4492,15 @@ PLINE      DD     DOCOL
 ;  *   .LINE   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   DLINE, 80H+5, ".LIN", "E"+80H, DOCOL
+%else
 N_DLINE      DB   80H+5
          DB      ".LIN"
          DB     "E"+80H
          DD    N_PLINE
 DLINE      DD     DOCOL
-                           
+%endif                           
         DD      PLINE
         DD      DTRAI
         DD      LTYPE
@@ -4465,12 +4511,15 @@ DLINE      DD     DOCOL
 ;  *   MESSAGE   *
 ;  *************** 
 ;  
+%if 1
+        ENTRY   MESS, 80H+7, "MESSAG", "E"+80H, DOCOL
+%else
 N_MESS      DB   80H+7
          DB      "MESSAG"
          DB     "E"+80H
          DD    N_DLINE
 MESS      DD     DOCOL
-                           
+%endif                           
         DD      WARN
         DD      FETCH
         DD      ZBRAN
@@ -4490,6 +4539,9 @@ MESS1      DD      PDOTQ
         DD      DOT     ;ENDIF
 MESS3      DD      SEMIS
 ;
+
+%if 0
+; ##### These are not implemented on this version, as most PC's don't have ports. ###
 
 ;  *********** 
 ;  *   PC@   *
@@ -4565,16 +4617,21 @@ PSTO      DD     $+CW
         JMP      DWORD PTR[EBX]   
 ;
 
+%endif
+
 ;  *********** 
 ;  *   USE   *
 ;  *********** 
 ;  
+%if 1
+        ENTRY   USE, 80H+3, "US", "E"+80H, DOVAR
+%else
 N_USE      DB   80H+3
          DB      "US"
          DB     "E"+80H
          DD    N_PSTO
 USE      DD     DOVAR
-                           
+%endif                           
         DD BUF1
 ;
 
@@ -4582,12 +4639,15 @@ USE      DD     DOVAR
 ;  *   PREV   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   PREV, 80H+4, "PRE", "V"+80H, DOVAR
+%else
 N_PREV      DB   80H+4
          DB      "PRE"
          DB     "V"+80H
          DD    N_USE
 PREV      DD     DOVAR
-                           
+%endif
         DD      BUF1
 ;
 
@@ -4595,12 +4655,15 @@ PREV      DD     DOVAR
 ;  *   #BUFF   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   NOBUF, 80H+5, "#BUF", "F"+80H, DOCON
+%else
 N_NOBUF      DB   80H+5
          DB      "#BUF"
          DB     "F"+80H
          DD    N_PREV
 NOBUF      DD     DOCON
-                           
+%endif                           
         ;NO. OF BUFFERS
         DD      NBUF
 ;
@@ -4609,12 +4672,15 @@ NOBUF      DD     DOCON
 ;  *   +BUF   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   PBUF, 80H+4, "+BU", "F"+80H, DOCOL
+%else
 N_PBUF      DB   80H+4
          DB      "+BU"
          DB     "F"+80H
          DD    N_NOBUF
 PBUF      DD     DOCOL
-                           
+%endif                           
         DD      LIT,(KBBUF+2*CW)
         DD      PLUS,LDUP
         DD      LIMIT,EQUAL
@@ -4630,12 +4696,15 @@ PBUF1      DD      LDUP,PREV
 ;  *   UPDATE   *
 ;  ************** 
 ;  
+%if 1
+        ENTRY   UPDAT, 80H+6, "UPDAT", "E"+80H, DOCOL
+%else
 N_UPDAT      DB   80H+6
          DB      "UPDAT"
          DB     "E"+80H
          DD    N_PBUF
 UPDAT      DD     DOCOL
-                           
+%endif                           
         DD      PREV
         DD      FETCH,FETCH
         DD      LIT,BMASK
@@ -4648,12 +4717,15 @@ UPDAT      DD     DOCOL
 ;  *   EMPTY-BUFFERS   *
 ;  ********************* 
 ;  
+%if 1
+        ENTRY   MTBUF, 80H+13, "EMPTY-BUFFER", "S"+80H, DOCOL
+%else
 N_MTBUF      DB   80H+13
          DB      "EMPTY-BUFFER"
          DB     "S"+80H
          DD    N_UPDAT
 MTBUF      DD     DOCOL
-                           
+%endif                           
         DD      FIRST
         DD      LIMIT,OVER
         DD      LSUB,LERASE
@@ -4665,12 +4737,15 @@ MTBUF      DD     DOCOL
 ;  *   BUFFER   *
 ;  ************** 
 ;  
+%if 1
+        ENTRY   BUFFE, 80H+6, "BUFFE", "R"+80H, DOCOL
+%else
 N_BUFFE      DB   80H+6
          DB      "BUFFE"
          DB     "R"+80H
          DD    N_MTBUF
 BUFFE      DD     DOCOL
-                           
+%endif                           
 ; NOTE: THIS WORD WON'T WORK IF ONLY USING SINGLE BUFFER
         DD      USE
         DD      FETCH,LDUP
@@ -4698,12 +4773,15 @@ BUFF2      DD      RR,STORE
 ;  *   BLOCK   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   BLOCK, 80H+5, "BLOC", "K"+80H, DOCOL
+%else
 N_BLOCK      DB   80H+5
          DB      "BLOC"
          DB     "K"+80H
          DD    N_BUFFE
 BLOCK      DD     DOCOL
-                           
+%endif                           
         DD      LIT, PMASK, LAND
         DD      OFSET
         DD      FETCH,PLUS
@@ -4738,12 +4816,15 @@ BLOC1      DD      FROMR,DROP
 ;  *   FLUSH   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   FLUSH, 80H+5, "FLUS", "H"+80H, DOCOL
+%else
 N_FLUSH      DB   80H+5
          DB      "FLUS"
          DB     "H"+80H
          DD    N_BLOCK
 FLUSH      DD     DOCOL
-                           
+%endif                           
         DD      NOBUF,ONEP
         DD      ZERO,XDO
 FLUS1      DD      ZERO,BUFFE
@@ -4757,12 +4838,15 @@ FLUS1      DD      ZERO,BUFFE
 ;  *   LOAD   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   LOAD, 80H+4, "LOA", "D"+80H, DOCOL
+%else
 N_LOAD      DB   80H+4
          DB      "LOA"
          DB     "D"+80H
          DD    N_FLUSH
 LOAD      DD     DOCOL
-                           
+%endif                           
         DD      BLK
         DD      FETCH,TOR
         DD      LIN,FETCH
@@ -4782,12 +4866,15 @@ SCREEN      DD      FROMR,LIN
 ;  *   -->   *
 ;  *********** 
 ;  
+%if 1
+        ENTRY   ARROW, 80H+3+40H, "--", ">"+80H, DOCOL
+%else
 N_ARROW      DB   80H+3+40H
          DB      "--"
          DB     ">"+80H
          DD    N_LOAD
 ARROW      DD     DOCOL
-                           
+%endif                           
         DD      QLOAD
         DD      ZERO
         DD      LIN
@@ -4806,6 +4893,8 @@ ARROW      DD     DOCOL
 ;
 
 
+%if 0
+; ################## NOT USED ################
 ;  ************* 
 ;  *   LINOS   *
 ;  ************* 
@@ -4826,7 +4915,7 @@ LINOS      DD     $+CW
         MOV     EBX,EAX                  
         JMP      DWORD PTR[EBX]        ; Positive means okay. Negative means -errno.
 ;
-
+%endif
 ;
         ;
 ;------------------------------------
@@ -4841,6 +4930,9 @@ LINOS      DD     $+CW
 ;  *   TYPE   *
 ;  ************ 
 ;  
+%if 1
+        CODE_ENTRY   LTYPE, 80H+4, "TYP", "E"+80H
+%else
 N_LTYPE      DB   80H+4
          DB      "TYP"
          DB     "E"+80H
@@ -4848,6 +4940,7 @@ N_LTYPE      DB   80H+4
 LTYPE      DD     C_LTYPE
 C_LTYPE:                           
 ;        DD      $+(CW*1) ;  Turns this code word into high level.  ### TODO WTF is goin on here?
+%endif
         CALL    c_type
         LEA     ESP,[ESP+(CW*2)]    ; remove input
         LODSD                 ; NEXT
@@ -4860,12 +4953,16 @@ C_LTYPE:
 ;  *   EXPECT   *
 ;  ************** 
 ;  
+%if 1
+        CODE_ENTRY   EXPEC, 80H+6, "EXPEC", "T"+80H
+%else
 N_EXPEC      DB   80H+6
          DB      "EXPEC"
          DB     "T"+80H
          DD    N_LTYPE
 EXPEC      DD     C_EXPEC
 C_EXPEC:                           
+%endif
         CALL    c_expect
         LEA     ESP,[ESP+(CW*2)]    ; remove input
         LODSD                 ; NEXT
@@ -4877,12 +4974,15 @@ C_EXPEC:
 ;  *   KEY   *
 ;  *********** 
 ;  
+%if 1
+        CODE_ENTRY   LKEY, 80H+3, "KE", "Y"+80H
+%else
 N_KEY      DB   80H+3
          DB      "KE"
          DB     "Y"+80H
          DD    N_EXPEC
 KEY      DD     $+CW
-                           
+%endif                           
         CALL    c_key
         PUSH    EAX
         LODSD                 ; NEXT
@@ -4894,12 +4994,15 @@ KEY      DD     $+CW
 ;  *   ?TERMINAL   *
 ;  ***************** 
 ;  
+%if 1
+        CODE_ENTRY   QTERM, 80H+9, "?TERMINA", "L"+80H
+%else
 N_QTERM      DB   80H+9
          DB      "?TERMINA"
          DB     "L"+80H
          DD    N_KEY
 QTERM      DD     $+CW
-                           
+%endif                           
         CALL    c_qterminal
         PUSH    EAX
         LODSD                 ; NEXT
@@ -4939,12 +5042,15 @@ EMIT      DD     DOCOL
 ;  *   BLOCK-FILE   *
 ;  ****************** 
 ;  
+%if 1
+        ENTRY   BLFL, 80H+10, "BLOCK-FIL", "E"+80H, DOVAR
+%else
 N_BLFL      DB   80H+10
          DB      "BLOCK-FIL"
          DB     "E"+80H
          DD    N_EMIT
 BLFL      DD     DOVAR
-                           
+%endif                           
         
         DB      10
         DB      "BLOCKS.BLK"
@@ -4954,12 +5060,15 @@ BLFL      DD     DOVAR
 ;  *   BLOCK-HANDLE   *
 ;  ******************** 
 ;  
+%if 1
+        ENTRY   BHAN, 80H+12, "BLOCK-HANDL", "E"+80H, DOVAR
+%else
 N_BHAN      DB   80H+12
          DB      "BLOCK-HANDL"
          DB     "E"+80H
          DD    N_BLFL
 BHAN      DD     DOVAR
-                           
+%endif                           
         DD      -1
 ;
 ;
@@ -4971,12 +5080,15 @@ BHAN      DD     DOVAR
 ;  *   DISK-ERROR   *
 ;  ****************** 
 ;  
+%if 1
+        ENTRY   DERR, 80H+10, "DISK-ERRO", "R"+80H, DOVAR
+%else
 N_DERR      DB   80H+10
          DB      "DISK-ERRO"
          DB     "R"+80H
          DD    N_BHAN
 DERR      DD     DOVAR
-                           
+%endif                           
         DD      -1
 ;
 ;
@@ -4988,12 +5100,16 @@ DERR      DD     DOVAR
 ;  *   BLOCK-INIT   *
 ;  ****************** 
 ;  
+%if 1
+        CODE_ENTRY   BLINI, 80H+10, "BLOCK-INI", "T"+80H
+%else
 N_BLINI      DB   80H+10
          DB      "BLOCK-INI"
          DB     "T"+80H
          DD    N_DERR
 BLINI      DD     c_BLINI   ; ################## TEMP ##############
-c_BLINI:                           
+c_BLINI:
+%endif
         XOR     EAX,EAX
         MOV     AL,BYTE PTR[(BLFL+CW)]
         LEA     EBX,(BLFL+CW)+1
@@ -5011,12 +5127,15 @@ c_BLINI:
 ;  *   BLOCK-EXIT   *
 ;  ****************** 
 ;  
+%if 1
+        CODE_ENTRY   BLEXI, 80H+10, "BLOCK-EXI", "T"+80H
+%else
 N_BLEXI      DB   80H+10
          DB      "BLOCK-EXI"
          DB     "T"+80H
          DD    N_BLINI
 BLEXI      DD     $+CW
-                           
+%endif                           
         CALL    c_block_exit
         LODSD                 ; NEXT
         MOV     EBX,EAX                  
@@ -5028,13 +5147,16 @@ BLEXI      DD     $+CW
 ;  *   R/W   *
 ;  *********** 
 ;  
+%if 1
+        CODE_ENTRY   RSLW, 80H+3, "R/", "W"+80H
+%else
 N_RSLW      DB   80H+3
          DB      "R/"
          DB     "W"+80H
          DD    N_BLEXI
 RSLW      DD     $+CW
-                           
-        CALL c_rslw
+%endif                           
+        CALL c_readwrite
         MOV     [(DERR+CW)],EAX
         LEA     ESP,[ESP+(CW*3)]    ; remove input
         LODSD                 ; NEXT
@@ -5042,24 +5164,19 @@ RSLW      DD     $+CW
         JMP      DWORD PTR[EBX]   
 
 
- ;
-;
-;
-;
-;
-;
-        ;
-        ; At line     LINE ~3500
 
 ;  ********* 
 ;  *   '   *
 ;  ********* 
 ;  
+%if 1
+        ENTRY_1   TICK, 80H+1+40H, "'"+80H, DOCOL
+%else
 N_TICK      DB   80H+1+40H
          DB     "'"+80H
          DD    N_RSLW
 TICK      DD     DOCOL
-                           
+%endif                           
         DD      DFIND
         DD      ZEQU
         DD      ZERO
@@ -5073,12 +5190,15 @@ TICK      DD     DOCOL
 ;  *   FORGET-VOC   *
 ;  ****************** 
 ;  
+%if 1
+        ENTRY   FORGV, 80H+10, "FORGET-VO", "C"+80H, DOCOL
+%else
 N_FORGV      DB   80H+10
          DB      "FORGET-VO"
          DB     "C"+80H
          DD    N_TICK
 FORGV      DD     DOCOL
-                           
+%endif                           
         DD      TDUP
         DD      ULESS
         DD      ZBRAN
@@ -5117,12 +5237,15 @@ FORGV2      DD      SEMIS
 ;  *   FORGET   *
 ;  ************** 
 ;  
+%if 1
+        ENTRY   FORG, 80H+6, "FORGE", "T"+80H, DOCOL
+%else
 N_FORG      DB   80H+6
          DB      "FORGE"
          DB     "T"+80H
          DD    N_FORGV
 FORG      DD     DOCOL
-                           
+%endif                           
         DD      CURR
         DD      FETCH
         DD      CONT
@@ -5149,12 +5272,15 @@ FORG      DD     DOCOL
 ;  *   BACK   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   BACK, 80H+4, "BAC", "K"+80H, DOCOL
+%else
 N_BACK      DB   80H+4
          DB      "BAC"
          DB     "K"+80H
          DD    N_FORG
 BACK      DD     DOCOL
-                           
+%endif                           
         DD      HERE
         DD      LSUB
         DD      COMMA
@@ -5165,12 +5291,15 @@ BACK      DD     DOCOL
 ;  *   BEGIN   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   BEGIN, 80H+5+40H, "BEGI", "N"+80H, DOCOL
+%else
 N_BEGIN      DB   80H+5+40H
          DB      "BEGI"
          DB     "N"+80H
          DD    N_BACK
 BEGIN      DD     DOCOL
-                           
+%endif                           
         DD      QCOMP
         DD      HERE
         DD      ONE
@@ -5181,12 +5310,15 @@ BEGIN      DD     DOCOL
 ;  *   ENDIF   *
 ;  ************* 
 ;  
+%if 1
+        ENTRY   LENDIF, 80H+5+40H, "ENDI", "F"+80H, DOCOL
+%else
 N_LENDIF      DB   80H+5+40H
          DB      "ENDI"
          DB     "F"+80H
          DD    N_BEGIN
 LENDIF      DD     DOCOL
-                           
+%endif                           
         DD      QCOMP
         DD      TWO     ; Magic number
         DD      QPAIR
@@ -5202,12 +5334,15 @@ LENDIF      DD     DOCOL
 ;  *   THEN   *
 ;  ************ 
 ;  
+%if 1
+        ENTRY   THEN, 80H+4+40H, "THE", "N"+80H, DOCOL
+%else
 N_THEN      DB   80H+4+40H
          DB      "THE"
          DB     "N"+80H
          DD    N_LENDIF
 THEN      DD     DOCOL
-                           
+%endif                           
         DD      LENDIF
         DD      SEMIS
 ;
@@ -5216,12 +5351,15 @@ THEN      DD     DOCOL
 ;  *   DO   *
 ;  ********** 
 ;  
+%if 1
+        ENTRY   DO, 80H+2+40H, "D", "O"+80H, DOCOL
+%else
 N_DO      DB   80H+2+40H
          DB      "D"
          DB     "O"+80H
          DD    N_THEN
 DO      DD     DOCOL
-                           
+%endif                           
         DD      COMP
         DD      XDO
         DD      HERE
@@ -5696,7 +5834,7 @@ N_VLIST      DB   80H+5
 VLIST      DD     DOCOL
                            
         DD      CSLL
-        DD      LOUT
+        DD      LOUT                    ; ### TODO: This deosn't stick. And nonbody is looking at OUT anyway?
         DD      STORE
         DD      LIT, IDDOT
         DD      FORW
@@ -5717,8 +5855,10 @@ N_BYE      DB   80H+3
 BYE      DD     DOCOL
                            
 ; Exit to linux, with okay status. 
-        DD      ZERO, ZERO, ZERO, ONE, LINOS
-        ; TODO FIX this to just RET to C caller.
+;        DD      ZERO, ZERO, ZERO, ONE, LINOS
+; TODO FIX this to just RET to C caller.
+
+         DD SEMIS
 ;
 ;
 
