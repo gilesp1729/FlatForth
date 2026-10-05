@@ -1,8 +1,9 @@
-Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/05/26 09:52:15
+Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/05/26 11:12:59
 forth32.asm						     Page 1 - 1
 
 
-
+				; FlatForth - an x86 32-bit flat MASM-assembling figForth, with no M4 in sight.
+				; Derived from: (see below FIG notice which is left intact)
 
 
 				;               HCC FIG generic 8086 FORTH
@@ -46,42 +47,8 @@ forth32.asm						     Page 1 - 1
  = 00000400			KBBUF   EQU     1024    ;DATA BYTES PER DISK BUFFER
  = 00000100			US      EQU     100H     ; USER VARIABLE SPACE
 
- = 00010000			 RTS     EQU  10000H    ; RETURN STACK & TERM BUFFER 
-				;
-				 ;
+ = 00010000			RTS     EQU  10000H    ; RETURN STACK & TERM BUFFER 
 
-				;
-
- = 00000200			BPS     EQU     512             ;Bytes/sector, common to all of MSDOS
- = 00000002			SPB     EQU     KBBUF/BPS
-				;
-				; PHYSICAL DISK PARAMETERS
-				; (not needed for MODERN)
-				; (not needed for BOOTHD)
-				;
-				; Disk parameters: 
-				; HD drive 3" 
- = 00000050			TRKS    EQU     80    ;Number of tracks
- = 00000012			SPT     EQU     18    ;Sectors/track
- = 00000002			HEADS   EQU     2     ;Number of heads 
- = 00000002			NFAT    EQU     2     ; Number of FATS
- = 0000000E			SECROOT EQU     0EH   ; Sectors for root directory entry.
- = 00000009			SECFAT  EQU     9     ; Sectors per FAT
- = 000000F0			MEDIA   EQU    0F0H   ; Descriptor byte. Anachronism.
-
-				%if 0
-				%endif
-
-				; Bios specific equates.
- = 00007C00			BOOTADDRESS     EQU     07C00H ; PC jumps to 0:7C00 to boot
- = 00000B40			SPDRV   EQU     HEADS*TRKS*SPT    ; sectors/drive
-				        ; Skip boot sector,fats and root dir and first sector of file.
- = 00000022			SECSTRT EQU     1+NFAT*SECFAT + SECROOT + 1
-				%if 0
-				%endif
-				; END  OF PHYSICAL DISK PARAMETERS
-
-				;
  = 80000000			BMASK   EQU     80000000H
 
 				; ########################################################################################
@@ -93,7 +60,7 @@ forth32.asm						     Page 1 - 1
 				; with a value of 4 instead of currentlocation + 4. These things, along with bizarre behaviour
 				; of colon/no-colon on labels, are sent to try us.
 
-				; Initial value of link
+				; Initial value of link. Each ENTRY links to the previous one.
  = 00000000			Link    =     0
 
 				; Code entry (where code follows directly after entry)
@@ -163,36 +130,9 @@ forth32.asm						     Page 1 - 1
 
 				        ;
 				; ########################################################################################
-				;                      BOOTCODE    (optional, always real mode)
+				;                      BOOTCODE   
 				; ########################################################################################
 
-				; All bootcode must be relocatable and its memory references absolute.
-				; Not for the sake of booting, but to allow MSDOS to start the program too. 
-
-				        ;    SEGMENT PARA PUBLIC 'CODE'
-				        ; CS:;,DS:;,SS:;,ES:;
-				    
-
-				; ########################################################################################
-				;                       ADJUST CODE SEGMENT REGISTER (still real mode)
-				; ########################################################################################
-				; Required start of .COM program.
-				    
-
-				; ########################################################################################
-				;                       MOVE CODE TO ITS PLACE (still real mode)
-				; ########################################################################################
-
-				;
-
-				; ########################################################################################
-				;                       FILL GDT AND SWITCH TO PROTECTED MODE/32 BITS (optional)
-				; ########################################################################################
-				;
-
-				;
-
-				;
 
 				.stack 4096
  00000000			.code
@@ -226,10 +166,7 @@ forth32.asm						     Page 1 - 1
 				; ######################################################################
 				; NEXT, the Forth address (inner) interpreter.
 
-				%if 0
-				%endif
-
-				; NEXT macro goes at the end of code words. It is the same code as above.
+				; The NEXT macro goes at the end of code words. It is the same code as above.
 
 				NEXT    MACRO
 				        LODSD 
@@ -5606,7 +5543,7 @@ forth32.asm						     Page 1 - 1
 				%else
 				%endif                           
  00002395  0000076C R		        DD      TWO     ; Magic number 
- 00002399  00000CD6 R        DD      QPAIR
+ 00002399  00000CD6 R		        DD      QPAIR
  0000239D  00000D54 R		        DD      COMP
  000023A1  00000047 R		        DD      BRAN
  000023A5  000009E7 R		        DD      HERE
@@ -6289,7 +6226,7 @@ forth32.asm						     Page 1 - 1
  000028E1  000ECE0F [		       BYTE        1048576 - FORTHSIZE - RTS - US - BUFFERSIZE DUP(?)
 	    00
 	   ]
- 000EF6F0			INITS0:                         ; Growns down
+ 000EF6F0			INITS0:                         ; Grows down
  000EF6F0			STRTIB: 
  000EF6F0  00010000 [		        BYTE        RTS DUP(?)            ; Start return stack area
 	    00
@@ -6304,20 +6241,10 @@ forth32.asm						     Page 1 - 1
 	    00
 	   ]
  00100000			EM:
-				;
-				;
-
-				 ;    ENDS
-				        ;
-				%if 0
-				%endif
-
-				; Define the entry point, not valid for auto booting.
-				        ;     ORIG
 
  00100000			figforth endp
 				end 
-Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/05/26 09:52:15
+Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/05/26 11:12:59
 forth32.asm						     Symbols 2 - 1
 
 
@@ -6506,8 +6433,6 @@ BLOC3  . . . . . . . . . . . . .	DWord	 00001D6E _TEXT
 BLOCK  . . . . . . . . . . . . .	DWord	 00001CEE _TEXT	
 BLS  . . . . . . . . . . . . . .	DWord	 00000797 _TEXT	
 BMASK  . . . . . . . . . . . . .	Number	 -80000000h   
-BOOTADDRESS  . . . . . . . . . .	Number	 00007C00h   
-BPS  . . . . . . . . . . . . . .	Number	 00000200h   
 BRAN . . . . . . . . . . . . . .	DWord	 00000047 _TEXT	
 BSCR . . . . . . . . . . . . . .	DWord	 000007FE _TEXT	
 BSIN . . . . . . . . . . . . . .	Number	 00000008h   
@@ -6603,7 +6528,6 @@ FORW1  . . . . . . . . . . . . .	DWord	 000025F1 _TEXT
 FORW . . . . . . . . . . . . . .	DWord	 000025D9 _TEXT	
 FROMR  . . . . . . . . . . . . .	DWord	 00000463 _TEXT	
 GREAT  . . . . . . . . . . . . .	DWord	 00000AE5 _TEXT	
-HEADS  . . . . . . . . . . . . .	Number	 00000002h   
 HERE . . . . . . . . . . . . . .	DWord	 000009E7 _TEXT	
 HEX  . . . . . . . . . . . . . .	DWord	 00000DDB _TEXT	
 HLD  . . . . . . . . . . . . . .	DWord	 00000967 _TEXT	
@@ -6666,7 +6590,6 @@ Link . . . . . . . . . . . . . .	Number	 000028D0h
 MATCH  . . . . . . . . . . . . .	DWord	 00002898 _TEXT	
 MAX1 . . . . . . . . . . . . . .	DWord	 0000195A _TEXT	
 MAX  . . . . . . . . . . . . . .	DWord	 00001942 _TEXT	
-MEDIA  . . . . . . . . . . . . .	Number	 000000F0h   
 MESS1  . . . . . . . . . . . . .	DWord	 00001B65 _TEXT	
 MESS2  . . . . . . . . . . . . .	DWord	 00001B5D _TEXT	
 MESS3  . . . . . . . . . . . . .	DWord	 00001B74 _TEXT	
@@ -6679,7 +6602,6 @@ MSMOD  . . . . . . . . . . . . .	DWord	 00001A90 _TEXT
 MSTAR  . . . . . . . . . . . . .	DWord	 00001969 _TEXT	
 MTBUF  . . . . . . . . . . . . .	DWord	 00001C3D _TEXT	
 NBUF . . . . . . . . . . . . . .	Number	 00000002h   
-NFAT . . . . . . . . . . . . . .	Number	 00000002h   
 NFA  . . . . . . . . . . . . . .	DWord	 00000BEB _TEXT	
 NOBUF  . . . . . . . . . . . . .	DWord	 00001BA3 _TEXT	
 NOOP . . . . . . . . . . . . . .	DWord	 00000078 _TEXT	
@@ -6987,9 +6909,6 @@ RZERO  . . . . . . . . . . . . .	DWord	 0000083E _TEXT
 SCREEN . . . . . . . . . . . . .	DWord	 00001E29 _TEXT	
 SCR  . . . . . . . . . . . . . .	DWord	 000008CD _TEXT	
 SCSP . . . . . . . . . . . . . .	DWord	 00000C38 _TEXT	
-SECFAT . . . . . . . . . . . . .	Number	 00000009h   
-SECROOT  . . . . . . . . . . . .	Number	 0000000Eh   
-SECSTRT  . . . . . . . . . . . .	Number	 00000022h   
 SEMI1  . . . . . . . . . . . . .	DWord	 00000E5D _TEXT	
 SEMIC  . . . . . . . . . . . . .	DWord	 00000E49 _TEXT	
 SEMIS  . . . . . . . . . . . . .	DWord	 0000041D _TEXT	
@@ -7003,11 +6922,8 @@ SPACES . . . . . . . . . . . . .	DWord	 000023EA _TEXT
 SPACE  . . . . . . . . . . . . .	DWord	 00000B16 _TEXT	
 SPAX1  . . . . . . . . . . . . .	DWord	 00002416 _TEXT	
 SPAX2  . . . . . . . . . . . . .	DWord	 0000240A _TEXT	
-SPB  . . . . . . . . . . . . . .	Number	 00000002h   
-SPDRV  . . . . . . . . . . . . .	Number	 00000B40h   
 SPFET  . . . . . . . . . . . . .	DWord	 000003C2 _TEXT	
 SPSTO  . . . . . . . . . . . . .	DWord	 000003D6 _TEXT	
-SPT  . . . . . . . . . . . . . .	Number	 00000012h   
 SSLA . . . . . . . . . . . . . .	DWord	 00001A72 _TEXT	
 SSMOD  . . . . . . . . . . . . .	DWord	 00001A53 _TEXT	
 STAR . . . . . . . . . . . . . .	DWord	 000019E6 _TEXT	
@@ -7030,7 +6946,6 @@ TRAV . . . . . . . . . . . . . .	DWord	 00000B54 _TEXT
 TRIA1  . . . . . . . . . . . . .	DWord	 00002809 _TEXT	
 TRIA2  . . . . . . . . . . . . .	DWord	 00002825 _TEXT	
 TRIAD  . . . . . . . . . . . . .	DWord	 000027C9 _TEXT	
-TRKS . . . . . . . . . . . . . .	Number	 00000050h   
 TSTOR  . . . . . . . . . . . . .	DWord	 00000621 _TEXT	
 TWOP . . . . . . . . . . . . . .	DWord	 000009B8 _TEXT	
 TWO  . . . . . . . . . . . . . .	DWord	 0000076C _TEXT	

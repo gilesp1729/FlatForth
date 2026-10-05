@@ -1,4 +1,5 @@
-
+; FlatForth - an x86 32-bit flat MASM-assembling figForth, with no M4 in sight.
+; Derived from: (see below FIG notice which is left intact)
 
 
 ;               HCC FIG generic 8086 FORTH
@@ -97,53 +98,8 @@ NBUF    EQU     2       ; NO. OF BUFFERS AKA SCREENS
 KBBUF   EQU     1024    ;DATA BYTES PER DISK BUFFER
 US      EQU     100H     ; USER VARIABLE SPACE
 
- RTS     EQU  10000H    ; RETURN STACK & TERM BUFFER 
-;
- ;
+RTS     EQU  10000H    ; RETURN STACK & TERM BUFFER 
 
-;
-
-BPS     EQU     512             ;Bytes/sector, common to all of MSDOS
-SPB     EQU     KBBUF/BPS
-;
-; PHYSICAL DISK PARAMETERS
-; (not needed for MODERN)
-; (not needed for BOOTHD)
-;
-; Disk parameters: 
-; HD drive 3" 
-TRKS    EQU     80    ;Number of tracks
-SPT     EQU     18    ;Sectors/track
-HEADS   EQU     2     ;Number of heads 
-NFAT    EQU     2     ; Number of FATS
-SECROOT EQU     0EH   ; Sectors for root directory entry.
-SECFAT  EQU     9     ; Sectors per FAT
-MEDIA   EQU    0F0H   ; Descriptor byte. Anachronism.
-
-%if 0
-; HD drive 5" 
-TRKS    EQU     80      ;Number of tracks
-SPT     EQU     15      ;Sectors/track
-HEADS   EQU     2       ;Number of heads 
-NFAT    EQU     2       ; Number of FATS
-SECROOT EQU     ?       ; Sectors for root directory entry.
-SECFAT  EQU     ?       ; Sectors per FAT
-MEDIA   EQU    F0H      ; Descriptor byte. Anachronism.
-%endif
-
-; Bios specific equates.
-BOOTADDRESS     EQU     07C00H ; PC jumps to 0:7C00 to boot
-SPDRV   EQU     HEADS*TRKS*SPT    ; sectors/drive
-        ; Skip boot sector,fats and root dir and first sector of file.
-SECSTRT EQU     1+NFAT*SECFAT + SECROOT + 1
-%if 0
-; Alternative if the disk need not be recognized by MSDOS
-; Usable for generating a bootable floppy simple.
-SECSTRT EQU     1
-%endif
-; END  OF PHYSICAL DISK PARAMETERS
-
-;
 BMASK   EQU     80000000H
 
 ; ########################################################################################
@@ -155,7 +111,7 @@ BMASK   EQU     80000000H
 ; with a value of 4 instead of currentlocation + 4. These things, along with bizarre behaviour
 ; of colon/no-colon on labels, are sent to try us.
 
-; Initial value of link
+; Initial value of link. Each ENTRY links to the previous one.
 Link    =     0
 
 ; Code entry (where code follows directly after entry)
@@ -225,36 +181,9 @@ ENDM
 
         ;
 ; ########################################################################################
-;                      BOOTCODE    (optional, always real mode)
+;                      BOOTCODE   
 ; ########################################################################################
 
-; All bootcode must be relocatable and its memory references absolute.
-; Not for the sake of booting, but to allow MSDOS to start the program too. 
-
-        ;    SEGMENT PARA PUBLIC 'CODE'
-        ; CS:;,DS:;,SS:;,ES:;
-    
-
-; ########################################################################################
-;                       ADJUST CODE SEGMENT REGISTER (still real mode)
-; ########################################################################################
-; Required start of .COM program.
-    
-
-; ########################################################################################
-;                       MOVE CODE TO ITS PLACE (still real mode)
-; ########################################################################################
-
-;
-
-; ########################################################################################
-;                       FILL GDT AND SWITCH TO PROTECTED MODE/32 BITS (optional)
-; ########################################################################################
-;
-
-;
-
-;
 
 .stack 4096
 .code
@@ -356,17 +285,7 @@ APUSH:  PUSH    EAX
 ; ######################################################################
 ; NEXT, the Forth address (inner) interpreter.
 
-%if 0
-; In 32 bit versions there may be no jumps to NEXT0 at all 
-; The label NEXT1 is rarely relevant (for _OLDDEBUG_) 
-NEXT0:  LODSD           ;AX <- (IP), IP += 4
-NEXT1:  MOV     EBX,EAX   ; (W) <- (IP)
-
-        JMP      DWORD PTR[EBX]    ; TO `CFA'
-        ;
-%endif
-
-; NEXT macro goes at the end of code words. It is the same code as above.
+; The NEXT macro goes at the end of code words. It is the same code as above.
 
 NEXT    MACRO
         LODSD 
@@ -6033,7 +5952,7 @@ INITDP:                 ;  It may be that it is not consecutive with TASK
 
 ; Allow 1MB (1048576) for dictionary growth.
        BYTE        1048576 - FORTHSIZE - RTS - US - BUFFERSIZE DUP(?)
-INITS0:                         ; Growns down
+INITS0:                         ; Grows down
 STRTIB: 
         BYTE        RTS DUP(?)            ; Start return stack area
 INITR0:                         ; Grows down
@@ -6042,58 +5961,6 @@ STRUSA:
 BUF1:   
         BYTE        BUFFERSIZE DUP(?)     ; FIRST DISK BUFFER
 EM:
-;
-;
-
- ;    ENDS
-        ;
-%if 0
-
-  MISC. NOTES AND SCATTERED THOUGHTS
-
-- This source will assemble on all platforms where NASM is
-  available by the command line:
-  nasm -fbin fig86.asm -o fig86.com
-  (There may be exceptions for special configurations.)
-  The result will run on MSDOS systems only, or stand alone
-  an an IBM-compatible computer
-
-- In a MODERN version <ctrl> P  will echo all output to the
-  printer. This is not programmed here, but a feature of the OS.
-  The operating system may make available a command history too.
-
-- Use the installation manual.  Descriptions for all FIG
-  words are given.  Those ERROR messages you get in FORTH
-  correspond to the relative line numbers in blocks
-  4 and 5 of the installation manual's model.
-
-- Remember that all the FORTH words in this version are
-  upper case letters.  Use <CAPS LOCK> when in FORTH.
-
-- Changing variable EM will allow you to create a larger
-  dictionary space.  However I suggest you develop and
-  DEBUG with EM set to 4000H.  Setting it to a larger value
-  will result in a larger FORTH.EXE file, and you may
-  need to run EXE2BIN ( Chap 10, DOS 2.0 ) to get enough
-  disk space.  Once you are satisfied with what you have,
-  then by all means take that extra memory.
-
-- Reading the section on batch files may speed up your
-  developement.  See the example files that came with
-  the Macro Assembler.
-
-- Subscribe to FORTH Dimensions.  It is a valuable source
-  of system and application ideas.  Talking with fellow
-  FORTH programmers is sure to stir up some exciting ideas.
-  Consider joining a FIG chapter.  See the back of FORTH
-  Dimensions for more info.
-
-- <Ctrl-Break> will vector to WARM start ( Label WRM: )
-
-%endif
-
-; Define the entry point, not valid for auto booting.
-        ;     ORIG
 
 figforth endp
 end 
