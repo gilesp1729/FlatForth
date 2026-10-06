@@ -148,6 +148,8 @@
       <AssembledCodeListingFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">forth32.lst</AssembledCodeListingFile>
       <AssembledCodeListingFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">forth32.lst</AssembledCodeListingFile>
       <AssembledCodeListingFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">forth32.lst</AssembledCodeListingFile>
+      <GeneratePreprocessedSourceListing Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</GeneratePreprocessedSourceListing>
+      <GeneratePreprocessedSourceListing Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</GeneratePreprocessedSourceListing>
     </MASM>
   </ItemGroup>
   <ItemGroup>
