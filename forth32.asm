@@ -3455,8 +3455,6 @@ IDDOT      DD     DOCOL
         DD      LAND
         DD      EMIT
         DD      SPACE
-        DD      SPACE
-        DD      SPACE
         DD      SEMIS
 ;
 
@@ -4965,53 +4963,8 @@ TICK      DD     DOCOL
         DD      SEMIS
 ;
 
-;  ****************** 
-;  *   FORGET-VOC   *
-;  ****************** 
-;  
-%if 1
-        ENTRY   FORGV, 80H+10, "FORGET-VO", "C"+80H, DOCOL
-%else
-N_FORGV      DB   80H+10
-         DB      "FORGET-VO"
-         DB     "C"+80H
-         DD    N_TICK
-FORGV      DD     DOCOL
-%endif                           
-        DD      TDUP
-        DD      ULESS
-        DD      ZBRAN
-        DD      FORGV1-$
-;        Vocabulary itself is also forgotten.
-        DD      FORTH
-        DD      DEFIN
-        DD      FETCH     ; Unlink by linking next vocabulary.
-        DD      VOCL
-        DD      STORE
-        DD      BRAN
-        DD      FORGV2-$
-FORGV1: ;  Forget part of contents.
-        DD      SWAP
-        DD      TOR
-        DD      LIT,2+(CW*1)
-        DD      LSUB    ;  TOS is now phantom NFA.
-        DD      LDUP
-FORGV3:
-        DD      PFA
-        DD      LFA
-        DD      FETCH
-        DD      LDUP
-        DD      RR
-        DD      ULESS
-        DD      ZBRAN
-        DD      FORGV3-$
-        DD      SWAP
-        DD      TWOP    ;  Skip over " "-name.
-        DD      STORE
-        DD      FROMR
-FORGV2      DD      SEMIS
-;
-
+; The original figForth FORGET code. The 2.148 version did not work any better,
+; so cleaned it out and restored the DP resetting.
 ;  ************** 
 ;  *   FORGET   *
 ;  ************** 
@@ -5041,9 +4994,13 @@ FORG      DD     DOCOL
         DD      QERR
         DD      LDUP
         DD      NFA
-        DD      LIT,FORGV
-        DD      FORV
-        DD      DROP
+        DD      LDP
+        DD      STORE
+        DD      LFA
+        DD      FETCH
+        DD      CONT
+        DD      FETCH
+        DD      STORE
         DD      SEMIS
 ;
 
@@ -5600,100 +5557,45 @@ UDOT      DD     DOCOL
         DD      SEMIS
 ;
 
-;  ***************** 
-;  *   FOR-WORDS   *
-;  ***************** 
-;  
-%if 1
-        ENTRY   FORW, 80H+9, "FOR-WORD", "S"+80H, DOCOL
-%else
-N_FORW      DB   80H+9
-         DB      "FOR-WORD"
-         DB     "S"+80H
-         DD    N_UDOT
-FORW      DD     DOCOL
-%endif                           
-        DD      TOR
+;
+; The original figForth VLIST code
+; *************
+; *   VLIST   *
+; *************
+;
+        ENTRY   VLIST, 80H+5, "VLIS", "T"+80H, DOCOL
+        DD      LIT
+        DD      80H
+        DD      LOUT
+        DD      STORE
         DD      CONT
         DD      FETCH
         DD      FETCH
-        DD      TOR
-FORW1      DD      FROMR
-        DD      RR
-        DD      OVER
+VLIS1   DD      LOUT            ; BEGIN
+        DD      FETCH
+        DD      CSLL
+        DD      GREAT
+        DD      ZBRAN            ; IF
+        DD      VLIS2-$
+        DD      CR
+        DD      ZERO
+        DD      LOUT
+        DD      STORE             ; ENDIF
+VLIS2   DD      LDUP
+        DD      IDDOT
+        DD      SPACE
+        DD      SPACE
         DD      PFA
         DD      LFA
         DD      FETCH
-        DD      TOR
-        DD      EXEC
-        DD      RR
+        DD      LDUP
         DD      ZEQU
-        DD      ZBRAN
-        DD      FORW1-$
-        DD      FROMR
-        DD      DROP
-        DD      FROMR
-        DD      DROP
-        DD      SEMIS
-;
-
-;  **************** 
-;  *   FOR-VOCS   *
-;  **************** 
-;  
-%if 1
-        ENTRY   FORV, 80H+8, "FOR-VOC", "S"+80H, DOCOL
-%else
-N_FORV      DB   80H+8
-         DB      "FOR-VOC"
-         DB     "S"+80H
-         DD    N_FORW
-FORV      DD     DOCOL
-%endif                           
-        DD      TOR
-        DD      VOCL
-        DD      FETCH
-        DD      TOR
-FORV1      DD      FROMR
-        DD      RR
-        DD      OVER
-        DD      FETCH
-        DD      TOR
-        DD      EXEC
-        DD      RR
-        DD      ZEQU
-        DD      ZBRAN
-        DD      FORV1-$
-        DD      FROMR
-        DD      DROP
-        DD      FROMR
+        DD      QTERM
+        DD      LOR
+        DD      ZBRAN             ; UNTIL
+        DD      VLIS1-$
         DD      DROP
         DD      SEMIS
-;
-
-;  ************* 
-;  *   VLIST   *
-;  ************* 
-;  
-%if 1
-        ENTRY   VLIST, 80H+5, "VLIS", "T"+80H, DOCOL
-%else
-N_VLIST      DB   80H+5
-         DB      "VLIS"
-         DB     "T"+80H
-         DD    N_FORV
-VLIST      DD     DOCOL
-%endif                           
-        DD      CSLL
-        DD      LOUT                    ; ### TODO: nobody is looking at OUT anyway?
-        DD      STORE
-        DD      LIT, IDDOT
-        DD      FORW
-        DD      SEMIS
-;
-;
-;
-
 
 ;  *********** 
 ;  *   BYE   *
@@ -5840,69 +5742,9 @@ DOTCPU      DD     DOCOL
         DD      BASE,STORE
         DD      SEMIS
 ;
-;           CODE LEVEL "MATCH" DEFINITIONS
-;
-
-;  ************* 
-;  *   MATCH   *
-;  ************* 
-;  
-%if 1
-        CODE_ENTRY   MATCH, 80H+5, "MATC", "H"+80H
-%else
-N_MATCH      DB   80H+5
-         DB      "MATC"
-         DB     "H"+80H
-         DD    N_DOTCPU
-MATCH      DD     $+CW
-%endif                           
-        MOV     EDI,ESI   ; SAVE IP
-        POP     ECX      ; STRING COUNT
-        POP     EBX      ;STRING ADDR
-        POP     EDX      ;BYTES LEFT TO SEARCH
-        POP     ESI      ;CURSOR ADDR
-        PUSH    ESI      ;SAVE COPY
-MAT1:   LODSB           ;GET FIRST BYTE
-        CMP     AL,[EBX] ;MATCH?
-        JNZ     MAT3    ;NO
-        PUSH    EBX      ;SAVE STRING ADDR
-        PUSH    ECX      ; &   STRING COUNT
-        PUSH    ESI      ; &   CURSOR ADDR
-; TRY TO MATCH REMAINING CHARS IN STRING
-;
-MAT2:   DEC     ECX      ;STR. COUNT -1
-        JZ      MATCHOK ;EXIT - MATCH FOUND
-        DEC     EDX      ;BYTES LEFT -1
-        JZ      NOMATCH ;EXIT - NO MATCH
-        INC     EBX      ;NEXT STR CHAR ADDR
-        LODSB           ;GET FIRST BYTE
-        CMP     AL,[EBX] ;MATCH?
-        JZ      MAT2    ;YES, GET MORE
-; NO MATCH YET
-        POP     ESI
-        POP     ECX
-        POP     EBX      ;RESTORE POINTERS
-MAT3:   DEC     EDX      ;BYTE LEFT COUNT -1
-        JNZ     MAT1    ;START OVER
-        JMP     MAT4    ;EXIT...NO MATCH
-MATCHOK:
-NOMATCH:
-        POP     ECX      ;ADJUST STACK
-        POP     ECX      ;FOR EXIT
-        POP     ECX
-; EXIT HERE: DX = TRUE/FALSE FLAG ( 0=NO MATCH)
-;
-MAT4:   MOV     EAX,ESI   ;NEW CURSOR ADDR
-        POP     ESI      ;GET STARTING ADDR
-        SUB     EAX,ESI   ;COMPUTE CURSOR OFFSET
-        MOV     ESI,EDI   ;GET BACK UP
-        PUSH    EDX
-        PUSH    EAX
-        NEXT
-        ;
 ;
 ;
-;**** LAST DICTIONARY WORD ****
+;**** LAST DICTIONARY WORD in the FORTH vocabulary ****
 
 ;  ************ 
 ;  *   TASK   *
