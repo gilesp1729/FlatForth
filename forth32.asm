@@ -8,7 +8,7 @@
 ;
         ;  66,106
  ;   GENERIC FORTH FOR 8086 $Revision: 2.148 $
- ;
+ ; 
 ; NASM version of FIG FORTH created by M4 from generic listing.
 ;
 %if 0
@@ -1511,7 +1511,7 @@ DOUSE:  MOV     EBX,[EBX+(CW*1)] ;PFA
 ;
 
 ;  *********** 
-;  *   BLK   *
+;  *   BLK   *   ### TODO: BLK contains the buffer address for an open file, or zero for terminal. Buffer has file ID in it.
 ;  *********** 
 ;  
         ENTRY    BLK, 80H+3, "BL", "K"+80H, DOUSE
@@ -2142,7 +2142,7 @@ DOTQ2      DD      SEMIS
         DD      ZBRAN
         DD      NULL1-$ ; IF
         DD      ONE
-        DD      BLK
+        DD      BLK             ; ### TODO: Read the next line from the file. Buffer addr (BLK) stays same. If EOF, pop off R-stack and return. 
         DD      PSTOR
         DD      ZERO
         DD      LIN
@@ -2243,7 +2243,7 @@ NULL3      DD      SEMIS
         DD      WORD1-$ ; IF
         DD      BLK
         DD      FETCH
-        DD      BLOCK
+        DD      BLOCK           ; #### TODO: REmove BLOCK call. BLK provids the buffer addr for the open file.
         DD      BRAN
         DD      WORD2-$  ; ELSE
 WORD1      DD      TIB
@@ -3040,7 +3040,7 @@ MAX1      DD      DROP
         DD      BSCR
         DD      STAR
         DD      PLUS
-        DD      BLOCK
+        DD      BLOCK   ; ### TODO: Wht's going on here?
         DD      PLUS
         DD      LIT,64
         DD      SEMIS
@@ -3209,7 +3209,7 @@ PBUF1      DD      LDUP,PREV
 ;
 
 ;  ************** 
-;  *   UPDATE   *
+;  *   UPDATE   * #### Rdeundant.
 ;  ************** 
 ;  
         ENTRY   UPDAT, 80H+6, "UPDAT", "E"+80H, DOCOL
@@ -3265,7 +3265,7 @@ BUFF2      DD      RR,STORE
 ;
 
 ;  ************* 
-;  *   BLOCK   *
+;  *   BLOCK   * ### TODO: REmove this. 
 ;  ************* 
 ;  
         ENTRY   BLOCK, 80H+5, "BLOC", "K"+80H, DOCOL
@@ -3316,7 +3316,7 @@ FLUS1      DD      ZERO,BUFFE
 ;
 
 ;  ************ 
-;  *   LOAD   *
+;  *   LOAD   * #### TODO: INCLUDE same as this, but opens file, assigns buffer, and reads firts line. Stores FID in buffer an IN and BLK (buffr addr) on R-stack.
 ;  ************ 
 ;  
         ENTRY   LOAD, 80H+4, "LOA", "D"+80H, DOCOL
@@ -3337,7 +3337,7 @@ SCREEN      DD      FROMR,LIN
 ;
 
 ;  *********** 
-;  *   -->   *
+;  *   -->   * ####TODO: This is a no-operation with files.. SHould be removed.
 ;  *********** 
 ;  
         ENTRY   ARROW, 80H+3+40H, "--", ">"+80H, DOCOL
@@ -3467,7 +3467,7 @@ EMIT      DD     DOCOL
 
 
 ;  ****************** 
-;  *   BLOCK-FILE   *
+;  *   BLOCK-FILE   * ### TODO: Redundant.
 ;  ****************** 
 ;  
         ENTRY   BLFL, 80H+10, "BLOCK-FIL", "E"+80H, DOVAR
@@ -3478,7 +3478,7 @@ EMIT      DD     DOCOL
         BYTE    254-9 DUP(?)               ; Allow for some path
 
 ;  ******************** 
-;  *   BLOCK-HANDLE   *
+;  *   BLOCK-HANDLE   * ### TODO: Redundant.
 ;  ******************** 
 ;  
         ENTRY   BHAN, 80H+12, "BLOCK-HANDL", "E"+80H, DOVAR
@@ -3495,7 +3495,7 @@ EMIT      DD     DOCOL
         DD      -1
 
 ;  ****************** 
-;  *   BLOCK-INIT   *
+;  *   BLOCK-INIT   * ### TODO: Redundant.
 ;  ****************** 
 ;  
         CODE_ENTRY   BLINI, 80H+10, "BLOCK-INI", "T"+80H
@@ -3512,7 +3512,7 @@ EMIT      DD     DOCOL
 ;
 
 ;  ****************** 
-;  *   BLOCK-EXIT   *
+;  *   BLOCK-EXIT   * ### TODO: Redundant.
 ;  ****************** 
 ;  
         CODE_ENTRY   BLEXI, 80H+10, "BLOCK-EXI", "T"+80H
@@ -3523,7 +3523,7 @@ EMIT      DD     DOCOL
 
 ;      ( ADDR  BLK#  FLAG (0=W, 1=R)
 ;  *********** 
-;  *   R/W   *
+;  *   R/W   * ### TODO: Redundant. Separate redaing from writing and fix up the C glue.
 ;  *********** 
 ;  
         CODE_ENTRY   RSLW, 80H+3, "R/", "W"+80H

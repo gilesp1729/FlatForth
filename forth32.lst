@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/06/26 20:50:52
+Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/09/26 12:34:21
 forth32.asm						     Page 1 - 1
 
 
@@ -12,7 +12,7 @@ forth32.asm						     Page 1 - 1
 				;
 				        ;  66,106
 				 ;   GENERIC FORTH FOR 8086 $Revision: 2.148 $
-				 ;
+				 ; 
 				; NASM version of FIG FORTH created by M4 from generic listing.
 				;
 				%if 0
@@ -1500,7 +1500,7 @@ forth32.asm						     Page 1 - 1
  000006E1  00000DBB R		        DD      SMUDG
  000006E5  00000A17 R		        DD      COMMA
  000006E9  00000E23 R		        DD      PSCOD
- 000006ED  8B 43 04DOCON:  MOV     EAX,[EBX+(CW*1)] ;GET DATA FROM PFA
+ 000006ED  8B 43 04		DOCON:  MOV     EAX,[EBX+(CW*1)] ;GET DATA FROM PFA
  000006F0  50			        PUSH    EAX
 				        NEXT
  000006F1  AD		     1	        LODSD 
@@ -2066,7 +2066,7 @@ forth32.asm						     Page 1 - 1
 				;
 
 				;  *********** 
-				;  *   BLK   *
+				;  *   BLK   *   ### TODO: BLK contains the file ID of an open file. Needto get from there to a buffer address.
 				;  *********** 
 				;  
 				        ENTRY    BLK, 80H+3, "BL", "K"+80H, DOUSE
@@ -2969,7 +2969,7 @@ forth32.asm						     Page 1 - 1
  0000100D  0000005E R		        DD      ZBRAN
  00001011  00000054		        DD      NULL1-$ ; IF
  00001015  00000757 R		        DD      ONE
- 00001019  00000996 R		        DD      BLK
+ 00001019  00000996 R		        DD      BLK             ; ### TODO: Read the next line from the file. Buffer stays same. If EOF, pop off R-stack and return. 
  0000101D  0000058D R		        DD      PSTOR
  00001021  00000745 R		        DD      ZERO
  00001025  00000976 R		        DD      LIN
@@ -2983,7 +2983,7 @@ forth32.asm						     Page 1 - 1
  00001045  00000484 R		        DD      ZEQU
  00001049  0000005E R		        DD      ZBRAN
  0000104D  00000010		        DD      NULL2-$ ; IF
- 00001051  00000CAF R        DD      QEXEC
+ 00001051  00000CAF R		        DD      QEXEC
  00001055  00000463 R		        DD      FROMR
  00001059  0000053A R		        DD      DROP    ; ENDIF
  0000105D 00000047 R		NULL2      DD      BRAN
@@ -3106,7 +3106,7 @@ forth32.asm						     Page 1 - 1
  00001124  00000018		        DD      WORD1-$ ; IF
  00001128  00000996 R		        DD      BLK
  0000112C  000005B8 R		        DD      FETCH
- 00001130  00001CE6 R		        DD      BLOCK
+ 00001130  00001CE6 R		        DD      BLOCK           ; #### TODO: This provids the buffer addr for the open file.
  00001134  00000047 R		        DD      BRAN
  00001138  0000000C		        DD      WORD2-$  ; ELSE
  0000113C 0000084E R		WORD1      DD      TIB
@@ -4449,7 +4449,7 @@ forth32.asm						     Page 1 - 1
 				;
 
 				;  ************ 
-				;  *   LOAD   *
+				;  *   LOAD   * #### TODO: INCLUDE same as this, but opens file and reads firts line. Stores FID and buffr addr on R-stack.
 				;  ************ 
 				;  
 				        ENTRY   LOAD, 80H+4, "LOA", "D"+80H, DOCOL
@@ -4483,7 +4483,7 @@ forth32.asm						     Page 1 - 1
 				;
 
 				;  *********** 
-				;  *   -->   *
+				;  *   -->   * ####TODO: This is a no-operation. SHould be removed.
 				;  *********** 
 				;  
 				        ENTRY   ARROW, 80H+3+40H, "--", ">"+80H, DOCOL
@@ -4636,7 +4636,7 @@ forth32.asm						     Page 1 - 1
 
 
 				;  ****************** 
-				;  *   BLOCK-FILE   *
+				;  *   BLOCK-FILE   * ### TODO: Redundant.
 				;  ****************** 
 				;  
 				        ENTRY   BLFL, 80H+10, "BLOCK-FIL", "E"+80H, DOVAR
@@ -4656,7 +4656,7 @@ forth32.asm						     Page 1 - 1
 	   ]
 
 				;  ******************** 
-				;  *   BLOCK-HANDLE   *
+				;  *   BLOCK-HANDLE   * ### TODO: Redundant.
 				;  ******************** 
 				;  
 				        ENTRY   BHAN, 80H+12, "BLOCK-HANDL", "E"+80H, DOVAR
@@ -5592,7 +5592,7 @@ forth32.asm						     Page 1 - 1
 
  00100000			figforth endp
 				end 
-Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/06/26 20:50:52
+Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/09/26 12:34:21
 forth32.asm						     Symbols 2 - 1
 
 
