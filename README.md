@@ -16,9 +16,7 @@ Changes:
 
 Works in progress or contemplated:
 
-* 
-
-* INCLUDE source from files, perhaps removing the old block/screen stuff altogether. Editing source code in blocks is for extreme masochists these days.
+* INCLUDE source from files, perhaps removing the old block/screen stuff altogether. Editing source code in blocks is for extreme masochists these days. This is the filesource branch.
 
 * Some degree of integration with VSCode, initially just running terminal I/O to VSCode's terminal window, and later some debugging aids (tracing, breakpoints, watchpoints, and so on)
 
