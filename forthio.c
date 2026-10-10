@@ -76,50 +76,46 @@ int c_expect(int count, char buffer[])
   return count;     /* Ignored by fig-Forth, for ANSI ACCEPT you need the actual no of chars read.*/
 }
 
-FILE *block_fid = NULL;
 
-/* Open out block file with the Forth name `filename' */
-/* `filename' is a stored Forth string.               */
-int c_block_init( int count, char filename[] )
+/* Open a file for reading, with the Forth name `filename'  */
+/* `filename' is a stored Forth string.                     */
+/* Returns fileID or 0 if failed.                           */
+FILE* c_file_open( int count, char filename[] )
 {
     int rc;
+    FILE* fid;
 
   /* turn into c-string */
   char zname[MAX_COMMAND];
-  strncpy_s(zname, MAX_COMMAND, filename, 10);
+  strncpy_s(zname, MAX_COMMAND, filename, count);
   zname[count] = 0;
 
-  if (block_fid != NULL)
-    fclose(block_fid);    
-  rc = fopen_s(&block_fid, zname, "r+");
+  rc = fopen_s(&fid, zname, "r");
 
-  return block_fid > 0 ? 0 : rc;
+  return rc == 0 ? fid : 0;
 }       
 
-/* Close block file earlier opened with c_block_init */
-int c_block_exit( void )
+/* Close file earlier opened with c_file_open */
+int c_file_close(FILE* fid)
 {
-  int rc = fclose( block_fid );
-  block_fid = NULL;
-  return rc;
+    return fclose(fid);
 }
 
-/* RSLW */
-int c_readwrite(int control, int block, void *pmem )
+/* Read and write (NOTE: open for writing not yet imp */
+int c_file_read(void* pmem, int size, FILE* fid)
 {
-
-    if (block_fid == 0)
+    if (fid == 0)
         return -1;
 
-    fseek(block_fid, block * KBBUF, SEEK_SET);
-    if (control)    // Reading
-    {
-        return fread_s(pmem, KBBUF, KBBUF, 1, block_fid);
-    }
-    else
-    {               // Writing
-        return fwrite(pmem, KBBUF, 1, block_fid);
-    }
+    return fread_s(pmem, size, size, 1, fid);
+}
+
+int c_file_write(void* pmem, int size, FILE* fid)
+{
+    if (fid == 0)
+        return -1;
+
+    return fwrite(pmem, size, 1, fid);
 }
 
 /* EXIT (BYE) */

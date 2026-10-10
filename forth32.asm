@@ -94,7 +94,7 @@ FF      EQU     0CH     ; FORM FEED
 ;
 ;      MEMORY + I/O CONSTANTS
 ;
-NBUF    EQU     2       ; NO. OF BUFFERS AKA SCREENS 
+NBUF    EQU     8       ; NO. OF BUFFERS
 KBBUF   EQU     1024    ;DATA BYTES PER DISK BUFFER
 US      EQU     100H     ; USER VARIABLE SPACE
 
@@ -171,9 +171,10 @@ ENDM
         extern  c_expect:PROC
         extern  c_key:PROC
         extern  c_qterminal:PROC
-        extern  c_readwrite:PROC
-        extern  c_block_exit:PROC
-        extern  c_block_init:PROC
+        extern  c_file_open:PROC
+        extern  c_file_close:PROC
+        extern  c_file_read:PROC
+        extern  c_file_write:PROC
         extern  c_exit:PROC
  ;
 
@@ -1287,7 +1288,7 @@ DOUSE:  MOV     EBX,[EBX+(CW*1)] ;PFA
 ;
 
 ;  ************* 
-;  *   B/SCR   *
+;  *   B/SCR   * #### TODO: Redundant. "screens" no longer exist.
 ;  ************* 
 ;  
         ENTRY    BSCR, 80H+5, "B/SC", "R"+80H, DOCON
@@ -2793,9 +2794,6 @@ CLD1:
         DD      LIT,FORTH+2+(CW*2)
         DD      STORE
 ;
-
-        DD      BLINI
-;
         DD      ABORT
 ;
         ;
@@ -3040,7 +3038,7 @@ MAX1      DD      DROP
         DD      BSCR
         DD      STAR
         DD      PLUS
-        DD      BLOCK   ; ### TODO: Wht's going on here?
+        DD      BLOCK   ; ### TODO: Source for error messages is screen 4 (see MESSAGE) Use a file ultimately..
         DD      PLUS
         DD      LIT,64
         DD      SEMIS
@@ -3203,10 +3201,27 @@ PSTO      DD     $+CW
         DD      ZBRAN
         DD      PBUF1-$
         DD      DROP,FIRST
-PBUF1      DD      LDUP,PREV
+PBUF1      DD      LDUP,PREV            ; ### TODO: Get rid of PREV and all its ilk
         DD      FETCH,LSUB
         DD      SEMIS
 ;
+
+; ***************
+; *   BUFFERS   *
+; ***************
+; Print the buffer addresses and the FID (if any) using the buffer.
+;
+        ENTRY   BUFFS, 80H+7, "BUFFER", "S"+80H, DOCOL
+
+        DD      HEX
+        DD      FIRST
+        DD      NOBUF, ZERO, XDO
+BUFS1   DD      LDUP, LDUP, DOT, FETCH, DOT, CR
+        DD      PBUF, DROP
+        DD      XLOOP
+        DD      BUFS1-$
+        DD      DROP
+        DD      SEMIS
 
 ;  ************** 
 ;  *   UPDATE   * #### Rdeundant.
@@ -3236,9 +3251,19 @@ PBUF1      DD      LDUP,PREV
 ;
 
 ;  ************** 
-;  *   BUFFER   *
+;  *   BUFFER   *  #### TODO: Rewrite this completely.
 ;  ************** 
-;  
+;  fid -- buffer addr
+;  Search the buffers for one matching the given FID. If none is found,
+;  plant the FID in the next free one and return that. If all buffers are
+;  exhausted, return NULL.
+;
+;  TODO: Write a new word that check for a buffer with the given FID.
+;  - check for the FID, if that's not found:
+;  - check for zero, if found, store FID, if not:
+;  - return zero (all buffers in use)
+
+
         ENTRY   BUFFE, 80H+6, "BUFFE", "R"+80H, DOCOL
                            
 ; NOTE: THIS WORD WON'T WORK IF ONLY USING SINGLE BUFFER
@@ -3301,7 +3326,7 @@ BLOC1      DD      FROMR,DROP
 ;
 
 ;  ************* 
-;  *   FLUSH   *
+;  *   FLUSH   * #### TODO: Redundant.
 ;  ************* 
 ;  
         ENTRY   FLUSH, 80H+5, "FLUS", "H"+80H, DOCOL
@@ -3313,7 +3338,25 @@ FLUS1      DD      ZERO,BUFFE
         DD      XLOOP
         DD      FLUS1-$
         DD      SEMIS
+
 ;
+;  ************
+;  * OPENFILE *
+;  ************
+;  -- bufadr
+;  Takes space-delimited filename from input stream, opens it for read, and
+;  returns a buffer address for it storing the FID at the head of the buffer.
+;
+        ENTRY OPENF, 80H+8, "OPENFIL", "E"+80H, DOCOL
+
+        DD      BLS, LWORD
+        DD      HERE, LDUP, ONEP        ; push string address HERE+1
+        DD      SWAP, CFET              ; push count
+        DD      FOPEN                   ; open the file, returning the FID
+       ; DD      BUFFE                   ; Return a buffer addr for the FID
+        DD      SEMIS
+
+
 
 ;  ************ 
 ;  *   LOAD   * #### TODO: INCLUDE same as this, but opens file, assigns buffer, and reads firts line. Stores FID in buffer an IN and BLK (buffr addr) on R-stack.
@@ -3336,55 +3379,7 @@ SCREEN      DD      FROMR,LIN
         DD      SEMIS
 ;
 
-;  *********** 
-;  *   -->   * ####TODO: This is a no-operation with files.. SHould be removed.
-;  *********** 
-;  
-        ENTRY   ARROW, 80H+3+40H, "--", ">"+80H, DOCOL
-                           
-        DD      QLOAD
-        DD      ZERO
-        DD      LIN
-        DD      STORE
-        DD      BSCR
-        DD      BLK
-        DD      FETCH
-        DD      OVER
-        DD      LMOD
-        DD      LSUB
-        DD      BLK
-        DD      PSTOR
-        DD      SEMIS
-        ;
-;
-;
 
-
-%if 0
-; ################## NOT USED ################
-;  ************* 
-;  *   LINOS   *
-;  ************* 
-;  
-N_LINOS      DB   80H+5
-         DB      "LINO"
-         DB     "S"+80H
-         DD    N_ARROW
-LINOS      DD     $+CW
-                           
-        POP     EAX        ; Function number
-        POP     EDX        ; Third parameter, if any
-        POP     ECX        ; Second parameter, if any
-        POP     EBX        ; First parameter.
-        INT     80H        ; Generic call on LINUX 
-        PUSH    EAX
-        LODSD                 ; NEXT
-        MOV     EBX,EAX                  
-        JMP      DWORD PTR[EBX]        ; Positive means okay. Negative means -errno.
-;
-%endif
-;
-        ;
 ;------------------------------------
 ;       SYSTEM DEPENDANT CHAR I/O
 ;------------------------------------
@@ -3467,26 +3462,6 @@ EMIT      DD     DOCOL
 
 
 ;  ****************** 
-;  *   BLOCK-FILE   * ### TODO: Redundant.
-;  ****************** 
-;  
-        ENTRY   BLFL, 80H+10, "BLOCK-FIL", "E"+80H, DOVAR
-                           
-        
-        DB      10
-        DB      "BLOCKS.BLK"
-        BYTE    254-9 DUP(?)               ; Allow for some path
-
-;  ******************** 
-;  *   BLOCK-HANDLE   * ### TODO: Redundant.
-;  ******************** 
-;  
-        ENTRY   BHAN, 80H+12, "BLOCK-HANDL", "E"+80H, DOVAR
-                           
-        DD      -1
-
-
-;  ****************** 
 ;  *   DISK-ERROR   *
 ;  ****************** 
 ;  
@@ -3495,29 +3470,27 @@ EMIT      DD     DOCOL
         DD      -1
 
 ;  ****************** 
-;  *   BLOCK-INIT   * ### TODO: Redundant.
+;  *   FILE-OPEN    *
 ;  ****************** 
 ;  
-        CODE_ENTRY   BLINI, 80H+10, "BLOCK-INI", "T"+80H
+        CODE_ENTRY   FOPEN, 80H+9, "FILE-OPE", "N"+80H
 
         XOR     EAX,EAX
-        MOV     AL,BYTE PTR[(BLFL+CW)]
-        LEA     EBX,(BLFL+CW)+1
-        PUSH    EBX
-        PUSH    EAX
-        CALL    c_block_init
-        MOV     [(DERR+CW)],EAX
-        LEA     ESP,[ESP+(CW*2)]    ; remove input
+        CALL    c_file_open             ; count then filename on stack
+        LEA     ESP,[ESP+(CW*2)]        ; remove input
+        PUSH    EAX                     ; push returned FID
         NEXT
 ;
 
 ;  ****************** 
-;  *   BLOCK-EXIT   * ### TODO: Redundant.
+;  *   FILE-CLOSE   *
 ;  ****************** 
 ;  
-        CODE_ENTRY   BLEXI, 80H+10, "BLOCK-EXI", "T"+80H
+        CODE_ENTRY   FCLOSE, 80H+10, "FILE-CLOS", "E"+80H
                            
-        CALL    c_block_exit
+        CALL    c_file_close            ; fid on stack, returns rc on stack
+        LEA     ESP,[ESP+(CW*2)]        ; remove input
+        PUSH    EAX
         NEXT
 ;
 
@@ -3528,7 +3501,7 @@ EMIT      DD     DOCOL
 ;  
         CODE_ENTRY   RSLW, 80H+3, "R/", "W"+80H
                            
-        CALL c_readwrite
+     ;   CALL c_readwrite
         MOV     [(DERR+CW)],EAX
         LEA     ESP,[ESP+(CW*3)]    ; remove input
         NEXT

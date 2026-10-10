@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/09/26 12:34:21
+Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/10/26 11:16:02
 forth32.asm						     Page 1 - 1
 
 
@@ -43,7 +43,7 @@ forth32.asm						     Page 1 - 1
 				;
 				;      MEMORY + I/O CONSTANTS
 				;
- = 00000002			NBUF    EQU     2       ; NO. OF BUFFERS AKA SCREENS 
+ = 00000008			NBUF    EQU     8       ; NO. OF BUFFERS
  = 00000400			KBBUF   EQU     1024    ;DATA BYTES PER DISK BUFFER
  = 00000100			US      EQU     100H     ; USER VARIABLE SPACE
 
@@ -120,9 +120,10 @@ forth32.asm						     Page 1 - 1
 				        extern  c_expect:PROC
 				        extern  c_key:PROC
 				        extern  c_qterminal:PROC
-				        extern  c_readwrite:PROC
-				        extern  c_block_exit:PROC
-				        extern  c_block_init:PROC
+				        extern  c_file_open:PROC
+				        extern  c_file_close:PROC
+				        extern  c_file_read:PROC
+				        extern  c_file_write:PROC
 				        extern  c_exit:PROC
 				 ;
 
@@ -400,16 +401,16 @@ forth32.asm						     Page 1 - 1
  00000120  0E			        DB      0EH     ; VERSION ATTRIBUTES
  00000121  00000000		        DD 0   ; Fill version info up to two cells. 
  00000125			USINI:
- 00000125  000027A4 R		        DD      N_TASK ; FIRST DEFINITION 0 
- 00000129  000FF6F0 R		        DD      STRUSA  ; INIT (U0) USER AREA POINTER 1
+ 00000125  000026AB R		        DD      N_TASK ; FIRST DEFINITION 0 
+ 00000129  000FDEC0 R		        DD      STRUSA  ; INIT (U0) USER AREA POINTER 1
  0000012D  00000008		        DD      BSIN    ; RUBOUT: get rid of latest char 2
- 00000131  000EF6F0 R		        DD      INITS0  ; INIT (S0)         3
- 00000135  000FF6F0 R		        DD      INITR0  ; INIT (R0)         4
- 00000139  000EF6F0 R		        DD      STRTIB  ; INIT (TIB)        5
+ 00000131  000EDEC0 R		        DD      INITS0  ; INIT (S0)         3
+ 00000135  000FDEC0 R		        DD      INITR0  ; INIT (R0)         4
+ 00000139  000EDEC0 R		        DD      STRTIB  ; INIT (TIB)        5
  0000013D  00000020		        DD      32      ; INIT (WIDTH)      6
  00000141  00000000		        DD      0       ; INIT (WARNING)      7
- 00000145  000027B5 R		        DD      INITDP  ;      INIT (FENCE)  8
- 00000149  000027B5 R		        DD      INITDP  ;      INIT (DP)     9
+ 00000145  000026BC R		        DD      INITDP  ;      INIT (FENCE)  8
+ 00000149  000026BC R		        DD      INITDP  ;      INIT (DP)     9
  0000014D  000016DB R		        DD      FORTH+2+(CW*2)+(CW*1) ;       INIT (VOC-LINK) 10
 
  00000151  00000000		        DD      0       ; INIT (OFFSET) 
@@ -630,7 +631,7 @@ forth32.asm						     Page 1 - 1
 				                           
  0000030C  0000001E R		        DD      LIT,LF
 	   0000000A
- 00000314  00001EF2 R		        DD      EMIT
+ 00000314  00001F37 R		        DD      EMIT
  00000318  0000041D R		        DD      SEMIS
 				;
 
@@ -1669,7 +1670,7 @@ forth32.asm						     Page 1 - 1
  000007B5  0000079F R	     1	        DD  Link
  000007B9 000006ED R	     1	FIRST   DD  DOCON
 				                           
- 000007BD  000FF7F0 R		        DD      BUF1
+ 000007BD  000FDFC0 R		        DD      BUF1
 				 ;
 				;
 				;
@@ -1718,7 +1719,7 @@ forth32.asm						     Page 1 - 1
 				;
 
 				;  ************* 
-				;  *   B/SCR   *
+				;  *   B/SCR   * #### TODO: Redundant. "screens" no longer exist.
 				;  ************* 
 				;  
 				        ENTRY    BSCR, 80H+5, "B/SC", "R"+80H, DOCON
@@ -2066,7 +2067,7 @@ forth32.asm						     Page 1 - 1
 				;
 
 				;  *********** 
-				;  *   BLK   *   ### TODO: BLK contains the file ID of an open file. Needto get from there to a buffer address.
+				;  *   BLK   *   ### TODO: BLK contains the buffer address for an open file, or zero for terminal. Buffer has file ID in it.
 				;  *********** 
 				;  
 				        ENTRY    BLK, 80H+3, "BL", "K"+80H, DOUSE
@@ -2161,7 +2162,7 @@ forth32.asm						     Page 1 - 1
 				;
 
 				;  ************* 
-				;  *   ALLOT   *
+;  *   ALLOT   *
 				;  ************* 
 				;  
 				        ENTRY    ALLOT, 80H+5, "ALLO", "T"+80H, DOCOL
@@ -2353,7 +2354,7 @@ forth32.asm						     Page 1 - 1
  00000B16 0000069C R	     1	SPACE   DD  DOCOL
 				                           
  00000B1A  00000797 R		        DD      BLS
- 00000B1E  00001EF2 R		        DD      EMIT
+ 00000B1E  00001F37 R		        DD      EMIT
  00000B22  0000041D R		        DD      SEMIS
 				;
 
@@ -2896,7 +2897,7 @@ forth32.asm						     Page 1 - 1
  00000F5A  00000463 R		        DD      FROMR
  00000F5E  000004BB R		        DD      PLUS
  00000F62  0000044C R		        DD      TOR
- 00000F66  00001E86 R		        DD      LTYPE
+ 00000F66  00001ECB R		        DD      LTYPE
  00000F6A  0000041D R		        DD      SEMIS
 				;
 
@@ -2930,7 +2931,7 @@ forth32.asm						     Page 1 - 1
  00000FB5 00001114 R		DOTQ1      DD      LWORD
  00000FB9  000009E7 R		        DD      HERE
  00000FBD  00000EBF R		        DD      COUNT
- 00000FC1  00001E86 R		        DD      LTYPE   ; ENDIF
+ 00000FC1  00001ECB R		        DD      LTYPE   ; ENDIF
  00000FC5 0000041D R		DOTQ2      DD      SEMIS
 				;
 
@@ -2949,7 +2950,7 @@ forth32.asm						     Page 1 - 1
  00000FDB  000005B8 R		        DD      FETCH
  00000FDF  0000001E R		        DD      LIT,RTS/2
 	   00008000
- 00000FE7  00001EA3 R		        DD      EXPEC
+ 00000FE7  00001EE8 R		        DD      EXPEC
  00000FEB  00000745 R		        DD      ZERO
  00000FEF  00000976 R		        DD      LIN
  00000FF3  000005F9 R		        DD      STORE
@@ -2969,7 +2970,7 @@ forth32.asm						     Page 1 - 1
  0000100D  0000005E R		        DD      ZBRAN
  00001011  00000054		        DD      NULL1-$ ; IF
  00001015  00000757 R		        DD      ONE
- 00001019  00000996 R		        DD      BLK             ; ### TODO: Read the next line from the file. Buffer stays same. If EOF, pop off R-stack and return. 
+ 00001019  00000996 R		        DD      BLK             ; ### TODO: Read the next line from the file. Buffer addr (BLK) stays same. If EOF, pop off R-stack and return. 
  0000101D  0000058D R		        DD      PSTOR
  00001021  00000745 R		        DD      ZERO
  00001025  00000976 R		        DD      LIN
@@ -3106,7 +3107,7 @@ forth32.asm						     Page 1 - 1
  00001124  00000018		        DD      WORD1-$ ; IF
  00001128  00000996 R		        DD      BLK
  0000112C  000005B8 R		        DD      FETCH
- 00001130  00001CE6 R		        DD      BLOCK           ; #### TODO: This provids the buffer addr for the open file.
+ 00001130  00001D36 R		        DD      BLOCK           ; #### TODO: REmove BLOCK call. BLK provids the buffer addr for the open file.
  00001134  00000047 R		        DD      BRAN
  00001138  0000000C		        DD      WORD2-$  ; ELSE
  0000113C 0000084E R		WORD1      DD      TIB
@@ -3298,12 +3299,12 @@ forth32.asm						     Page 1 - 1
  00001364  00001336 R		        DD      PABOR   ;ENDIF
  00001368 000009E7 R		ERRO1      DD      HERE
  0000136C  00000EBF R		        DD      COUNT
- 00001370  00001E86 R		        DD      LTYPE
+ 00001370  00001ECB R		        DD      LTYPE
  00001374  00000F46 R		        DD      PDOTQ
 				        
  00001378  02			        DB      2
  00001379  3F 20		        DB      "? "
- 0000137B  00001B25 R		        DD      MESS
+ 0000137B  00001B21 R		        DD      MESS
  0000137F  000003D6 R		        DD      SPSTO
 				;
 				;      CHANGE FROM FIG MODEL
@@ -3338,13 +3339,13 @@ forth32.asm						     Page 1 - 1
  000013C3  00000757 R		        DD      ONE
  000013C7  00000A58 R		        DD      LSUB
  000013CB  00000577 R		        DD      TDUP
- 000013CF  00001E86 R		        DD      LTYPE
+ 000013CF  00001ECB R		        DD      LTYPE
  000013D3  000004BB R		        DD      PLUS
  000013D7  000005CC R		        DD      CFET
  000013DB  0000001E R		        DD      LIT,07FH
 	   0000007F
  000013E3  00000381 R		        DD      LAND
- 000013E7  00001EF2 R		        DD      EMIT
+ 000013E7  00001F37 R		        DD      EMIT
  000013EB  00000B16 R		        DD      SPACE
  000013EF  0000041D R		        DD      SEMIS
 				;
@@ -3375,14 +3376,14 @@ forth32.asm						     Page 1 - 1
  00001432  000013AF R		        DD      IDDOT
  00001436  0000001E R		        DD      LIT,4
 	   00000004
- 0000143E  00001B25 R		        DD      MESS
+ 0000143E  00001B21 R		        DD      MESS
  00001442  00000B16 R		        DD      SPACE   ;ENDIF
  00001446 000009E7 R		CREA1      DD      HERE
  0000144A  00000562 R		        DD      LDUP
  0000144E  000005CC R		        DD      CFET
  00001452  00000860 R		        DD      WIDTHE
  00001456  000005B8 R		        DD      FETCH
- 0000145A  00001912 R		        DD      MIN
+ 0000145A  0000190E R		        DD      MIN
  0000145E  000009A5 R		        DD      ONEP
  00001462  00000A01 R		        DD      ALLOT
  00001466  00000562 R		        DD      LDUP
@@ -3625,7 +3626,7 @@ forth32.asm						     Page 1 - 1
 				                           
  000016D1  000016B3 R		        DD      DOVOC
  000016D5  81 A0		        DB      80H+1, " "+80H  ; Dummy name field
- 000016D7  000027A4 R		        DD      N_TASK
+ 000016D7  000026AB R		        DD      N_TASK
  000016DB  00000000		        DD      0       ; END OF VOCABULARY LIST
 				;
 
@@ -3711,7 +3712,7 @@ forth32.asm						     Page 1 - 1
  00001783  00000DFF R		        DD      DECA
  00001787  00001550 R		        DD      QSTAC   ; IT DID TO & INCL THIS
  0000178B  00000308 R		        DD      CR
- 0000178F  00002754 R		        DD      DOTCPU
+ 0000178F  0000265B R		        DD      DOTCPU
  00001793  00000F46 R		        DD      PDOTQ
 
 				%if 0
@@ -3755,7 +3756,7 @@ forth32.asm						     Page 1 - 1
  000017EA  00001771 R	     1	        DD  Link
  000017EE 0000069C R	     1	WARM   DD  DOCOL
 				                           
- 000017F2  00001C35 R		        DD      MTBUF
+ 000017F2  00001C85 R		        DD      MTBUF
  000017F6  0000177B R		        DD      ABORT
 				;
 				;      COLD START VECTOR COMES HERE
@@ -3786,12 +3787,12 @@ forth32.asm						     Page 1 - 1
  0000181A  000017E5 R	     1	        DD  Link
  0000181E 0000069C R	     1	COLD   DD  DOCOL
 				                           
- 00001822  00001C35 R		        DD      MTBUF
+ 00001822  00001C85 R		        DD      MTBUF
  00001826  000007B9 R		        DD      FIRST
- 0000182A  00001B78 R		        DD      USE,STORE
+ 0000182A  00001B74 R		        DD      USE,STORE
 	   000005F9 R
  00001832  000007B9 R		        DD      FIRST
- 00001836  00001B89 R		        DD      PREV,STORE
+ 00001836  00001B85 R		        DD      PREV,STORE
 	   000005F9 R
  0000183E  0000001E R		        DD      LIT, USINI
 	   00000125 R
@@ -3808,10 +3809,7 @@ forth32.asm						     Page 1 - 1
 	   000016D7 R
  00001872  000005F9 R		        DD      STORE
 				;
-
- 00001876  0000205C R		        DD      BLINI
-				;
- 0000187A  0000177B R		        DD      ABORT
+ 00001876  0000177B R		        DD      ABORT
 				;
 				        ;
 
@@ -3820,24 +3818,24 @@ forth32.asm						     Page 1 - 1
 				;  ************ 
 				;  
 				        CODE_ENTRY   STOD, 80H+4, "S->", "D"+80H
- 0000187E 84		     1	N_STOD DB  80H+4
- 0000187F  53 2D 3E	     1	        DB  "S->"
- 00001882  C4		     1	        DB  "D"+80H
- 00001883  00001815 R	     1	        DD  Link
- 00001887 0000188B R	     1	STOD   DD  C_STOD
- 0000188B		     1	C_STOD:
+ 0000187A 84		     1	N_STOD DB  80H+4
+ 0000187B  53 2D 3E	     1	        DB  "S->"
+ 0000187E  C4		     1	        DB  "D"+80H
+ 0000187F  00001815 R	     1	        DD  Link
+ 00001883 00001887 R	     1	STOD   DD  C_STOD
+ 00001887		     1	C_STOD:
 				                           
- 0000188B  5A			        POP     EDX      ;S1
- 0000188C  2B C0		        SUB     EAX,EAX
- 0000188E  0B D2		        OR      EDX,EDX
- 00001890  79 01		        JNS     STOD1   ;POS
- 00001892  48			        DEC     EAX      ;NEG
- 00001893  52			STOD1:  PUSH    EDX
- 00001894  50			        PUSH    EAX
+ 00001887  5A			        POP     EDX      ;S1
+ 00001888  2B C0		        SUB     EAX,EAX
+ 0000188A  0B D2		        OR      EDX,EDX
+ 0000188C  79 01		        JNS     STOD1   ;POS
+ 0000188E  48			        DEC     EAX      ;NEG
+ 0000188F  52			STOD1:  PUSH    EDX
+ 00001890  50			        PUSH    EAX
 				        NEXT
- 00001895  AD		     1	        LODSD 
- 00001896  8B D8	     1	        MOV     EBX,EAX                  
- 00001898  FF 23	     1	        JMP      DWORD PTR[EBX]   
+ 00001891  AD		     1	        LODSD 
+ 00001892  8B D8	     1	        MOV     EBX,EAX                  
+ 00001894  FF 23	     1	        JMP      DWORD PTR[EBX]   
 				;
 
 				;  ********** 
@@ -3845,17 +3843,17 @@ forth32.asm						     Page 1 - 1
 				;  ********** 
 				;  
 				        ENTRY   PM, 80H+2, "+", "-"+80H, DOCOL
- 0000189A 82		     1	N_PM DB  80H+2
- 0000189B  2B		     1	        DB  "+"
- 0000189C  AD		     1	        DB  "-"+80H
- 0000189D  0000187E R	     1	        DD  Link
- 000018A1 0000069C R	     1	PM   DD  DOCOL
+ 00001896 82		     1	N_PM DB  80H+2
+ 00001897  2B		     1	        DB  "+"
+ 00001898  AD		     1	        DB  "-"+80H
+ 00001899  0000187A R	     1	        DD  Link
+ 0000189D 0000069C R	     1	PM   DD  DOCOL
 				                           
- 000018A5  000004A0 R		        DD      ZLESS
- 000018A9  0000005E R		        DD      ZBRAN
- 000018AD  00000008		        DD      PM1-$   ;IF
- 000018B1  000004ED R		        DD      MINUS   ;ENDIF
- 000018B5 0000041D R		PM1      DD      SEMIS
+ 000018A1  000004A0 R		        DD      ZLESS
+ 000018A5  0000005E R		        DD      ZBRAN
+ 000018A9  00000008		        DD      PM1-$   ;IF
+ 000018AD  000004ED R		        DD      MINUS   ;ENDIF
+ 000018B1 0000041D R		PM1      DD      SEMIS
 				;
 
 				;  *********** 
@@ -3863,17 +3861,17 @@ forth32.asm						     Page 1 - 1
 				;  *********** 
 				;  
 				        ENTRY   DPM, 80H+3, "D+", "-"+80H, DOCOL
- 000018B9 83		     1	N_DPM DB  80H+3
- 000018BA  44 2B	     1	        DB  "D+"
- 000018BC  AD		     1	        DB  "-"+80H
- 000018BD  0000189A R	     1	        DD  Link
- 000018C1 0000069C R	     1	DPM   DD  DOCOL
+ 000018B5 83		     1	N_DPM DB  80H+3
+ 000018B6  44 2B	     1	        DB  "D+"
+ 000018B8  AD		     1	        DB  "-"+80H
+ 000018B9  00001896 R	     1	        DD  Link
+ 000018BD 0000069C R	     1	DPM   DD  DOCOL
 				                           
- 000018C5  000004A0 R		        DD      ZLESS
- 000018C9  0000005E R		        DD      ZBRAN
- 000018CD  00000008		        DD      DPM1-$  ;IF
- 000018D1  00000505 R		        DD      DMINU   ;ENDIF
- 000018D5 0000041D R		DPM1      DD      SEMIS
+ 000018C1  000004A0 R		        DD      ZLESS
+ 000018C5  0000005E R		        DD      ZBRAN
+ 000018C9  00000008		        DD      DPM1-$  ;IF
+ 000018CD  00000505 R		        DD      DMINU   ;ENDIF
+ 000018D1 0000041D R		DPM1      DD      SEMIS
 				;
 
 				;  *********** 
@@ -3881,15 +3879,15 @@ forth32.asm						     Page 1 - 1
 				;  *********** 
 				;  
 				        ENTRY   LABS, 80H+3, "AB", "S"+80H, DOCOL
- 000018D9 83		     1	N_LABS DB  80H+3
- 000018DA  41 42	     1	        DB  "AB"
- 000018DC  D3		     1	        DB  "S"+80H
- 000018DD  000018B9 R	     1	        DD  Link
- 000018E1 0000069C R	     1	LABS   DD  DOCOL
+ 000018D5 83		     1	N_LABS DB  80H+3
+ 000018D6  41 42	     1	        DB  "AB"
+ 000018D8  D3		     1	        DB  "S"+80H
+ 000018D9  000018B5 R	     1	        DD  Link
+ 000018DD 0000069C R	     1	LABS   DD  DOCOL
 				                           
- 000018E5  00000562 R		        DD      LDUP
- 000018E9  000018A1 R		        DD      PM
- 000018ED  0000041D R		        DD      SEMIS
+ 000018E1  00000562 R		        DD      LDUP
+ 000018E5  0000189D R		        DD      PM
+ 000018E9  0000041D R		        DD      SEMIS
 				;
 
 				;  ************ 
@@ -3897,15 +3895,15 @@ forth32.asm						     Page 1 - 1
 				;  ************ 
 				;  
 				        ENTRY   DABS, 80H+4, "DAB", "S"+80H, DOCOL
- 000018F1 84		     1	N_DABS DB  80H+4
- 000018F2  44 41 42	     1	        DB  "DAB"
- 000018F5  D3		     1	        DB  "S"+80H
- 000018F6  000018D9 R	     1	        DD  Link
- 000018FA 0000069C R	     1	DABS   DD  DOCOL
+ 000018ED 84		     1	N_DABS DB  80H+4
+ 000018EE  44 41 42	     1	        DB  "DAB"
+ 000018F1  D3		     1	        DB  "S"+80H
+ 000018F2  000018D5 R	     1	        DD  Link
+ 000018F6 0000069C R	     1	DABS   DD  DOCOL
 				                           
- 000018FE  00000562 R		        DD      LDUP
- 00001902  000018C1 R		        DD      DPM
- 00001906  0000041D R		        DD      SEMIS
+ 000018FA  00000562 R		        DD      LDUP
+ 000018FE  000018BD R		        DD      DPM
+ 00001902  0000041D R		        DD      SEMIS
 				;
 
 				;  *********** 
@@ -3913,19 +3911,19 @@ forth32.asm						     Page 1 - 1
 				;  *********** 
 				;  
 				        ENTRY   MIN, 80H+3, "MI", "N"+80H, DOCOL
- 0000190A 83		     1	N_MIN DB  80H+3
- 0000190B  4D 49	     1	        DB  "MI"
- 0000190D  CE		     1	        DB  "N"+80H
- 0000190E  000018F1 R	     1	        DD  Link
- 00001912 0000069C R	     1	MIN   DD  DOCOL
+ 00001906 83		     1	N_MIN DB  80H+3
+ 00001907  4D 49	     1	        DB  "MI"
+ 00001909  CE		     1	        DB  "N"+80H
+ 0000190A  000018ED R	     1	        DD  Link
+ 0000190E 0000069C R	     1	MIN   DD  DOCOL
 				                           
- 00001916  00000577 R		        DD      TDUP
- 0000191A  00000AE5 R		        DD      GREAT
- 0000191E  0000005E R		        DD      ZBRAN
- 00001922  00000008		        DD      MIN1-$  ;IF
- 00001926  0000054D R		        DD      SWAP    ;ENDIF
- 0000192A 0000053A R		MIN1      DD      DROP
- 0000192E  0000041D R		        DD      SEMIS
+ 00001912  00000577 R		        DD      TDUP
+ 00001916  00000AE5 R		        DD      GREAT
+ 0000191A  0000005E R		        DD      ZBRAN
+ 0000191E  00000008		        DD      MIN1-$  ;IF
+ 00001922  0000054D R		        DD      SWAP    ;ENDIF
+ 00001926 0000053A R		MIN1      DD      DROP
+ 0000192A  0000041D R		        DD      SEMIS
 				;
 
 				;  *********** 
@@ -3933,19 +3931,19 @@ forth32.asm						     Page 1 - 1
 				;  *********** 
 				;  
 				        ENTRY   MAX, 80H+3, "MA", "X"+80H, DOCOL
- 00001932 83		     1	N_MAX DB  80H+3
- 00001933  4D 41	     1	        DB  "MA"
- 00001935  D8		     1	        DB  "X"+80H
- 00001936  0000190A R	     1	        DD  Link
- 0000193A 0000069C R	     1	MAX   DD  DOCOL
+ 0000192E 83		     1	N_MAX DB  80H+3
+ 0000192F  4D 41	     1	        DB  "MA"
+ 00001931  D8		     1	        DB  "X"+80H
+ 00001932  00001906 R	     1	        DD  Link
+ 00001936 0000069C R	     1	MAX   DD  DOCOL
 				                           
- 0000193E  00000577 R		        DD      TDUP
- 00001942  00000A82 R		        DD      LESS
- 00001946  0000005E R		        DD      ZBRAN
- 0000194A  00000008		        DD      MAX1-$  ;IF
- 0000194E  0000054D R		        DD      SWAP    ;ENDIF
- 00001952 0000053A R		MAX1      DD      DROP
- 00001956  0000041D R		        DD      SEMIS
+ 0000193A  00000577 R		        DD      TDUP
+ 0000193E  00000A82 R		        DD      LESS
+ 00001942  0000005E R		        DD      ZBRAN
+ 00001946  00000008		        DD      MAX1-$  ;IF
+ 0000194A  0000054D R		        DD      SWAP    ;ENDIF
+ 0000194E 0000053A R		MAX1      DD      DROP
+ 00001952  0000041D R		        DD      SEMIS
 				;
 
 				;  ********** 
@@ -3953,22 +3951,22 @@ forth32.asm						     Page 1 - 1
 				;  ********** 
 				;  
 				        ENTRY   MSTAR, 80H+2, "M", "*"+80H, DOCOL
- 0000195A 82		     1	N_MSTAR DB  80H+2
- 0000195B  4D		     1	        DB  "M"
- 0000195C  AA		     1	        DB  "*"+80H
- 0000195D  00001932 R	     1	        DD  Link
- 00001961 0000069C R	     1	MSTAR   DD  DOCOL
+ 00001956 82		     1	N_MSTAR DB  80H+2
+ 00001957  4D		     1	        DB  "M"
+ 00001958  AA		     1	        DB  "*"+80H
+ 00001959  0000192E R	     1	        DD  Link
+ 0000195D 0000069C R	     1	MSTAR   DD  DOCOL
 				                           
- 00001965  00000577 R		        DD      TDUP
- 00001969  000003AC R		        DD      LXOR
- 0000196D  0000044C R		        DD      TOR
- 00001971  000018E1 R		        DD      LABS
- 00001975  0000054D R		        DD      SWAP
- 00001979  000018E1 R		        DD      LABS
- 0000197D  00000340 R		        DD      USTAR
- 00001981  00000463 R		        DD      FROMR
- 00001985  000018C1 R		        DD      DPM
- 00001989  0000041D R		        DD      SEMIS
+ 00001961  00000577 R		        DD      TDUP
+ 00001965  000003AC R		        DD      LXOR
+ 00001969  0000044C R		        DD      TOR
+ 0000196D  000018DD R		        DD      LABS
+ 00001971  0000054D R		        DD      SWAP
+ 00001975  000018DD R		        DD      LABS
+ 00001979  00000340 R		        DD      USTAR
+ 0000197D  00000463 R		        DD      FROMR
+ 00001981  000018BD R		        DD      DPM
+ 00001985  0000041D R		        DD      SEMIS
 				;
 
 				;  ********** 
@@ -3976,28 +3974,28 @@ forth32.asm						     Page 1 - 1
 				;  ********** 
 				;  
 				        ENTRY   MSLAS, 80H+2, "M", "/"+80H, DOCOL
- 0000198D 82		     1	N_MSLAS DB  80H+2
- 0000198E  4D		     1	        DB  "M"
- 0000198F  AF		     1	        DB  "/"+80H
- 00001990  0000195A R	     1	        DD  Link
- 00001994 0000069C R	     1	MSLAS   DD  DOCOL
+ 00001989 82		     1	N_MSLAS DB  80H+2
+ 0000198A  4D		     1	        DB  "M"
+ 0000198B  AF		     1	        DB  "/"+80H
+ 0000198C  00001956 R	     1	        DD  Link
+ 00001990 0000069C R	     1	MSLAS   DD  DOCOL
 				                           
- 00001998  00000523 R		        DD      OVER
+ 00001994  00000523 R		        DD      OVER
+ 00001998  0000044C R		        DD      TOR
  0000199C  0000044C R		        DD      TOR
- 000019A0  0000044C R		        DD      TOR
- 000019A4  000018FA R		        DD      DABS
- 000019A8  00000479 R		        DD      RR
- 000019AC  000018E1 R		        DD      LABS
- 000019B0  00000357 R		        DD      USLAS
- 000019B4  00000463 R		        DD      FROMR
- 000019B8  00000479 R		        DD      RR
- 000019BC  000003AC R		        DD      LXOR
- 000019C0  000018A1 R		        DD      PM
- 000019C4  0000054D R		        DD      SWAP
- 000019C8  00000463 R		        DD      FROMR
- 000019CC  000018A1 R		        DD      PM
- 000019D0  0000054D R		        DD      SWAP
- 000019D4  0000041D R		        DD      SEMIS
+ 000019A0  000018F6 R		        DD      DABS
+ 000019A4  00000479 R		        DD      RR
+ 000019A8  000018DD R		        DD      LABS
+ 000019AC  00000357 R		        DD      USLAS
+ 000019B0  00000463 R		        DD      FROMR
+ 000019B4  00000479 R		        DD      RR
+ 000019B8  000003AC R		        DD      LXOR
+ 000019BC  0000189D R		        DD      PM
+ 000019C0  0000054D R		        DD      SWAP
+ 000019C4  00000463 R		        DD      FROMR
+ 000019C8  0000189D R		        DD      PM
+ 000019CC  0000054D R		        DD      SWAP
+ 000019D0  0000041D R		        DD      SEMIS
 				;
 
 				;  ********* 
@@ -4005,14 +4003,14 @@ forth32.asm						     Page 1 - 1
 				;  ********* 
 				;  
 				        ENTRY_1   STAR, 80H+1, "*"+80H, DOCOL
- 000019D8 81		     1	N_STAR DB  80H+1
- 000019D9  AA		     1	        DB  "*"+80H
- 000019DA  0000198D R	     1	        DD  Link
- 000019DE 0000069C R	     1	STAR   DD  DOCOL
+ 000019D4 81		     1	N_STAR DB  80H+1
+ 000019D5  AA		     1	        DB  "*"+80H
+ 000019D6  00001989 R	     1	        DD  Link
+ 000019DA 0000069C R	     1	STAR   DD  DOCOL
 				                           
- 000019E2  00001961 R		        DD      MSTAR
- 000019E6  0000053A R		        DD      DROP
- 000019EA  0000041D R		        DD      SEMIS
+ 000019DE  0000195D R		        DD      MSTAR
+ 000019E2  0000053A R		        DD      DROP
+ 000019E6  0000041D R		        DD      SEMIS
 				;
 
 				;  ************ 
@@ -4020,17 +4018,17 @@ forth32.asm						     Page 1 - 1
 				;  ************ 
 				;  
 				        ENTRY   SLMOD, 80H+4, "/MO", "D"+80H, DOCOL
- 000019EE 84		     1	N_SLMOD DB  80H+4
- 000019EF  2F 4D 4F	     1	        DB  "/MO"
- 000019F2  C4		     1	        DB  "D"+80H
- 000019F3  000019D8 R	     1	        DD  Link
- 000019F7 0000069C R	     1	SLMOD   DD  DOCOL
+ 000019EA 84		     1	N_SLMOD DB  80H+4
+ 000019EB  2F 4D 4F	     1	        DB  "/MO"
+ 000019EE  C4		     1	        DB  "D"+80H
+ 000019EF  000019D4 R	     1	        DD  Link
+ 000019F3 0000069C R	     1	SLMOD   DD  DOCOL
 				                           
- 000019FB  0000044C R		        DD      TOR
- 000019FF  00001887 R		        DD      STOD
- 00001A03  00000463 R		        DD      FROMR
- 00001A07  00001994 R		        DD      MSLAS
- 00001A0B  0000041D R		        DD      SEMIS
+ 000019F7  0000044C R		        DD      TOR
+ 000019FB  00001883 R		        DD      STOD
+ 000019FF  00000463 R		        DD      FROMR
+ 00001A03  00001990 R		        DD      MSLAS
+ 00001A07  0000041D R		        DD      SEMIS
 				;
 
 				;  ********* 
@@ -4038,15 +4036,15 @@ forth32.asm						     Page 1 - 1
 				;  ********* 
 				;  
 				        ENTRY_1   SLASH, 80H+1, "/"+80H, DOCOL
- 00001A0F 81		     1	N_SLASH DB  80H+1
- 00001A10  AF		     1	        DB  "/"+80H
- 00001A11  000019EE R	     1	        DD  Link
- 00001A15 0000069C R	     1	SLASH   DD  DOCOL
+ 00001A0B 81		     1	N_SLASH DB  80H+1
+ 00001A0C  AF		     1	        DB  "/"+80H
+ 00001A0D  000019EA R	     1	        DD  Link
+ 00001A11 0000069C R	     1	SLASH   DD  DOCOL
 				                           
- 00001A19  000019F7 R		        DD      SLMOD
- 00001A1D  0000054D R		        DD      SWAP
- 00001A21  0000053A R		        DD      DROP
- 00001A25  0000041D R		        DD      SEMIS
+ 00001A15  000019F3 R		        DD      SLMOD
+ 00001A19  0000054D R		        DD      SWAP
+ 00001A1D  0000053A R		        DD      DROP
+ 00001A21  0000041D R		        DD      SEMIS
 				;
 
 				;  *********** 
@@ -4054,15 +4052,15 @@ forth32.asm						     Page 1 - 1
 				;  *********** 
 				;  
 				        ENTRY   LMOD, 80H+3, "MO", "D"+80H, DOCOL
- 00001A29 83		     1	N_LMOD DB  80H+3
- 00001A2A  4D 4F	     1	        DB  "MO"
- 00001A2C  C4		     1	        DB  "D"+80H
- 00001A2D  00001A0F R	     1	        DD  Link
- 00001A31 0000069C R	     1	LMOD   DD  DOCOL
+ 00001A25 83		     1	N_LMOD DB  80H+3
+ 00001A26  4D 4F	     1	        DB  "MO"
+ 00001A28  C4		     1	        DB  "D"+80H
+ 00001A29  00001A0B R	     1	        DD  Link
+ 00001A2D 0000069C R	     1	LMOD   DD  DOCOL
 				                           
- 00001A35  000019F7 R		        DD      SLMOD
- 00001A39  0000053A R		        DD      DROP
- 00001A3D  0000041D R		        DD      SEMIS
+ 00001A31  000019F3 R		        DD      SLMOD
+ 00001A35  0000053A R		        DD      DROP
+ 00001A39  0000041D R		        DD      SEMIS
 				;
 
 				;  ************* 
@@ -4070,17 +4068,17 @@ forth32.asm						     Page 1 - 1
 				;  ************* 
 				;  
 				        ENTRY   SSMOD, 80H+5, "*/MO", "D"+80H, DOCOL
- 00001A41 85		     1	N_SSMOD DB  80H+5
- 00001A42  2A 2F 4D 4F	     1	        DB  "*/MO"
- 00001A46  C4		     1	        DB  "D"+80H
- 00001A47  00001A29 R	     1	        DD  Link
- 00001A4B 0000069C R	     1	SSMOD   DD  DOCOL
+ 00001A3D 85		     1	N_SSMOD DB  80H+5
+ 00001A3E  2A 2F 4D 4F	     1	        DB  "*/MO"
+ 00001A42  C4		     1	        DB  "D"+80H
+ 00001A43  00001A25 R	     1	        DD  Link
+ 00001A47 0000069C R	     1	SSMOD   DD  DOCOL
 				                           
- 00001A4F  0000044C R		        DD      TOR
- 00001A53  00001961 R		        DD      MSTAR
- 00001A57  00000463 R		        DD      FROMR
- 00001A5B  00001994 R		        DD      MSLAS
- 00001A5F  0000041D R		        DD      SEMIS
+ 00001A4B  0000044C R		        DD      TOR
+ 00001A4F  0000195D R		        DD      MSTAR
+ 00001A53  00000463 R		        DD      FROMR
+ 00001A57  00001990 R		        DD      MSLAS
+ 00001A5B  0000041D R		        DD      SEMIS
 				;
 
 				;  ********** 
@@ -4088,16 +4086,16 @@ forth32.asm						     Page 1 - 1
 				;  ********** 
 				;  
 				        ENTRY   SSLA, 80H+2, "*", "/"+80H, DOCOL
- 00001A63 82		     1	N_SSLA DB  80H+2
- 00001A64  2A		     1	        DB  "*"
- 00001A65  AF		     1	        DB  "/"+80H
- 00001A66  00001A41 R	     1	        DD  Link
- 00001A6A 0000069C R	     1	SSLA   DD  DOCOL
+ 00001A5F 82		     1	N_SSLA DB  80H+2
+ 00001A60  2A		     1	        DB  "*"
+ 00001A61  AF		     1	        DB  "/"+80H
+ 00001A62  00001A3D R	     1	        DD  Link
+ 00001A66 0000069C R	     1	SSLA   DD  DOCOL
 				                           
- 00001A6E  00001A4B R		        DD      SSMOD
- 00001A72  0000054D R		        DD      SWAP
- 00001A76  0000053A R		        DD      DROP
- 00001A7A  0000041D R		        DD      SEMIS
+ 00001A6A  00001A47 R		        DD      SSMOD
+ 00001A6E  0000054D R		        DD      SWAP
+ 00001A72  0000053A R		        DD      DROP
+ 00001A76  0000041D R		        DD      SEMIS
 				;
 
 				;  ************* 
@@ -4105,22 +4103,22 @@ forth32.asm						     Page 1 - 1
 				;  ************* 
 				;  
 				        ENTRY   MSMOD, 80H+5, "M/MO", "D"+80H, DOCOL
- 00001A7E 85		     1	N_MSMOD DB  80H+5
- 00001A7F  4D 2F 4D 4F	     1	        DB  "M/MO"
- 00001A83  C4		     1	        DB  "D"+80H
- 00001A84  00001A63 R	     1	        DD  Link
- 00001A88 0000069C R	     1	MSMOD   DD  DOCOL
+ 00001A7A 85		     1	N_MSMOD DB  80H+5
+ 00001A7B  4D 2F 4D 4F	     1	        DB  "M/MO"
+ 00001A7F  C4		     1	        DB  "D"+80H
+ 00001A80  00001A5F R	     1	        DD  Link
+ 00001A84 0000069C R	     1	MSMOD   DD  DOCOL
 				                           
- 00001A8C  0000044C R		        DD      TOR
- 00001A90  00000745 R		        DD      ZERO
- 00001A94  00000479 R		        DD      RR
- 00001A98  00000357 R		        DD      USLAS
- 00001A9C  00000463 R		        DD      FROMR
- 00001AA0  0000054D R		        DD      SWAP
- 00001AA4  0000044C R		        DD      TOR
- 00001AA8  00000357 R		        DD      USLAS
- 00001AAC  00000463 R		        DD      FROMR
- 00001AB0  0000041D R		        DD      SEMIS
+ 00001A88  0000044C R		        DD      TOR
+ 00001A8C  00000745 R		        DD      ZERO
+ 00001A90  00000479 R		        DD      RR
+ 00001A94  00000357 R		        DD      USLAS
+ 00001A98  00000463 R		        DD      FROMR
+ 00001A9C  0000054D R		        DD      SWAP
+ 00001AA0  0000044C R		        DD      TOR
+ 00001AA4  00000357 R		        DD      USLAS
+ 00001AA8  00000463 R		        DD      FROMR
+ 00001AAC  0000041D R		        DD      SEMIS
 				;
 
 				;  ************** 
@@ -4128,26 +4126,26 @@ forth32.asm						     Page 1 - 1
 				;  ************** 
 				;  
 				        ENTRY   PLINE, 80H+6, "(LINE", ")"+80H, DOCOL
- 00001AB4 86		     1	N_PLINE DB  80H+6
- 00001AB5  28 4C 49 4E 45    1	        DB  "(LINE"
- 00001ABA  A9		     1	        DB  ")"+80H
- 00001ABB  00001A7E R	     1	        DD  Link
- 00001ABF 0000069C R	     1	PLINE   DD  DOCOL
+ 00001AB0 86		     1	N_PLINE DB  80H+6
+ 00001AB1  28 4C 49 4E 45    1	        DB  "(LINE"
+ 00001AB6  A9		     1	        DB  ")"+80H
+ 00001AB7  00001A7A R	     1	        DD  Link
+ 00001ABB 0000069C R	     1	PLINE   DD  DOCOL
 				                           
- 00001AC3  0000044C R		        DD      TOR
- 00001AC7  0000001E R		        DD      LIT,64
+ 00001ABF  0000044C R		        DD      TOR
+ 00001AC3  0000001E R		        DD      LIT,64
 	   00000040
- 00001ACF  000007EC R		        DD      BBUF
- 00001AD3  00001A4B R		        DD      SSMOD
- 00001AD7  00000463 R		        DD      FROMR
- 00001ADB  000007FE R		        DD      BSCR
- 00001ADF  000019DE R		        DD      STAR
- 00001AE3  000004BB R		        DD      PLUS
- 00001AE7  00001CE6 R		        DD      BLOCK
- 00001AEB  000004BB R		        DD      PLUS
- 00001AEF  0000001E R		        DD      LIT,64
+ 00001ACB  000007EC R		        DD      BBUF
+ 00001ACF  00001A47 R		        DD      SSMOD
+ 00001AD3  00000463 R		        DD      FROMR
+ 00001AD7  000007FE R		        DD      BSCR
+ 00001ADB  000019DA R		        DD      STAR
+ 00001ADF  000004BB R		        DD      PLUS
+ 00001AE3  00001D36 R		        DD      BLOCK   ; ### TODO: Source for error messages is screen 4 (see MESSAGE) Use a file ultimately..
+ 00001AE7  000004BB R		        DD      PLUS
+ 00001AEB  0000001E R		        DD      LIT,64
 	   00000040
- 00001AF7  0000041D R		        DD      SEMIS
+ 00001AF3  0000041D R		        DD      SEMIS
 				;
 
 				;  ************* 
@@ -4155,16 +4153,16 @@ forth32.asm						     Page 1 - 1
 				;  ************* 
 				;  
 				        ENTRY   DLINE, 80H+5, ".LIN", "E"+80H, DOCOL
- 00001AFB 85		     1	N_DLINE DB  80H+5
- 00001AFC  2E 4C 49 4E	     1	        DB  ".LIN"
- 00001B00  C5		     1	        DB  "E"+80H
- 00001B01  00001AB4 R	     1	        DD  Link
- 00001B05 0000069C R	     1	DLINE   DD  DOCOL
+ 00001AF7 85		     1	N_DLINE DB  80H+5
+ 00001AF8  2E 4C 49 4E	     1	        DB  ".LIN"
+ 00001AFC  C5		     1	        DB  "E"+80H
+ 00001AFD  00001AB0 R	     1	        DD  Link
+ 00001B01 0000069C R	     1	DLINE   DD  DOCOL
 				                           
- 00001B09  00001ABF R		        DD      PLINE
- 00001B0D  00000EE5 R		        DD      DTRAI
- 00001B11  00001E86 R		        DD      LTYPE
- 00001B15  0000041D R		        DD      SEMIS
+ 00001B05  00001ABB R		        DD      PLINE
+ 00001B09  00000EE5 R		        DD      DTRAI
+ 00001B0D  00001ECB R		        DD      LTYPE
+ 00001B11  0000041D R		        DD      SEMIS
 				;
 
 				;  *************** 
@@ -4172,33 +4170,33 @@ forth32.asm						     Page 1 - 1
 				;  *************** 
 				;  
 				        ENTRY   MESS, 80H+7, "MESSAG", "E"+80H, DOCOL
- 00001B19 87		     1	N_MESS DB  80H+7
- 00001B1A  4D 45 53 53 41    1	        DB  "MESSAG"
+ 00001B15 87		     1	N_MESS DB  80H+7
+ 00001B16  4D 45 53 53 41    1	        DB  "MESSAG"
 	   47
- 00001B20  C5		     1	        DB  "E"+80H
- 00001B21  00001AFB R	     1	        DD  Link
- 00001B25 0000069C R	     1	MESS   DD  DOCOL
+ 00001B1C  C5		     1	        DB  "E"+80H
+ 00001B1D  00001AF7 R	     1	        DD  Link
+ 00001B21 0000069C R	     1	MESS   DD  DOCOL
 				                           
- 00001B29  00000874 R		        DD      WARN
- 00001B2D  000005B8 R		        DD      FETCH
- 00001B31  0000005E R		        DD      ZBRAN
- 00001B35  00000028		        DD      MESS1-$ ;IF
- 00001B39  00000B2F R		        DD      DDUP
- 00001B3D  0000005E R		        DD      ZBRAN
- 00001B41  00000014		        DD      MESS2-$ ;IF
- 00001B45  0000001E R		        DD      LIT,4
+ 00001B25  00000874 R		        DD      WARN
+ 00001B29  000005B8 R		        DD      FETCH
+ 00001B2D  0000005E R		        DD      ZBRAN
+ 00001B31  00000028		        DD      MESS1-$ ;IF
+ 00001B35  00000B2F R		        DD      DDUP
+ 00001B39  0000005E R		        DD      ZBRAN
+ 00001B3D  00000014		        DD      MESS2-$ ;IF
+ 00001B41  0000001E R		        DD      LIT,4
 	   00000004
- 00001B4D  00001B05 R		        DD      DLINE
- 00001B51  00000B16 R		        DD      SPACE   ;ENDIF
- 00001B55 00000047 R		MESS2      DD      BRAN
- 00001B59  00000013		        DD      MESS3-$  ;ELSE
- 00001B5D 00000F46 R		MESS1      DD      PDOTQ
+ 00001B49  00001B01 R		        DD      DLINE
+ 00001B4D  00000B16 R		        DD      SPACE   ;ENDIF
+ 00001B51 00000047 R		MESS2      DD      BRAN
+ 00001B55  00000013		        DD      MESS3-$  ;ELSE
+ 00001B59 00000F46 R		MESS1      DD      PDOTQ
 				        
- 00001B61  06			        DB      6
- 00001B62  4D 53 47 20 23	        DB      "MSG # "
+ 00001B5D  06			        DB      6
+ 00001B5E  4D 53 47 20 23	        DB      "MSG # "
 	   20
- 00001B68  00002507 R		        DD      DOT     ;ENDIF
- 00001B6C 0000041D R		MESS3      DD      SEMIS
+ 00001B64  0000240E R		        DD      DOT     ;ENDIF
+ 00001B68 0000041D R		MESS3      DD      SEMIS
 				;
 
 				%if 0
@@ -4209,13 +4207,13 @@ forth32.asm						     Page 1 - 1
 				;  *********** 
 				;  
 				        ENTRY   USE, 80H+3, "US", "E"+80H, DOVAR
- 00001B70 83		     1	N_USE DB  80H+3
- 00001B71  55 53	     1	        DB  "US"
- 00001B73  C5		     1	        DB  "E"+80H
- 00001B74  00001B19 R	     1	        DD  Link
- 00001B78 0000070F R	     1	USE   DD  DOVAR
+ 00001B6C 83		     1	N_USE DB  80H+3
+ 00001B6D  55 53	     1	        DB  "US"
+ 00001B6F  C5		     1	        DB  "E"+80H
+ 00001B70  00001B15 R	     1	        DD  Link
+ 00001B74 0000070F R	     1	USE   DD  DOVAR
 				                           
- 00001B7C  000FF7F0 R		        DD BUF1
+ 00001B78  000FDFC0 R		        DD BUF1
 				;
 
 				;  ************ 
@@ -4223,13 +4221,13 @@ forth32.asm						     Page 1 - 1
 				;  ************ 
 				;  
 				        ENTRY   PREV, 80H+4, "PRE", "V"+80H, DOVAR
- 00001B80 84		     1	N_PREV DB  80H+4
- 00001B81  50 52 45	     1	        DB  "PRE"
- 00001B84  D6		     1	        DB  "V"+80H
- 00001B85  00001B70 R	     1	        DD  Link
- 00001B89 0000070F R	     1	PREV   DD  DOVAR
+ 00001B7C 84		     1	N_PREV DB  80H+4
+ 00001B7D  50 52 45	     1	        DB  "PRE"
+ 00001B80  D6		     1	        DB  "V"+80H
+ 00001B81  00001B6C R	     1	        DD  Link
+ 00001B85 0000070F R	     1	PREV   DD  DOVAR
 
- 00001B8D  000FF7F0 R		        DD      BUF1
+ 00001B89  000FDFC0 R		        DD      BUF1
 				;
 
 				;  ************* 
@@ -4237,14 +4235,14 @@ forth32.asm						     Page 1 - 1
 				;  ************* 
 				;  
 				        ENTRY   NOBUF, 80H+5, "#BUF", "F"+80H, DOCON
- 00001B91 85		     1	N_NOBUF DB  80H+5
- 00001B92  23 42 55 46	     1	        DB  "#BUF"
- 00001B96  C6		     1	        DB  "F"+80H
- 00001B97  00001B80 R	     1	        DD  Link
- 00001B9B 000006ED R	     1	NOBUF   DD  DOCON
+ 00001B8D 85		     1	N_NOBUF DB  80H+5
+ 00001B8E  23 42 55 46	     1	        DB  "#BUF"
+ 00001B92  C6		     1	        DB  "F"+80H
+ 00001B93  00001B7C R	     1	        DD  Link
+ 00001B97 000006ED R	     1	NOBUF   DD  DOCON
 				                           
 				        ;NO. OF BUFFERS
- 00001B9F  00000002		        DD      NBUF
+ 00001B9B  00000008		        DD      NBUF
 				;
 
 				;  ************ 
@@ -4252,49 +4250,80 @@ forth32.asm						     Page 1 - 1
 				;  ************ 
 				;  
 				        ENTRY   PBUF, 80H+4, "+BU", "F"+80H, DOCOL
- 00001BA3 84		     1	N_PBUF DB  80H+4
- 00001BA4  2B 42 55	     1	        DB  "+BU"
- 00001BA7  C6		     1	        DB  "F"+80H
- 00001BA8  00001B91 R	     1	        DD  Link
- 00001BAC 0000069C R	     1	PBUF   DD  DOCOL
+ 00001B9F 84		     1	N_PBUF DB  80H+4
+ 00001BA0  2B 42 55	     1	        DB  "+BU"
+ 00001BA3  C6		     1	        DB  "F"+80H
+ 00001BA4  00001B8D R	     1	        DD  Link
+ 00001BA8 0000069C R	     1	PBUF   DD  DOCOL
 				                           
- 00001BB0  0000001E R		        DD      LIT,(KBBUF+2*CW)
+ 00001BAC  0000001E R		        DD      LIT,(KBBUF+2*CW)
 	   00000408
- 00001BB8  000004BB R		        DD      PLUS,LDUP
+ 00001BB4  000004BB R		        DD      PLUS,LDUP
 	   00000562 R
- 00001BC0  000007CB R		        DD      LIMIT,EQUAL
+ 00001BBC  000007CB R		        DD      LIMIT,EQUAL
 	   00000A6C R
- 00001BC8  0000005E R		        DD      ZBRAN
- 00001BCC  0000000C		        DD      PBUF1-$
- 00001BD0  0000053A R		        DD      DROP,FIRST
+ 00001BC4  0000005E R		        DD      ZBRAN
+ 00001BC8  0000000C		        DD      PBUF1-$
+ 00001BCC  0000053A R		        DD      DROP,FIRST
 	   000007B9 R
- 00001BD8 00000562 R		PBUF1      DD      LDUP,PREV
-	   00001B89 R
- 00001BE0  000005B8 R		        DD      FETCH,LSUB
+ 00001BD4 00000562 R		PBUF1      DD      LDUP,PREV
+	   00001B85 R
+ 00001BDC  000005B8 R		        DD      FETCH,LSUB
 	   00000A58 R
- 00001BE8  0000041D R		        DD      SEMIS
+ 00001BE4  0000041D R		        DD      SEMIS
 				;
 
+				; ***************
+				; *   BUFFERS   *
+				; ***************
+				; Print the buffer addresses and the FID (if any) using the buffer.
+				;
+				        ENTRY   BUFFS, 80H+7, "BUFFER", "S"+80H, DOCOL
+ 00001BE8 87		     1	N_BUFFS DB  80H+7
+ 00001BE9  42 55 46 46 45    1	        DB  "BUFFER"
+	   52
+ 00001BEF  D3		     1	        DB  "S"+80H
+ 00001BF0  00001B9F R	     1	        DD  Link
+ 00001BF4 0000069C R	     1	BUFFS   DD  DOCOL
+
+ 00001BF8  00000DDB R		        DD      HEX
+ 00001BFC  000007B9 R		        DD      FIRST
+ 00001C00  00001B97 R		        DD      NOBUF, ZERO, XDO
+	   00000745 R
+	   000000C9 R
+ 00001C0C 00000562 R		BUFS1   DD      LDUP, LDUP, DOT, FETCH, DOT, CR
+	   00000562 R
+	   0000240E R
+	   000005B8 R
+	   0000240E R
+	   00000308 R
+ 00001C24  00001BA8 R		        DD      PBUF, DROP
+	   0000053A R
+ 00001C2C  0000008C R		        DD      XLOOP
+ 00001C30  FFFFFFDC		        DD      BUFS1-$
+ 00001C34  0000053A R		        DD      DROP
+ 00001C38  0000041D R		        DD      SEMIS
+
 				;  ************** 
-				;  *   UPDATE   *
+				;  *   UPDATE   * #### Rdeundant.
 				;  ************** 
 				;  
 				        ENTRY   UPDAT, 80H+6, "UPDAT", "E"+80H, DOCOL
- 00001BEC 86		     1	N_UPDAT DB  80H+6
- 00001BED  55 50 44 41 54    1	        DB  "UPDAT"
- 00001BF2  C5		     1	        DB  "E"+80H
- 00001BF3  00001BA3 R	     1	        DD  Link
- 00001BF7 0000069C R	     1	UPDAT   DD  DOCOL
+ 00001C3C 86		     1	N_UPDAT DB  80H+6
+ 00001C3D  55 50 44 41 54    1	        DB  "UPDAT"
+ 00001C42  C5		     1	        DB  "E"+80H
+ 00001C43  00001BE8 R	     1	        DD  Link
+ 00001C47 0000069C R	     1	UPDAT   DD  DOCOL
 				                           
- 00001BFB  00001B89 R		        DD      PREV
- 00001BFF  000005B8 R		        DD      FETCH,FETCH
+ 00001C4B  00001B85 R		        DD      PREV
+ 00001C4F  000005B8 R		        DD      FETCH,FETCH
 	   000005B8 R
- 00001C07  0000001E R		        DD      LIT,BMASK
+ 00001C57  0000001E R		        DD      LIT,BMASK
 	   80000000
- 00001C0F  00000396 R		        DD      LOR
- 00001C13  00001B89 R		        DD      PREV,FETCH
+ 00001C5F  00000396 R		        DD      LOR
+ 00001C63  00001B85 R		        DD      PREV,FETCH
 	   000005B8 R
- 00001C1B  000005F9 R		        DD      STORE,SEMIS
+ 00001C6B  000005F9 R		        DD      STORE,SEMIS
 	   0000041D R
 				;
 
@@ -4303,218 +4332,218 @@ forth32.asm						     Page 1 - 1
 				;  ********************* 
 				;  
 				        ENTRY   MTBUF, 80H+13, "EMPTY-BUFFER", "S"+80H, DOCOL
- 00001C23 8D		     1	N_MTBUF DB  80H+13
- 00001C24  45 4D 50 54 59    1	        DB  "EMPTY-BUFFER"
+ 00001C73 8D		     1	N_MTBUF DB  80H+13
+ 00001C74  45 4D 50 54 59    1	        DB  "EMPTY-BUFFER"
 	   2D 42 55 46 46
 	   45 52
- 00001C30  D3		     1	        DB  "S"+80H
- 00001C31  00001BEC R	     1	        DD  Link
- 00001C35 0000069C R	     1	MTBUF   DD  DOCOL
+ 00001C80  D3		     1	        DB  "S"+80H
+ 00001C81  00001C3C R	     1	        DD  Link
+ 00001C85 0000069C R	     1	MTBUF   DD  DOCOL
 				                           
- 00001C39  000007B9 R		        DD      FIRST
- 00001C3D  000007CB R		        DD      LIMIT,OVER
+ 00001C89  000007B9 R		        DD      FIRST
+ 00001C8D  000007CB R		        DD      LIMIT,OVER
 	   00000523 R
- 00001C45  00000A58 R		        DD      LSUB,LERASE
+ 00001C95  00000A58 R		        DD      LSUB,LERASE
 	   00001093 R
- 00001C4D  0000041D R		        DD      SEMIS
+ 00001C9D  0000041D R		        DD      SEMIS
 				        ;
 				;
 
 				;  ************** 
-				;  *   BUFFER   *
+				;  *   BUFFER   *  #### TODO: Rewrite this completely.
 				;  ************** 
-				;  
+				;  fid -- buffer addr
+				;  Search the buffers for one matching the given FID. If none is found,
+				;  plant the FID in the next free one and return that. If all buffers are
+				;  exhausted, return NULL.
+
 				        ENTRY   BUFFE, 80H+6, "BUFFE", "R"+80H, DOCOL
- 00001C51 86		     1	N_BUFFE DB  80H+6
- 00001C52  42 55 46 46 45    1	        DB  "BUFFE"
- 00001C57  D2		     1	        DB  "R"+80H
- 00001C58  00001C23 R	     1	        DD  Link
- 00001C5C 0000069C R	     1	BUFFE   DD  DOCOL
+ 00001CA1 86		     1	N_BUFFE DB  80H+6
+ 00001CA2  42 55 46 46 45    1	        DB  "BUFFE"
+ 00001CA7  D2		     1	        DB  "R"+80H
+ 00001CA8  00001C73 R	     1	        DD  Link
+ 00001CAC 0000069C R	     1	BUFFE   DD  DOCOL
 				                           
 				; NOTE: THIS WORD WON'T WORK IF ONLY USING SINGLE BUFFER
- 00001C60  00001B78 R		        DD      USE
- 00001C64  000005B8 R		        DD      FETCH,LDUP
+ 00001CB0  00001B74 R		        DD      USE
+ 00001CB4  000005B8 R		        DD      FETCH,LDUP
 	   00000562 R
- 00001C6C  0000044C R		        DD      TOR
- 00001C70 00001BAC R		BUFF1      DD      PBUF
- 00001C74  0000005E R		        DD      ZBRAN
- 00001C78  FFFFFFF8		        DD      BUFF1-$
- 00001C7C  00001B78 R		        DD      USE,STORE
+ 00001CBC  0000044C R		        DD      TOR
+ 00001CC0 00001BA8 R		BUFF1      DD      PBUF
+ 00001CC4  0000005E R		        DD      ZBRAN
+ 00001CC8  FFFFFFF8		        DD      BUFF1-$
+ 00001CCC  00001B74 R		        DD      USE,STORE
 	   000005F9 R
- 00001C84  00000479 R		        DD      RR,FETCH
+ 00001CD4  00000479 R		        DD      RR,FETCH
 	   000005B8 R
- 00001C8C  000004A0 R		        DD      ZLESS
- 00001C90  0000005E R		        DD      ZBRAN
- 00001C94  00000028		        DD      BUFF2-$
- 00001C98  00000479 R		        DD      RR,CELLP
+ 00001CDC  000004A0 R		        DD      ZLESS
+ 00001CE0  0000005E R		        DD      ZBRAN
+ 00001CE4  00000028		        DD      BUFF2-$
+ 00001CE8  00000479 R		        DD      RR,CELLP
 	   000009D0 R
- 00001CA0  00000479 R		        DD      RR,FETCH
+ 00001CF0  00000479 R		        DD      RR,FETCH
 	   000005B8 R
- 00001CA8  0000001E R		        DD      LIT,7FFFH
+ 00001CF8  0000001E R		        DD      LIT,7FFFH
 	   00007FFF
- 00001CB0  00000381 R		        DD      LAND,ZERO
+ 00001D00  00000381 R		        DD      LAND,ZERO
 	   00000745 R
- 00001CB8  000020A7 R		        DD      RSLW
- 00001CBC 00000479 R		BUFF2      DD      RR,STORE
+ 00001D08  00001FB3 R		        DD      RSLW
+ 00001D0C 00000479 R		BUFF2      DD      RR,STORE
 	   000005F9 R
- 00001CC4  00000479 R		        DD      RR,PREV
-	   00001B89 R
- 00001CCC  000005F9 R		        DD      STORE,FROMR
+ 00001D14  00000479 R		        DD      RR,PREV
+	   00001B85 R
+ 00001D1C  000005F9 R		        DD      STORE,FROMR
 	   00000463 R
- 00001CD4  000009D0 R		        DD      CELLP,SEMIS
+ 00001D24  000009D0 R		        DD      CELLP,SEMIS
 	   0000041D R
 				;
 
 				;  ************* 
-				;  *   BLOCK   *
+				;  *   BLOCK   * ### TODO: REmove this. 
 				;  ************* 
 				;  
 				        ENTRY   BLOCK, 80H+5, "BLOC", "K"+80H, DOCOL
- 00001CDC 85		     1	N_BLOCK DB  80H+5
- 00001CDD  42 4C 4F 43	     1	        DB  "BLOC"
- 00001CE1  CB		     1	        DB  "K"+80H
- 00001CE2  00001C51 R	     1	        DD  Link
- 00001CE6 0000069C R	     1	BLOCK   DD  DOCOL
+ 00001D2C 85		     1	N_BLOCK DB  80H+5
+ 00001D2D  42 4C 4F 43	     1	        DB  "BLOC"
+ 00001D31  CB		     1	        DB  "K"+80H
+ 00001D32  00001CA1 R	     1	        DD  Link
+ 00001D36 0000069C R	     1	BLOCK   DD  DOCOL
 				                           
- 00001CEA  0000001E R		        DD      LIT, PMASK, LAND
+ 00001D3A  0000001E R		        DD      LIT, PMASK, LAND
 	   000000FF
 	   00000381 R
- 00001CF6  000008BD R		        DD      OFSET
- 00001CFA  000005B8 R		        DD      FETCH,PLUS
+ 00001D46  000008BD R		        DD      OFSET
+ 00001D4A  000005B8 R		        DD      FETCH,PLUS
 	   000004BB R
- 00001D02  0000044C R		        DD      TOR,PREV
-	   00001B89 R
- 00001D0A  000005B8 R		        DD      FETCH,LDUP
+ 00001D52  0000044C R		        DD      TOR,PREV
+	   00001B85 R
+ 00001D5A  000005B8 R		        DD      FETCH,LDUP
 	   00000562 R
- 00001D12  000005B8 R		        DD      FETCH,RR
+ 00001D62  000005B8 R		        DD      FETCH,RR
 	   00000479 R
- 00001D1A  00000A58 R		        DD      LSUB
- 00001D1E  00000562 R		        DD      LDUP,PLUS
+ 00001D6A  00000A58 R		        DD      LSUB
+ 00001D6E  00000562 R		        DD      LDUP,PLUS
 	   000004BB R
- 00001D26  0000005E R		        DD      ZBRAN
- 00001D2A  0000006C		        DD      BLOC1-$
- 00001D2E 00001BAC R		BLOC2      DD      PBUF,ZEQU
+ 00001D76  0000005E R		        DD      ZBRAN
+ 00001D7A  0000006C		        DD      BLOC1-$
+ 00001D7E 00001BA8 R		BLOC2      DD      PBUF,ZEQU
 	   00000484 R
- 00001D36  0000005E R		        DD      ZBRAN
- 00001D3A  0000002C		        DD      BLOC3-$
- 00001D3E  0000053A R		        DD      DROP,RR
+ 00001D86  0000005E R		        DD      ZBRAN
+ 00001D8A  0000002C		        DD      BLOC3-$
+ 00001D8E  0000053A R		        DD      DROP,RR
 	   00000479 R
- 00001D46  00001C5C R		        DD      BUFFE,LDUP
+ 00001D96  00001CAC R		        DD      BUFFE,LDUP
 	   00000562 R
- 00001D4E  00000479 R		        DD      RR,ONE
+ 00001D9E  00000479 R		        DD      RR,ONE
 	   00000757 R
- 00001D56  000020A7 R		        DD      RSLW
- 00001D5A  0000001E R		        DD      LIT, CW,LSUB
+ 00001DA6  00001FB3 R		        DD      RSLW
+ 00001DAA  0000001E R		        DD      LIT, CW,LSUB
 	   00000004
 	   00000A58 R
- 00001D66 00000562 R		BLOC3      DD      LDUP,FETCH
+ 00001DB6 00000562 R		BLOC3      DD      LDUP,FETCH
 	   000005B8 R
- 00001D6E  00000479 R		        DD      RR,LSUB
+ 00001DBE  00000479 R		        DD      RR,LSUB
 	   00000A58 R
- 00001D76  00000562 R		        DD      LDUP,PLUS
+ 00001DC6  00000562 R		        DD      LDUP,PLUS
 	   000004BB R
- 00001D7E  00000484 R		        DD      ZEQU
- 00001D82  0000005E R		        DD      ZBRAN
- 00001D86  FFFFFFA8		        DD      BLOC2-$
- 00001D8A  00000562 R		        DD      LDUP,PREV
-	   00001B89 R
- 00001D92  000005F9 R		        DD      STORE
- 00001D96 00000463 R		BLOC1      DD      FROMR,DROP
+ 00001DCE  00000484 R		        DD      ZEQU
+ 00001DD2  0000005E R		        DD      ZBRAN
+ 00001DD6  FFFFFFA8		        DD      BLOC2-$
+ 00001DDA  00000562 R		        DD      LDUP,PREV
+	   00001B85 R
+ 00001DE2  000005F9 R		        DD      STORE
+ 00001DE6 00000463 R		BLOC1      DD      FROMR,DROP
 	   0000053A R
- 00001D9E  000009D0 R		        DD      CELLP,SEMIS
+ 00001DEE  000009D0 R		        DD      CELLP,SEMIS
 	   0000041D R
 				;
 
 				;  ************* 
-				;  *   FLUSH   *
+				;  *   FLUSH   * #### TODO: Redundant.
 				;  ************* 
 				;  
 				        ENTRY   FLUSH, 80H+5, "FLUS", "H"+80H, DOCOL
- 00001DA6 85		     1	N_FLUSH DB  80H+5
- 00001DA7  46 4C 55 53	     1	        DB  "FLUS"
- 00001DAB  C8		     1	        DB  "H"+80H
- 00001DAC  00001CDC R	     1	        DD  Link
- 00001DB0 0000069C R	     1	FLUSH   DD  DOCOL
+ 00001DF6 85		     1	N_FLUSH DB  80H+5
+ 00001DF7  46 4C 55 53	     1	        DB  "FLUS"
+ 00001DFB  C8		     1	        DB  "H"+80H
+ 00001DFC  00001D2C R	     1	        DD  Link
+ 00001E00 0000069C R	     1	FLUSH   DD  DOCOL
 				                           
- 00001DB4  00001B9B R		        DD      NOBUF,ONEP
+ 00001E04  00001B97 R		        DD      NOBUF,ONEP
 	   000009A5 R
- 00001DBC  00000745 R		        DD      ZERO,XDO
+ 00001E0C  00000745 R		        DD      ZERO,XDO
 	   000000C9 R
- 00001DC4 00000745 R		FLUS1      DD      ZERO,BUFFE
-	   00001C5C R
- 00001DCC  0000053A R		        DD      DROP
- 00001DD0  0000008C R		        DD      XLOOP
- 00001DD4  FFFFFFF0		        DD      FLUS1-$
- 00001DD8  0000041D R		        DD      SEMIS
+ 00001E14 00000745 R		FLUS1      DD      ZERO,BUFFE
+	   00001CAC R
+ 00001E1C  0000053A R		        DD      DROP
+ 00001E20  0000008C R		        DD      XLOOP
+ 00001E24  FFFFFFF0		        DD      FLUS1-$
+ 00001E28  0000041D R		        DD      SEMIS
+
 				;
+				;  ************
+				;  * OPENFILE *
+				;  ************
+				;  -- bufadr
+				;  Takes space-delimited filename from input stream, opens it for read, and
+				;  returns a buffer address for it storing the FID at the head of the buffer.
+				;
+				        ENTRY OPENF, 80H+8, "OPENFIL", "E"+80H, DOCOL
+ 00001E2C 88		     1	N_OPENF DB  80H+8
+ 00001E2D  4F 50 45 4E 46    1	        DB  "OPENFIL"
+	   49 4C
+ 00001E34  C5		     1	        DB  "E"+80H
+ 00001E35  00001DF6 R	     1	        DD  Link
+ 00001E39 0000069C R	     1	OPENF   DD  DOCOL
+
+ 00001E3D  00000797 R		        DD      BLS, LWORD
+	   00001114 R
+ 00001E45  000009E7 R		        DD      HERE, LDUP, ONEP        ; push string address HERE+1
+	   00000562 R
+	   000009A5 R
+ 00001E51  0000054D R		        DD      SWAP, CFET              ; push count
+	   000005CC R
+ 00001E59  00001F74 R		        DD      FOPEN                   ; open the file, returning the FID
+				       ; DD      BUFFE                   ; Return a buffer addr for the FID
+ 00001E5D  0000041D R		        DD      SEMIS
+
+
 
 				;  ************ 
-				;  *   LOAD   * #### TODO: INCLUDE same as this, but opens file and reads firts line. Stores FID and buffr addr on R-stack.
+				;  *   LOAD   * #### TODO: INCLUDE same as this, but opens file, assigns buffer, and reads firts line. Stores FID in buffer an IN and BLK (buffr addr) on R-stack.
 				;  ************ 
 				;  
 				        ENTRY   LOAD, 80H+4, "LOA", "D"+80H, DOCOL
- 00001DDC 84		     1	N_LOAD DB  80H+4
- 00001DDD  4C 4F 41	     1	        DB  "LOA"
- 00001DE0  C4		     1	        DB  "D"+80H
- 00001DE1  00001DA6 R	     1	        DD  Link
- 00001DE5 0000069C R	     1	LOAD   DD  DOCOL
+ 00001E61 84		     1	N_LOAD DB  80H+4
+ 00001E62  4C 4F 41	     1	        DB  "LOA"
+ 00001E65  C4		     1	        DB  "D"+80H
+ 00001E66  00001E2C R	     1	        DD  Link
+ 00001E6A 0000069C R	     1	LOAD   DD  DOCOL
 				                           
- 00001DE9  00000996 R		        DD      BLK
- 00001DED  000005B8 R		        DD      FETCH,TOR
+ 00001E6E  00000996 R		        DD      BLK
+ 00001E72  000005B8 R		        DD      FETCH,TOR
 	   0000044C R
- 00001DF5  00000976 R		        DD      LIN,FETCH
+ 00001E7A  00000976 R		        DD      LIN,FETCH
 	   000005B8 R
- 00001DFD  0000044C R		        DD      TOR,ZERO
+ 00001E82  0000044C R		        DD      TOR,ZERO
 	   00000745 R
- 00001E05  00000976 R		        DD      LIN,STORE
+ 00001E8A  00000976 R		        DD      LIN,STORE
 	   000005F9 R
- 00001E0D  000007FE R		        DD      BSCR,STAR
-	   000019DE R
- 00001E15  00000996 R		        DD      BLK,STORE       ;BLK <- SCR * B/SCR
+ 00001E92  000007FE R		        DD      BSCR,STAR
+	   000019DA R
+ 00001E9A  00000996 R		        DD      BLK,STORE       ;BLK <- SCR * B/SCR
 	   000005F9 R
- 00001E1D  000015A6 R		        DD      INTER   ;INTERPRET FROM OTHER
- 00001E21 00000463 R		SCREEN      DD      FROMR,LIN
+ 00001EA2  000015A6 R		        DD      INTER   ;INTERPRET FROM OTHER
+ 00001EA6 00000463 R		SCREEN      DD      FROMR,LIN
 	   00000976 R
- 00001E29  000005F9 R		        DD      STORE
- 00001E2D  00000463 R		        DD      FROMR,BLK
+ 00001EAE  000005F9 R		        DD      STORE
+ 00001EB2  00000463 R		        DD      FROMR,BLK
 	   00000996 R
- 00001E35  000005F9 R		        DD      STORE
- 00001E39  0000041D R		        DD      SEMIS
-				;
-
-				;  *********** 
-				;  *   -->   * ####TODO: This is a no-operation. SHould be removed.
-				;  *********** 
-				;  
-				        ENTRY   ARROW, 80H+3+40H, "--", ">"+80H, DOCOL
- 00001E3D C3		     1	N_ARROW DB  80H+3+40H
- 00001E3E  2D 2D	     1	        DB  "--"
- 00001E40  BE		     1	        DB  ">"+80H
- 00001E41  00001DDC R	     1	        DD  Link
- 00001E45 0000069C R	     1	ARROW   DD  DOCOL
-				                           
- 00001E49  00000D28 R		        DD      QLOAD
- 00001E4D  00000745 R		        DD      ZERO
- 00001E51  00000976 R		        DD      LIN
- 00001E55  000005F9 R		        DD      STORE
- 00001E59  000007FE R		        DD      BSCR
- 00001E5D  00000996 R		        DD      BLK
- 00001E61  000005B8 R		        DD      FETCH
- 00001E65  00000523 R		        DD      OVER
- 00001E69  00001A31 R		        DD      LMOD
- 00001E6D  00000A58 R		        DD      LSUB
- 00001E71  00000996 R		        DD      BLK
- 00001E75  0000058D R		        DD      PSTOR
- 00001E79  0000041D R		        DD      SEMIS
-				        ;
-				;
+ 00001EBA  000005F9 R		        DD      STORE
+ 00001EBE  0000041D R		        DD      SEMIS
 				;
 
 
-				%if 0
-				%endif
-				;
-				        ;
 				;------------------------------------
 				;       SYSTEM DEPENDANT CHAR I/O
 				;------------------------------------
@@ -4528,19 +4557,19 @@ forth32.asm						     Page 1 - 1
 				;  ************ 
 				;  
 				        CODE_ENTRY   LTYPE, 80H+4, "TYP", "E"+80H
- 00001E7D 84		     1	N_LTYPE DB  80H+4
- 00001E7E  54 59 50	     1	        DB  "TYP"
- 00001E81  C5		     1	        DB  "E"+80H
- 00001E82  00001E3D R	     1	        DD  Link
- 00001E86 00001E8A R	     1	LTYPE   DD  C_LTYPE
- 00001E8A		     1	C_LTYPE:
+ 00001EC2 84		     1	N_LTYPE DB  80H+4
+ 00001EC3  54 59 50	     1	        DB  "TYP"
+ 00001EC6  C5		     1	        DB  "E"+80H
+ 00001EC7  00001E61 R	     1	        DD  Link
+ 00001ECB 00001ECF R	     1	LTYPE   DD  C_LTYPE
+ 00001ECF		     1	C_LTYPE:
 
- 00001E8A  E8 00000000 E	        CALL    c_type
- 00001E8F  8D 64 24 08		        LEA     ESP,[ESP+(CW*2)]    ; remove input
+ 00001ECF  E8 00000000 E	        CALL    c_type
+ 00001ED4  8D 64 24 08		        LEA     ESP,[ESP+(CW*2)]    ; remove input
 				        NEXT
- 00001E93  AD		     1	        LODSD 
- 00001E94  8B D8	     1	        MOV     EBX,EAX                  
- 00001E96  FF 23	     1	        JMP      DWORD PTR[EBX]   
+ 00001ED8  AD		     1	        LODSD 
+ 00001ED9  8B D8	     1	        MOV     EBX,EAX                  
+ 00001EDB  FF 23	     1	        JMP      DWORD PTR[EBX]   
 				;
 
 				;
@@ -4549,19 +4578,19 @@ forth32.asm						     Page 1 - 1
 				;  ************** 
 				;  
 				        CODE_ENTRY   EXPEC, 80H+6, "EXPEC", "T"+80H
- 00001E98 86		     1	N_EXPEC DB  80H+6
- 00001E99  45 58 50 45 43    1	        DB  "EXPEC"
- 00001E9E  D4		     1	        DB  "T"+80H
- 00001E9F  00001E7D R	     1	        DD  Link
- 00001EA3 00001EA7 R	     1	EXPEC   DD  C_EXPEC
- 00001EA7		     1	C_EXPEC:
+ 00001EDD 86		     1	N_EXPEC DB  80H+6
+ 00001EDE  45 58 50 45 43    1	        DB  "EXPEC"
+ 00001EE3  D4		     1	        DB  "T"+80H
+ 00001EE4  00001EC2 R	     1	        DD  Link
+ 00001EE8 00001EEC R	     1	EXPEC   DD  C_EXPEC
+ 00001EEC		     1	C_EXPEC:
 
- 00001EA7  E8 00000000 E	        CALL    c_expect
- 00001EAC  8D 64 24 08		        LEA     ESP,[ESP+(CW*2)]    ; remove input
+ 00001EEC  E8 00000000 E	        CALL    c_expect
+ 00001EF1  8D 64 24 08		        LEA     ESP,[ESP+(CW*2)]    ; remove input
 				        NEXT
- 00001EB0  AD		     1	        LODSD 
- 00001EB1  8B D8	     1	        MOV     EBX,EAX                  
- 00001EB3  FF 23	     1	        JMP      DWORD PTR[EBX]   
+ 00001EF5  AD		     1	        LODSD 
+ 00001EF6  8B D8	     1	        MOV     EBX,EAX                  
+ 00001EF8  FF 23	     1	        JMP      DWORD PTR[EBX]   
 				;
 
 				;  *********** 
@@ -4569,19 +4598,19 @@ forth32.asm						     Page 1 - 1
 				;  *********** 
 				;  
 				        CODE_ENTRY   LKEY, 80H+3, "KE", "Y"+80H
- 00001EB5 83		     1	N_LKEY DB  80H+3
- 00001EB6  4B 45	     1	        DB  "KE"
- 00001EB8  D9		     1	        DB  "Y"+80H
- 00001EB9  00001E98 R	     1	        DD  Link
- 00001EBD 00001EC1 R	     1	LKEY   DD  C_LKEY
- 00001EC1		     1	C_LKEY:
+ 00001EFA 83		     1	N_LKEY DB  80H+3
+ 00001EFB  4B 45	     1	        DB  "KE"
+ 00001EFD  D9		     1	        DB  "Y"+80H
+ 00001EFE  00001EDD R	     1	        DD  Link
+ 00001F02 00001F06 R	     1	LKEY   DD  C_LKEY
+ 00001F06		     1	C_LKEY:
 				                           
- 00001EC1  E8 00000000 E	        CALL    c_key
- 00001EC6  50			        PUSH    EAX
+ 00001F06  E8 00000000 E	        CALL    c_key
+ 00001F0B  50			        PUSH    EAX
 				        NEXT
- 00001EC7  AD		     1	        LODSD 
- 00001EC8  8B D8	     1	        MOV     EBX,EAX                  
- 00001ECA  FF 23	     1	        JMP      DWORD PTR[EBX]   
+ 00001F0C  AD		     1	        LODSD 
+ 00001F0D  8B D8	     1	        MOV     EBX,EAX                  
+ 00001F0F  FF 23	     1	        JMP      DWORD PTR[EBX]   
 				;
 
 				;  ***************** 
@@ -4589,20 +4618,20 @@ forth32.asm						     Page 1 - 1
 				;  ***************** 
 				;  
 				        CODE_ENTRY   QTERM, 80H+9, "?TERMINA", "L"+80H
- 00001ECC 89		     1	N_QTERM DB  80H+9
- 00001ECD  3F 54 45 52 4D    1	        DB  "?TERMINA"
+ 00001F11 89		     1	N_QTERM DB  80H+9
+ 00001F12  3F 54 45 52 4D    1	        DB  "?TERMINA"
 	   49 4E 41
- 00001ED5  CC		     1	        DB  "L"+80H
- 00001ED6  00001EB5 R	     1	        DD  Link
- 00001EDA 00001EDE R	     1	QTERM   DD  C_QTERM
- 00001EDE		     1	C_QTERM:
+ 00001F1A  CC		     1	        DB  "L"+80H
+ 00001F1B  00001EFA R	     1	        DD  Link
+ 00001F1F 00001F23 R	     1	QTERM   DD  C_QTERM
+ 00001F23		     1	C_QTERM:
 				                           
- 00001EDE  E8 00000000 E	        CALL    c_qterminal
- 00001EE3  50			        PUSH    EAX
+ 00001F23  E8 00000000 E	        CALL    c_qterminal
+ 00001F28  50			        PUSH    EAX
 				        NEXT
- 00001EE4  AD		     1	        LODSD 
- 00001EE5  8B D8	     1	        MOV     EBX,EAX                  
- 00001EE7  FF 23	     1	        JMP      DWORD PTR[EBX]   
+ 00001F29  AD		     1	        LODSD 
+ 00001F2A  8B D8	     1	        MOV     EBX,EAX                  
+ 00001F2C  FF 23	     1	        JMP      DWORD PTR[EBX]   
 				;
 				 ;
 				;
@@ -4612,17 +4641,17 @@ forth32.asm						     Page 1 - 1
 				;  *   EMIT   *
 				;  ************ 
 				;  
- 00001EE9 84			N_EMIT      DB   80H+4
- 00001EEA  45 4D 49		         DB      "EMI"
- 00001EED  D4			         DB     "T"+80H
- 00001EEE  00001ECC R		         DD    N_QTERM
- 00001EF2 0000069C R		EMIT      DD     DOCOL
+ 00001F2E 84			N_EMIT      DB   80H+4
+ 00001F2F  45 4D 49		         DB      "EMI"
+ 00001F32  D4			         DB     "T"+80H
+ 00001F33  00001F11 R		         DD    N_QTERM
+ 00001F37 0000069C R		EMIT      DD     DOCOL
 				                           
- 00001EF6  000003C2 R		        DD      SPFET, ONE, LTYPE
+ 00001F3B  000003C2 R		        DD      SPFET, ONE, LTYPE
 	   00000757 R
-	   00001E86 R
- 00001F02  0000053A R		        DD      DROP
- 00001F06  0000041D R		        DD      SEMIS
+	   00001ECB R
+ 00001F47  0000053A R		        DD      DROP
+ 00001F4B  0000041D R		        DD      SEMIS
 				;
 				;
 				;
@@ -4636,122 +4665,84 @@ forth32.asm						     Page 1 - 1
 
 
 				;  ****************** 
-				;  *   BLOCK-FILE   * ### TODO: Redundant.
-				;  ****************** 
-				;  
-				        ENTRY   BLFL, 80H+10, "BLOCK-FIL", "E"+80H, DOVAR
- 00001F0A 8A		     1	N_BLFL DB  80H+10
- 00001F0B  42 4C 4F 43 4B    1	        DB  "BLOCK-FIL"
-	   2D 46 49 4C
- 00001F14  C5		     1	        DB  "E"+80H
- 00001F15  00001ECC R	     1	        DD  Link
- 00001F19 0000070F R	     1	BLFL   DD  DOVAR
-				                           
-				        
- 00001F1D  0A			        DB      10
- 00001F1E  42 4C 4F 43 4B	        DB      "BLOCKS.BLK"
-	   53 2E 42 4C 4B
- 00001F28  000000F5 [		        BYTE    254-9 DUP(?)               ; Allow for some path
-	    00
-	   ]
-
-				;  ******************** 
-				;  *   BLOCK-HANDLE   * ### TODO: Redundant.
-				;  ******************** 
-				;  
-				        ENTRY   BHAN, 80H+12, "BLOCK-HANDL", "E"+80H, DOVAR
- 0000201D 8C		     1	N_BHAN DB  80H+12
- 0000201E  42 4C 4F 43 4B    1	        DB  "BLOCK-HANDL"
-	   2D 48 41 4E 44
-	   4C
- 00002029  C5		     1	        DB  "E"+80H
- 0000202A  00001F0A R	     1	        DD  Link
- 0000202E 0000070F R	     1	BHAN   DD  DOVAR
-				                           
- 00002032  FFFFFFFF		        DD      -1
-
-
-				;  ****************** 
 				;  *   DISK-ERROR   *
 				;  ****************** 
 				;  
 				        ENTRY   DERR, 80H+10, "DISK-ERRO", "R"+80H, DOVAR
- 00002036 8A		     1	N_DERR DB  80H+10
- 00002037  44 49 53 4B 2D    1	        DB  "DISK-ERRO"
+ 00001F4F 8A		     1	N_DERR DB  80H+10
+ 00001F50  44 49 53 4B 2D    1	        DB  "DISK-ERRO"
 	   45 52 52 4F
- 00002040  D2		     1	        DB  "R"+80H
- 00002041  0000201D R	     1	        DD  Link
- 00002045 0000070F R	     1	DERR   DD  DOVAR
+ 00001F59  D2		     1	        DB  "R"+80H
+ 00001F5A  00001F11 R	     1	        DD  Link
+ 00001F5E 0000070F R	     1	DERR   DD  DOVAR
 				                           
- 00002049  FFFFFFFF		        DD      -1
+ 00001F62  FFFFFFFF		        DD      -1
 
 				;  ****************** 
-				;  *   BLOCK-INIT   *
+				;  *   FILE-OPEN    *
 				;  ****************** 
 				;  
-				        CODE_ENTRY   BLINI, 80H+10, "BLOCK-INI", "T"+80H
- 0000204D 8A		     1	N_BLINI DB  80H+10
- 0000204E  42 4C 4F 43 4B    1	        DB  "BLOCK-INI"
-	   2D 49 4E 49
- 00002057  D4		     1	        DB  "T"+80H
- 00002058  00002036 R	     1	        DD  Link
- 0000205C 00002060 R	     1	BLINI   DD  C_BLINI
- 00002060		     1	C_BLINI:
+				        CODE_ENTRY   FOPEN, 80H+9, "FILE-OPE", "N"+80H
+ 00001F66 89		     1	N_FOPEN DB  80H+9
+ 00001F67  46 49 4C 45 2D    1	        DB  "FILE-OPE"
+	   4F 50 45
+ 00001F6F  CE		     1	        DB  "N"+80H
+ 00001F70  00001F4F R	     1	        DD  Link
+ 00001F74 00001F78 R	     1	FOPEN   DD  C_FOPEN
+ 00001F78		     1	C_FOPEN:
 
- 00002060  33 C0		        XOR     EAX,EAX
- 00002062  A0 00001F1D R	        MOV     AL,BYTE PTR[(BLFL+CW)]
- 00002067  8D 1D 00001F1E R	        LEA     EBX,(BLFL+CW)+1
- 0000206D  53			        PUSH    EBX
- 0000206E  50			        PUSH    EAX
- 0000206F  E8 00000000 E	        CALL    c_block_init
- 00002074  A3 00002049 R	        MOV     [(DERR+CW)],EAX
- 00002079  8D 64 24 08		        LEA     ESP,[ESP+(CW*2)]    ; remove input
+ 00001F78  33 C0		        XOR     EAX,EAX
+ 00001F7A  E8 00000000 E	        CALL    c_file_open             ; count then filename on stack
+ 00001F7F  8D 64 24 08		        LEA     ESP,[ESP+(CW*2)]        ; remove input
+ 00001F83  50			        PUSH    EAX                     ; push returned FID
 				        NEXT
- 0000207D  AD		     1	        LODSD 
- 0000207E  8B D8	     1	        MOV     EBX,EAX                  
- 00002080  FF 23	     1	        JMP      DWORD PTR[EBX]   
+ 00001F84  AD		     1	        LODSD 
+ 00001F85  8B D8	     1	        MOV     EBX,EAX                  
+ 00001F87  FF 23	     1	        JMP      DWORD PTR[EBX]   
 				;
 
 				;  ****************** 
-				;  *   BLOCK-EXIT   *
+				;  *   FILE-CLOSE   *
 				;  ****************** 
 				;  
-				        CODE_ENTRY   BLEXI, 80H+10, "BLOCK-EXI", "T"+80H
- 00002082 8A		     1	N_BLEXI DB  80H+10
- 00002083  42 4C 4F 43 4B    1	        DB  "BLOCK-EXI"
-	   2D 45 58 49
- 0000208C  D4		     1	        DB  "T"+80H
- 0000208D  0000204D R	     1	        DD  Link
- 00002091 00002095 R	     1	BLEXI   DD  C_BLEXI
- 00002095		     1	C_BLEXI:
+				        CODE_ENTRY   FCLOSE, 80H+10, "FILE-CLOS", "E"+80H
+ 00001F89 8A		     1	N_FCLOSE DB  80H+10
+ 00001F8A  46 49 4C 45 2D    1	        DB  "FILE-CLOS"
+	   43 4C 4F 53
+ 00001F93  C5		     1	        DB  "E"+80H
+ 00001F94  00001F66 R	     1	        DD  Link
+ 00001F98 00001F9C R	     1	FCLOSE   DD  C_FCLOSE
+ 00001F9C		     1	C_FCLOSE:
 				                           
- 00002095  E8 00000000 E	        CALL    c_block_exit
+ 00001F9C  E8 00000000 E	        CALL    c_file_close            ; fid on stack, returns rc on stack
+ 00001FA1  8D 64 24 08		        LEA     ESP,[ESP+(CW*2)]        ; remove input
+ 00001FA5  50			        PUSH    EAX
 				        NEXT
- 0000209A  AD		     1	        LODSD 
- 0000209B  8B D8	     1	        MOV     EBX,EAX                  
- 0000209D  FF 23	     1	        JMP      DWORD PTR[EBX]   
+ 00001FA6  AD		     1	        LODSD 
+ 00001FA7  8B D8	     1	        MOV     EBX,EAX                  
+ 00001FA9  FF 23	     1	        JMP      DWORD PTR[EBX]   
 				;
 
 				;      ( ADDR  BLK#  FLAG (0=W, 1=R)
 				;  *********** 
-				;  *   R/W   *
+				;  *   R/W   * ### TODO: Redundant. Separate redaing from writing and fix up the C glue.
 				;  *********** 
 				;  
 				        CODE_ENTRY   RSLW, 80H+3, "R/", "W"+80H
- 0000209F 83		     1	N_RSLW DB  80H+3
- 000020A0  52 2F	     1	        DB  "R/"
- 000020A2  D7		     1	        DB  "W"+80H
- 000020A3  00002082 R	     1	        DD  Link
- 000020A7 000020AB R	     1	RSLW   DD  C_RSLW
- 000020AB		     1	C_RSLW:
+ 00001FAB 83		     1	N_RSLW DB  80H+3
+ 00001FAC  52 2F	     1	        DB  "R/"
+ 00001FAE  D7		     1	        DB  "W"+80H
+ 00001FAF  00001F89 R	     1	        DD  Link
+ 00001FB3 00001FB7 R	     1	RSLW   DD  C_RSLW
+ 00001FB7		     1	C_RSLW:
 				                           
- 000020AB  E8 00000000 E	        CALL c_readwrite
- 000020B0  A3 00002049 R	        MOV     [(DERR+CW)],EAX
- 000020B5  8D 64 24 0C		        LEA     ESP,[ESP+(CW*3)]    ; remove input
+				     ;   CALL c_readwrite
+ 00001FB7  A3 00001F62 R	        MOV     [(DERR+CW)],EAX
+ 00001FBC  8D 64 24 0C		        LEA     ESP,[ESP+(CW*3)]    ; remove input
 				        NEXT
- 000020B9  AD		     1	        LODSD 
- 000020BA  8B D8	     1	        MOV     EBX,EAX                  
- 000020BC  FF 23	     1	        JMP      DWORD PTR[EBX]   
+ 00001FC0  AD		     1	        LODSD 
+ 00001FC1  8B D8	     1	        MOV     EBX,EAX                  
+ 00001FC3  FF 23	     1	        JMP      DWORD PTR[EBX]   
 
 
 
@@ -4760,18 +4751,18 @@ forth32.asm						     Page 1 - 1
 				;  ********* 
 				;  
 				        ENTRY_1   TICK, 80H+1+40H, "'"+80H, DOCOL
- 000020BE C1		     1	N_TICK DB  80H+1+40H
- 000020BF  A7		     1	        DB  "'"+80H
- 000020C0  0000209F R	     1	        DD  Link
- 000020C4 0000069C R	     1	TICK   DD  DOCOL
+ 00001FC5 C1		     1	N_TICK DB  80H+1+40H
+ 00001FC6  A7		     1	        DB  "'"+80H
+ 00001FC7  00001FAB R	     1	        DD  Link
+ 00001FCB 0000069C R	     1	TICK   DD  DOCOL
 				                           
- 000020C8  000012E6 R		        DD      DFIND
- 000020CC  00000484 R		        DD      ZEQU
- 000020D0  00000745 R		        DD      ZERO
- 000020D4  00000C57 R		        DD      QERR
- 000020D8  0000053A R		        DD      DROP
- 000020DC  000014F0 R		        DD      LITER
- 000020E0  0000041D R		        DD      SEMIS
+ 00001FCF  000012E6 R		        DD      DFIND
+ 00001FD3  00000484 R		        DD      ZEQU
+ 00001FD7  00000745 R		        DD      ZERO
+ 00001FDB  00000C57 R		        DD      QERR
+ 00001FDF  0000053A R		        DD      DROP
+ 00001FE3  000014F0 R		        DD      LITER
+ 00001FE7  0000041D R		        DD      SEMIS
 				;
 
 				; The original figForth FORGET code. The 2.148 version did not work any better,
@@ -4781,38 +4772,38 @@ forth32.asm						     Page 1 - 1
 				;  ************** 
 				;  
 				        ENTRY   FORG, 80H+6, "FORGE", "T"+80H, DOCOL
- 000020E4 86		     1	N_FORG DB  80H+6
- 000020E5  46 4F 52 47 45    1	        DB  "FORGE"
- 000020EA  D4		     1	        DB  "T"+80H
- 000020EB  000020BE R	     1	        DD  Link
- 000020EF 0000069C R	     1	FORG   DD  DOCOL
+ 00001FEB 86		     1	N_FORG DB  80H+6
+ 00001FEC  46 4F 52 47 45    1	        DB  "FORGE"
+ 00001FF1  D4		     1	        DB  "T"+80H
+ 00001FF2  00001FC5 R	     1	        DD  Link
+ 00001FF6 0000069C R	     1	FORG   DD  DOCOL
 				                           
- 000020F3  000008F5 R		        DD      CURR
- 000020F7  000005B8 R		        DD      FETCH
- 000020FB  000008E1 R		        DD      CONT
- 000020FF  000005B8 R		        DD      FETCH
- 00002103  00000A58 R		        DD      LSUB
- 00002107  0000001E R		        DD      LIT,18H
+ 00001FFA  000008F5 R		        DD      CURR
+ 00001FFE  000005B8 R		        DD      FETCH
+ 00002002  000008E1 R		        DD      CONT
+ 00002006  000005B8 R		        DD      FETCH
+ 0000200A  00000A58 R		        DD      LSUB
+ 0000200E  0000001E R		        DD      LIT,18H
 	   00000018
- 0000210F  00000C57 R		        DD      QERR
- 00002113  000020C4 R		        DD      TICK
- 00002117  00000562 R		        DD      LDUP
- 0000211B  00000886 R		        DD      FENCE
- 0000211F  000005B8 R		        DD      FETCH
- 00002123  00000A82 R		        DD      LESS
- 00002127  0000001E R		        DD      LIT,15H
+ 00002016  00000C57 R		        DD      QERR
+ 0000201A  00001FCB R		        DD      TICK
+ 0000201E  00000562 R		        DD      LDUP
+ 00002022  00000886 R		        DD      FENCE
+ 00002026  000005B8 R		        DD      FETCH
+ 0000202A  00000A82 R		        DD      LESS
+ 0000202E  0000001E R		        DD      LIT,15H
 	   00000015
- 0000212F  00000C57 R		        DD      QERR
- 00002133  00000562 R		        DD      LDUP
- 00002137  00000BEB R		        DD      NFA
- 0000213B  00000895 R		        DD      LDP
- 0000213F  000005F9 R		        DD      STORE
- 00002143  00000BB3 R		        DD      LFA
- 00002147  000005B8 R		        DD      FETCH
- 0000214B  000008E1 R		        DD      CONT
- 0000214F  000005B8 R		        DD      FETCH
- 00002153  000005F9 R		        DD      STORE
- 00002157  0000041D R		        DD      SEMIS
+ 00002036  00000C57 R		        DD      QERR
+ 0000203A  00000562 R		        DD      LDUP
+ 0000203E  00000BEB R		        DD      NFA
+ 00002042  00000895 R		        DD      LDP
+ 00002046  000005F9 R		        DD      STORE
+ 0000204A  00000BB3 R		        DD      LFA
+ 0000204E  000005B8 R		        DD      FETCH
+ 00002052  000008E1 R		        DD      CONT
+ 00002056  000005B8 R		        DD      FETCH
+ 0000205A  000005F9 R		        DD      STORE
+ 0000205E  0000041D R		        DD      SEMIS
 				;
 
 				;  ************ 
@@ -4820,16 +4811,16 @@ forth32.asm						     Page 1 - 1
 				;  ************ 
 				;  
 				        ENTRY   BACK, 80H+4, "BAC", "K"+80H, DOCOL
- 0000215B 84		     1	N_BACK DB  80H+4
- 0000215C  42 41 43	     1	        DB  "BAC"
- 0000215F  CB		     1	        DB  "K"+80H
- 00002160  000020E4 R	     1	        DD  Link
- 00002164 0000069C R	     1	BACK   DD  DOCOL
+ 00002062 84		     1	N_BACK DB  80H+4
+ 00002063  42 41 43	     1	        DB  "BAC"
+ 00002066  CB		     1	        DB  "K"+80H
+ 00002067  00001FEB R	     1	        DD  Link
+ 0000206B 0000069C R	     1	BACK   DD  DOCOL
 				                           
- 00002168  000009E7 R		        DD      HERE
- 0000216C  00000A58 R		        DD      LSUB
- 00002170  00000A17 R		        DD      COMMA
- 00002174  0000041D R		        DD      SEMIS
+ 0000206F  000009E7 R		        DD      HERE
+ 00002073  00000A58 R		        DD      LSUB
+ 00002077  00000A17 R		        DD      COMMA
+ 0000207B  0000041D R		        DD      SEMIS
 				;
 
 				;  ************* 
@@ -4837,16 +4828,16 @@ forth32.asm						     Page 1 - 1
 				;  ************* 
 				;  
 				        ENTRY   BEGIN, 80H+5+40H, "BEGI", "N"+80H, DOCOL
- 00002178 C5		     1	N_BEGIN DB  80H+5+40H
- 00002179  42 45 47 49	     1	        DB  "BEGI"
- 0000217D  CE		     1	        DB  "N"+80H
- 0000217E  0000215B R	     1	        DD  Link
- 00002182 0000069C R	     1	BEGIN   DD  DOCOL
+ 0000207F C5		     1	N_BEGIN DB  80H+5+40H
+ 00002080  42 45 47 49	     1	        DB  "BEGI"
+ 00002084  CE		     1	        DB  "N"+80H
+ 00002085  00002062 R	     1	        DD  Link
+ 00002089 0000069C R	     1	BEGIN   DD  DOCOL
 				                           
- 00002186  00000C85 R		        DD      QCOMP
- 0000218A  000009E7 R		        DD      HERE
- 0000218E  00000757 R		        DD      ONE
- 00002192  0000041D R		        DD      SEMIS
+ 0000208D  00000C85 R		        DD      QCOMP
+ 00002091  000009E7 R		        DD      HERE
+ 00002095  00000757 R		        DD      ONE
+ 00002099  0000041D R		        DD      SEMIS
 				;
 
 				;  ************* 
@@ -4854,21 +4845,21 @@ forth32.asm						     Page 1 - 1
 				;  ************* 
 				;  
 				        ENTRY   LENDIF, 80H+5+40H, "ENDI", "F"+80H, DOCOL
- 00002196 C5		     1	N_LENDIF DB  80H+5+40H
- 00002197  45 4E 44 49	     1	        DB  "ENDI"
- 0000219B  C6		     1	        DB  "F"+80H
- 0000219C  00002178 R	     1	        DD  Link
- 000021A0 0000069C R	     1	LENDIF   DD  DOCOL
+ 0000209D C5		     1	N_LENDIF DB  80H+5+40H
+ 0000209E  45 4E 44 49	     1	        DB  "ENDI"
+ 000020A2  C6		     1	        DB  "F"+80H
+ 000020A3  0000207F R	     1	        DD  Link
+ 000020A7 0000069C R	     1	LENDIF   DD  DOCOL
 				                           
- 000021A4  00000C85 R		        DD      QCOMP
- 000021A8  0000076C R		        DD      TWO     ; Magic number
- 000021AC  00000CD6 R		        DD      QPAIR
- 000021B0  000009E7 R		        DD      HERE
- 000021B4  00000523 R		        DD      OVER
- 000021B8  00000A58 R		        DD      LSUB
- 000021BC  0000054D R		        DD      SWAP
- 000021C0  000005F9 R		        DD      STORE
- 000021C4  0000041D R		        DD      SEMIS
+ 000020AB  00000C85 R		        DD      QCOMP
+ 000020AF  0000076C R		        DD      TWO     ; Magic number
+ 000020B3  00000CD6 R		        DD      QPAIR
+ 000020B7  000009E7 R		        DD      HERE
+ 000020BB  00000523 R		        DD      OVER
+ 000020BF  00000A58 R		        DD      LSUB
+ 000020C3  0000054D R		        DD      SWAP
+ 000020C7  000005F9 R		        DD      STORE
+ 000020CB  0000041D R		        DD      SEMIS
 				;
 
 				;  ************ 
@@ -4876,14 +4867,14 @@ forth32.asm						     Page 1 - 1
 				;  ************ 
 				;  
 				        ENTRY   THEN, 80H+4+40H, "THE", "N"+80H, DOCOL
- 000021C8 C4		     1	N_THEN DB  80H+4+40H
- 000021C9  54 48 45	     1	        DB  "THE"
- 000021CC  CE		     1	        DB  "N"+80H
- 000021CD  00002196 R	     1	        DD  Link
- 000021D1 0000069C R	     1	THEN   DD  DOCOL
+ 000020CF C4		     1	N_THEN DB  80H+4+40H
+ 000020D0  54 48 45	     1	        DB  "THE"
+ 000020D3  CE		     1	        DB  "N"+80H
+ 000020D4  0000209D R	     1	        DD  Link
+ 000020D8 0000069C R	     1	THEN   DD  DOCOL
 				                           
- 000021D5  000021A0 R		        DD      LENDIF
- 000021D9  0000041D R		        DD      SEMIS
+ 000020DC  000020A7 R		        DD      LENDIF
+ 000020E0  0000041D R		        DD      SEMIS
 				;
 
 				;  ********** 
@@ -4891,17 +4882,17 @@ forth32.asm						     Page 1 - 1
 				;  ********** 
 				;  
 				        ENTRY   DO, 80H+2+40H, "D", "O"+80H, DOCOL
- 000021DD C2		     1	N_DO DB  80H+2+40H
- 000021DE  44		     1	        DB  "D"
- 000021DF  CF		     1	        DB  "O"+80H
- 000021E0  000021C8 R	     1	        DD  Link
- 000021E4 0000069C R	     1	DO   DD  DOCOL
+ 000020E4 C2		     1	N_DO DB  80H+2+40H
+ 000020E5  44		     1	        DB  "D"
+ 000020E6  CF		     1	        DB  "O"+80H
+ 000020E7  000020CF R	     1	        DD  Link
+ 000020EB 0000069C R	     1	DO   DD  DOCOL
 				                           
- 000021E8  00000D54 R		        DD      COMP
- 000021EC  000000C9 R		        DD      XDO
- 000021F0  000009E7 R		        DD      HERE
- 000021F4  00000781 R		        DD      THREE   ; Magic number
- 000021F8  0000041D R		        DD      SEMIS
+ 000020EF  00000D54 R		        DD      COMP
+ 000020F3  000000C9 R		        DD      XDO
+ 000020F7  000009E7 R		        DD      HERE
+ 000020FB  00000781 R		        DD      THREE   ; Magic number
+ 000020FF  0000041D R		        DD      SEMIS
 				;
 
 				;  ************ 
@@ -4909,18 +4900,18 @@ forth32.asm						     Page 1 - 1
 				;  ************ 
 				;  
 				        ENTRY   LLOOP, 80H+4+40H, "LOO", "P"+80H, DOCOL
- 000021FC C4		     1	N_LLOOP DB  80H+4+40H
- 000021FD  4C 4F 4F	     1	        DB  "LOO"
- 00002200  D0		     1	        DB  "P"+80H
- 00002201  000021DD R	     1	        DD  Link
- 00002205 0000069C R	     1	LLOOP   DD  DOCOL
+ 00002103 C4		     1	N_LLOOP DB  80H+4+40H
+ 00002104  4C 4F 4F	     1	        DB  "LOO"
+ 00002107  D0		     1	        DB  "P"+80H
+ 00002108  000020E4 R	     1	        DD  Link
+ 0000210C 0000069C R	     1	LLOOP   DD  DOCOL
 				                           
- 00002209  00000781 R		        DD      THREE   ; Magic number
- 0000220D  00000CD6 R		        DD      QPAIR
- 00002211  00000D54 R		        DD      COMP
- 00002215  0000008C R		        DD      XLOOP
- 00002219  00002164 R		        DD      BACK
- 0000221D  0000041D R		        DD      SEMIS
+ 00002110  00000781 R		        DD      THREE   ; Magic number
+ 00002114  00000CD6 R		        DD      QPAIR
+ 00002118  00000D54 R		        DD      COMP
+ 0000211C  0000008C R		        DD      XLOOP
+ 00002120  0000206B R		        DD      BACK
+ 00002124  0000041D R		        DD      SEMIS
 				;
 
 				;  ************* 
@@ -4928,18 +4919,18 @@ forth32.asm						     Page 1 - 1
 				;  ************* 
 				;  
 				        ENTRY   PLOOP, 80H+5+40H, "+LOO", "P"+80H, DOCOL
- 00002221 C5		     1	N_PLOOP DB  80H+5+40H
- 00002222  2B 4C 4F 4F	     1	        DB  "+LOO"
- 00002226  D0		     1	        DB  "P"+80H
- 00002227  000021FC R	     1	        DD  Link
- 0000222B 0000069C R	     1	PLOOP   DD  DOCOL
+ 00002128 C5		     1	N_PLOOP DB  80H+5+40H
+ 00002129  2B 4C 4F 4F	     1	        DB  "+LOO"
+ 0000212D  D0		     1	        DB  "P"+80H
+ 0000212E  00002103 R	     1	        DD  Link
+ 00002132 0000069C R	     1	PLOOP   DD  DOCOL
 				                           
- 0000222F  00000781 R		        DD      THREE   ; Magic number
- 00002233  00000CD6 R		        DD      QPAIR
- 00002237  00000D54 R		        DD      COMP
- 0000223B  000000B9 R		        DD      XPLOO
- 0000223F  00002164 R		        DD      BACK
- 00002243  0000041D R		        DD      SEMIS
+ 00002136  00000781 R		        DD      THREE   ; Magic number
+ 0000213A  00000CD6 R		        DD      QPAIR
+ 0000213E  00000D54 R		        DD      COMP
+ 00002142  000000B9 R		        DD      XPLOO
+ 00002146  0000206B R		        DD      BACK
+ 0000214A  0000041D R		        DD      SEMIS
 				;
 
 				;  ************* 
@@ -4947,18 +4938,18 @@ forth32.asm						     Page 1 - 1
 				;  ************* 
 				;  
 				        ENTRY   UNTIL, 80H+5+40H, "UNTI", "L"+80H, DOCOL
- 00002247 C5		     1	N_UNTIL DB  80H+5+40H
- 00002248  55 4E 54 49	     1	        DB  "UNTI"
- 0000224C  CC		     1	        DB  "L"+80H
- 0000224D  00002221 R	     1	        DD  Link
- 00002251 0000069C R	     1	UNTIL   DD  DOCOL
+ 0000214E C5		     1	N_UNTIL DB  80H+5+40H
+ 0000214F  55 4E 54 49	     1	        DB  "UNTI"
+ 00002153  CC		     1	        DB  "L"+80H
+ 00002154  00002128 R	     1	        DD  Link
+ 00002158 0000069C R	     1	UNTIL   DD  DOCOL
 				                           
- 00002255  00000757 R		        DD      ONE
- 00002259  00000CD6 R		        DD      QPAIR
- 0000225D  00000D54 R		        DD      COMP
- 00002261  0000005E R		        DD      ZBRAN
- 00002265  00002164 R		        DD      BACK
- 00002269  0000041D R		        DD      SEMIS
+ 0000215C  00000757 R		        DD      ONE
+ 00002160  00000CD6 R		        DD      QPAIR
+ 00002164  00000D54 R		        DD      COMP
+ 00002168  0000005E R		        DD      ZBRAN
+ 0000216C  0000206B R		        DD      BACK
+ 00002170  0000041D R		        DD      SEMIS
 				;
 
 				;  *********** 
@@ -4966,14 +4957,14 @@ forth32.asm						     Page 1 - 1
 				;  *********** 
 				;  
 				        ENTRY   LEND, 80H+3+40H, "EN", "D"+80H, DOCOL
- 0000226D C3		     1	N_LEND DB  80H+3+40H
- 0000226E  45 4E	     1	        DB  "EN"
- 00002270  C4		     1	        DB  "D"+80H
- 00002271  00002247 R	     1	        DD  Link
- 00002275 0000069C R	     1	LEND   DD  DOCOL
+ 00002174 C3		     1	N_LEND DB  80H+3+40H
+ 00002175  45 4E	     1	        DB  "EN"
+ 00002177  C4		     1	        DB  "D"+80H
+ 00002178  0000214E R	     1	        DD  Link
+ 0000217C 0000069C R	     1	LEND   DD  DOCOL
 				                           
- 00002279  00002251 R		        DD      UNTIL
- 0000227D  0000041D R		        DD      SEMIS
+ 00002180  00002158 R		        DD      UNTIL
+ 00002184  0000041D R		        DD      SEMIS
 				;
 
 				;  ************* 
@@ -4981,18 +4972,18 @@ forth32.asm						     Page 1 - 1
 				;  ************* 
 				;  
 				        ENTRY   AGAIN, 80H+5+40H, "AGAI", "N"+80H, DOCOL
- 00002281 C5		     1	N_AGAIN DB  80H+5+40H
- 00002282  41 47 41 49	     1	        DB  "AGAI"
- 00002286  CE		     1	        DB  "N"+80H
- 00002287  0000226D R	     1	        DD  Link
- 0000228B 0000069C R	     1	AGAIN   DD  DOCOL
+ 00002188 C5		     1	N_AGAIN DB  80H+5+40H
+ 00002189  41 47 41 49	     1	        DB  "AGAI"
+ 0000218D  CE		     1	        DB  "N"+80H
+ 0000218E  00002174 R	     1	        DD  Link
+ 00002192 0000069C R	     1	AGAIN   DD  DOCOL
 				                           
- 0000228F  00000757 R		        DD      ONE
- 00002293  00000CD6 R		        DD      QPAIR
- 00002297  00000D54 R		        DD      COMP
- 0000229B  00000047 R		        DD      BRAN
- 0000229F  00002164 R		        DD      BACK
- 000022A3  0000041D R		        DD      SEMIS
+ 00002196  00000757 R		        DD      ONE
+ 0000219A  00000CD6 R		        DD      QPAIR
+ 0000219E  00000D54 R		        DD      COMP
+ 000021A2  00000047 R		        DD      BRAN
+ 000021A6  0000206B R		        DD      BACK
+ 000021AA  0000041D R		        DD      SEMIS
 				;
 
 				;  ************** 
@@ -5000,21 +4991,21 @@ forth32.asm						     Page 1 - 1
 				;  ************** 
 				;  
 				        ENTRY   REPEA, 80H+6+40H, "REPEA", "T"+80H, DOCOL
- 000022A7 C6		     1	N_REPEA DB  80H+6+40H
- 000022A8  52 45 50 45 41    1	        DB  "REPEA"
- 000022AD  D4		     1	        DB  "T"+80H
- 000022AE  00002281 R	     1	        DD  Link
- 000022B2 0000069C R	     1	REPEA   DD  DOCOL
+ 000021AE C6		     1	N_REPEA DB  80H+6+40H
+ 000021AF  52 45 50 45 41    1	        DB  "REPEA"
+ 000021B4  D4		     1	        DB  "T"+80H
+ 000021B5  00002188 R	     1	        DD  Link
+ 000021B9 0000069C R	     1	REPEA   DD  DOCOL
 				                           
- 000022B6  0000044C R		        DD      TOR
- 000022BA  0000044C R		        DD      TOR
- 000022BE  0000228B R		        DD      AGAIN
- 000022C2  00000463 R		        DD      FROMR
- 000022C6  00000463 R		        DD      FROMR
- 000022CA  0000076C R		        DD      TWO     ; Magic number
- 000022CE  00000A58 R		        DD      LSUB
- 000022D2  000021A0 R		        DD      LENDIF
- 000022D6  0000041D R		        DD      SEMIS
+ 000021BD  0000044C R		        DD      TOR
+ 000021C1  0000044C R		        DD      TOR
+ 000021C5  00002192 R		        DD      AGAIN
+ 000021C9  00000463 R		        DD      FROMR
+ 000021CD  00000463 R		        DD      FROMR
+ 000021D1  0000076C R		        DD      TWO     ; Magic number
+ 000021D5  00000A58 R		        DD      LSUB
+ 000021D9  000020A7 R		        DD      LENDIF
+ 000021DD  0000041D R		        DD      SEMIS
 				;
 
 				;  ********** 
@@ -5022,19 +5013,19 @@ forth32.asm						     Page 1 - 1
 				;  ********** 
 				;  
 				        ENTRY   LIF, 80H+2+40H, "I", "F"+80H, DOCOL
- 000022DA C2		     1	N_LIF DB  80H+2+40H
- 000022DB  49		     1	        DB  "I"
- 000022DC  C6		     1	        DB  "F"+80H
- 000022DD  000022A7 R	     1	        DD  Link
- 000022E1 0000069C R	     1	LIF   DD  DOCOL
+ 000021E1 C2		     1	N_LIF DB  80H+2+40H
+ 000021E2  49		     1	        DB  "I"
+ 000021E3  C6		     1	        DB  "F"+80H
+ 000021E4  000021AE R	     1	        DD  Link
+ 000021E8 0000069C R	     1	LIF   DD  DOCOL
 				                           
- 000022E5  00000D54 R		        DD      COMP
- 000022E9  0000005E R		        DD      ZBRAN
- 000022ED  000009E7 R		        DD      HERE
- 000022F1  00000745 R		        DD      ZERO
- 000022F5  00000A17 R		        DD      COMMA
- 000022F9  0000076C R		        DD      TWO     ; Magic number           
- 000022FD  0000041D R		        DD      SEMIS
+ 000021EC  00000D54 R		        DD      COMP
+ 000021F0  0000005E R		        DD      ZBRAN
+ 000021F4  000009E7 R		        DD      HERE
+ 000021F8  00000745 R		        DD      ZERO
+ 000021FC  00000A17 R		        DD      COMMA
+ 00002200  0000076C R		        DD      TWO     ; Magic number           
+ 00002204  0000041D R		        DD      SEMIS
 				;
 
 				;  ************ 
@@ -5042,24 +5033,24 @@ forth32.asm						     Page 1 - 1
 				;  ************ 
 				;  
 				        ENTRY   LELSE, 80H+4+40H, "ELS", "E"+80H, DOCOL
- 00002301 C4		     1	N_LELSE DB  80H+4+40H
- 00002302  45 4C 53	     1	        DB  "ELS"
- 00002305  C5		     1	        DB  "E"+80H
- 00002306  000022DA R	     1	        DD  Link
- 0000230A 0000069C R	     1	LELSE   DD  DOCOL
+ 00002208 C4		     1	N_LELSE DB  80H+4+40H
+ 00002209  45 4C 53	     1	        DB  "ELS"
+ 0000220C  C5		     1	        DB  "E"+80H
+ 0000220D  000021E1 R	     1	        DD  Link
+ 00002211 0000069C R	     1	LELSE   DD  DOCOL
 				                           
- 0000230E  0000076C R		        DD      TWO     ; Magic number 
- 00002312  00000CD6 R		        DD      QPAIR
- 00002316  00000D54 R		        DD      COMP
- 0000231A  00000047 R		        DD      BRAN
- 0000231E  000009E7 R		        DD      HERE
- 00002322  00000745 R		        DD      ZERO
- 00002326  00000A17 R		        DD      COMMA
- 0000232A  0000054D R		        DD      SWAP
- 0000232E  0000076C R		        DD      TWO     ; Magic number           
- 00002332  000021A0 R		        DD      LENDIF
- 00002336  0000076C R		        DD      TWO     ; Magic number           
- 0000233A  0000041D R		        DD      SEMIS
+ 00002215  0000076C R		        DD      TWO     ; Magic number 
+ 00002219  00000CD6 R		        DD      QPAIR
+ 0000221D  00000D54 R		        DD      COMP
+ 00002221  00000047 R		        DD      BRAN
+ 00002225  000009E7 R		        DD      HERE
+ 00002229  00000745 R		        DD      ZERO
+ 0000222D  00000A17 R		        DD      COMMA
+ 00002231  0000054D R		        DD      SWAP
+ 00002235  0000076C R		        DD      TWO     ; Magic number           
+ 00002239  000020A7 R		        DD      LENDIF
+ 0000223D  0000076C R		        DD      TWO     ; Magic number           
+ 00002241  0000041D R		        DD      SEMIS
 				;
 
 				;  ************* 
@@ -5067,15 +5058,15 @@ forth32.asm						     Page 1 - 1
 				;  ************* 
 				;  
 				        ENTRY   WHIL, 80H+5+40H, "WHIL", "E"+80H, DOCOL
- 0000233E C5		     1	N_WHIL DB  80H+5+40H
- 0000233F  57 48 49 4C	     1	        DB  "WHIL"
- 00002343  C5		     1	        DB  "E"+80H
- 00002344  00002301 R	     1	        DD  Link
- 00002348 0000069C R	     1	WHIL   DD  DOCOL
+ 00002245 C5		     1	N_WHIL DB  80H+5+40H
+ 00002246  57 48 49 4C	     1	        DB  "WHIL"
+ 0000224A  C5		     1	        DB  "E"+80H
+ 0000224B  00002208 R	     1	        DD  Link
+ 0000224F 0000069C R	     1	WHIL   DD  DOCOL
 				                           
- 0000234C  000022E1 R		        DD      LIF
- 00002350  000009B8 R		        DD      TWOP        ; Magic number           
- 00002354  0000041D R		        DD      SEMIS
+ 00002253  000021E8 R		        DD      LIF
+ 00002257  000009B8 R		        DD      TWOP        ; Magic number           
+ 0000225B  0000041D R		        DD      SEMIS
 				;
 
 				;  ************** 
@@ -5083,23 +5074,23 @@ forth32.asm						     Page 1 - 1
 				;  ************** 
 				;  
 				        ENTRY   SPACES, 80H+6, "SPACE", "S"+80H, DOCOL
- 00002358 86		     1	N_SPACES DB  80H+6
- 00002359  53 50 41 43 45    1	        DB  "SPACE"
- 0000235E  D3		     1	        DB  "S"+80H
- 0000235F  0000233E R	     1	        DD  Link
- 00002363 0000069C R	     1	SPACES   DD  DOCOL
+ 0000225F 86		     1	N_SPACES DB  80H+6
+ 00002260  53 50 41 43 45    1	        DB  "SPACE"
+ 00002265  D3		     1	        DB  "S"+80H
+ 00002266  00002245 R	     1	        DD  Link
+ 0000226A 0000069C R	     1	SPACES   DD  DOCOL
 				                           
- 00002367  00000745 R		        DD      ZERO
- 0000236B  0000193A R		        DD      MAX
- 0000236F  00000B2F R		        DD      DDUP
- 00002373  0000005E R		        DD      ZBRAN
- 00002377  00000018		        DD      SPAX1-$
- 0000237B  00000745 R		        DD      ZERO
- 0000237F  000000C9 R		        DD      XDO     ;DO
- 00002383 00000B16 R		SPAX2      DD      SPACE
- 00002387  0000008C R		        DD      XLOOP
- 0000238B  FFFFFFF8		        DD      SPAX2-$    ;LOOP
- 0000238F 0000041D R		SPAX1      DD      SEMIS
+ 0000226E  00000745 R		        DD      ZERO
+ 00002272  00001936 R		        DD      MAX
+ 00002276  00000B2F R		        DD      DDUP
+ 0000227A  0000005E R		        DD      ZBRAN
+ 0000227E  00000018		        DD      SPAX1-$
+ 00002282  00000745 R		        DD      ZERO
+ 00002286  000000C9 R		        DD      XDO     ;DO
+ 0000228A 00000B16 R		SPAX2      DD      SPACE
+ 0000228E  0000008C R		        DD      XLOOP
+ 00002292  FFFFFFF8		        DD      SPAX2-$    ;LOOP
+ 00002296 0000041D R		SPAX1      DD      SEMIS
 				;
 
 				;  ********** 
@@ -5107,16 +5098,16 @@ forth32.asm						     Page 1 - 1
 				;  ********** 
 				;  
 				        ENTRY   BDIGS, 80H+2, "<", "#"+80H, DOCOL
- 00002393 82		     1	N_BDIGS DB  80H+2
- 00002394  3C		     1	        DB  "<"
- 00002395  A3		     1	        DB  "#"+80H
- 00002396  00002358 R	     1	        DD  Link
- 0000239A 0000069C R	     1	BDIGS   DD  DOCOL
+ 0000229A 82		     1	N_BDIGS DB  80H+2
+ 0000229B  3C		     1	        DB  "<"
+ 0000229C  A3		     1	        DB  "#"+80H
+ 0000229D  0000225F R	     1	        DD  Link
+ 000022A1 0000069C R	     1	BDIGS   DD  DOCOL
 				                           
- 0000239E  000010F3 R		        DD      PAD
- 000023A2  00000967 R		        DD      HLD
- 000023A6  000005F9 R		        DD      STORE
- 000023AA  0000041D R		        DD      SEMIS
+ 000022A5  000010F3 R		        DD      PAD
+ 000022A9  00000967 R		        DD      HLD
+ 000022AD  000005F9 R		        DD      STORE
+ 000022B1  0000041D R		        DD      SEMIS
 				;
 
 				;  ********** 
@@ -5124,20 +5115,20 @@ forth32.asm						     Page 1 - 1
 				;  ********** 
 				;  
 				        ENTRY   EDIGS, 80H+2, "#", ">"+80H, DOCOL
- 000023AE 82		     1	N_EDIGS DB  80H+2
- 000023AF  23		     1	        DB  "#"
- 000023B0  BE		     1	        DB  ">"+80H
- 000023B1  00002393 R	     1	        DD  Link
- 000023B5 0000069C R	     1	EDIGS   DD  DOCOL
+ 000022B5 82		     1	N_EDIGS DB  80H+2
+ 000022B6  23		     1	        DB  "#"
+ 000022B7  BE		     1	        DB  ">"+80H
+ 000022B8  0000229A R	     1	        DD  Link
+ 000022BC 0000069C R	     1	EDIGS   DD  DOCOL
 				                           
- 000023B9  0000053A R		        DD      DROP
- 000023BD  0000053A R		        DD      DROP
- 000023C1  00000967 R		        DD      HLD
- 000023C5  000005B8 R		        DD      FETCH
- 000023C9  000010F3 R		        DD      PAD
- 000023CD  00000523 R		        DD      OVER
- 000023D1  00000A58 R		        DD      LSUB
- 000023D5  0000041D R		        DD      SEMIS
+ 000022C0  0000053A R		        DD      DROP
+ 000022C4  0000053A R		        DD      DROP
+ 000022C8  00000967 R		        DD      HLD
+ 000022CC  000005B8 R		        DD      FETCH
+ 000022D0  000010F3 R		        DD      PAD
+ 000022D4  00000523 R		        DD      OVER
+ 000022D8  00000A58 R		        DD      LSUB
+ 000022DC  0000041D R		        DD      SEMIS
 				;
 
 				;  ************ 
@@ -5145,20 +5136,20 @@ forth32.asm						     Page 1 - 1
 				;  ************ 
 				;  
 				        ENTRY   SIGN, 80H+4, "SIG", "N"+80H, DOCOL
- 000023D9 84		     1	N_SIGN DB  80H+4
- 000023DA  53 49 47	     1	        DB  "SIG"
- 000023DD  CE		     1	        DB  "N"+80H
- 000023DE  000023AE R	     1	        DD  Link
- 000023E2 0000069C R	     1	SIGN   DD  DOCOL
+ 000022E0 84		     1	N_SIGN DB  80H+4
+ 000022E1  53 49 47	     1	        DB  "SIG"
+ 000022E4  CE		     1	        DB  "N"+80H
+ 000022E5  000022B5 R	     1	        DD  Link
+ 000022E9 0000069C R	     1	SIGN   DD  DOCOL
 				                           
- 000023E6  00000AFD R		        DD      ROT
- 000023EA  000004A0 R		        DD      ZLESS
- 000023EE  0000005E R		        DD      ZBRAN
- 000023F2  00000010		        DD      SIGN1-$ ;IF
- 000023F6  0000001E R		        DD      LIT,2DH
+ 000022ED  00000AFD R		        DD      ROT
+ 000022F1  000004A0 R		        DD      ZLESS
+ 000022F5  0000005E R		        DD      ZBRAN
+ 000022F9  00000010		        DD      SIGN1-$ ;IF
+ 000022FD  0000001E R		        DD      LIT,2DH
 	   0000002D
- 000023FE  000010C7 R		        DD      HOLD    ;ENDIF
- 00002402 0000041D R		SIGN1      DD      SEMIS
+ 00002305  000010C7 R		        DD      HOLD    ;ENDIF
+ 00002309 0000041D R		SIGN1      DD      SEMIS
 				;
 
 				;  ********* 
@@ -5166,29 +5157,29 @@ forth32.asm						     Page 1 - 1
 				;  ********* 
 				;  
 				        ENTRY_1   DIG, 80H+1, "#"+80H, DOCOL
- 00002406 81		     1	N_DIG DB  80H+1
- 00002407  A3		     1	        DB  "#"+80H
- 00002408  000023D9 R	     1	        DD  Link
- 0000240C 0000069C R	     1	DIG   DD  DOCOL
+ 0000230D 81		     1	N_DIG DB  80H+1
+ 0000230E  A3		     1	        DB  "#"+80H
+ 0000230F  000022E0 R	     1	        DD  Link
+ 00002313 0000069C R	     1	DIG   DD  DOCOL
 				                           
- 00002410  00000918 R		        DD      BASE
- 00002414  000005B8 R		        DD      FETCH
- 00002418  00001A88 R		        DD      MSMOD
- 0000241C  00000AFD R		        DD      ROT
- 00002420  0000001E R		        DD      LIT,9
+ 00002317  00000918 R		        DD      BASE
+ 0000231B  000005B8 R		        DD      FETCH
+ 0000231F  00001A84 R		        DD      MSMOD
+ 00002323  00000AFD R		        DD      ROT
+ 00002327  0000001E R		        DD      LIT,9
 	   00000009
- 00002428  00000523 R		        DD      OVER
- 0000242C  00000A82 R		        DD      LESS
- 00002430  0000005E R		        DD      ZBRAN
- 00002434  00000010		        DD      DIG1-$  ;IF
- 00002438  0000001E R		        DD      LIT,7
+ 0000232F  00000523 R		        DD      OVER
+ 00002333  00000A82 R		        DD      LESS
+ 00002337  0000005E R		        DD      ZBRAN
+ 0000233B  00000010		        DD      DIG1-$  ;IF
+ 0000233F  0000001E R		        DD      LIT,7
 	   00000007
- 00002440  000004BB R		        DD      PLUS    ;ENDIF
- 00002444 0000001E R		DIG1      DD      LIT,30H
+ 00002347  000004BB R		        DD      PLUS    ;ENDIF
+ 0000234B 0000001E R		DIG1      DD      LIT,30H
 	   00000030
- 0000244C  000004BB R		        DD      PLUS
- 00002450  000010C7 R		        DD      HOLD
- 00002454  0000041D R		        DD      SEMIS
+ 00002353  000004BB R		        DD      PLUS
+ 00002357  000010C7 R		        DD      HOLD
+ 0000235B  0000041D R		        DD      SEMIS
 				;
 
 				;  ********** 
@@ -5196,20 +5187,20 @@ forth32.asm						     Page 1 - 1
 				;  ********** 
 				;  
 				        ENTRY   DIGS, 80H+2, "#", "S"+80H, DOCOL
- 00002458 82		     1	N_DIGS DB  80H+2
- 00002459  23		     1	        DB  "#"
- 0000245A  D3		     1	        DB  "S"+80H
- 0000245B  00002406 R	     1	        DD  Link
- 0000245F 0000069C R	     1	DIGS   DD  DOCOL
+ 0000235F 82		     1	N_DIGS DB  80H+2
+ 00002360  23		     1	        DB  "#"
+ 00002361  D3		     1	        DB  "S"+80H
+ 00002362  0000230D R	     1	        DD  Link
+ 00002366 0000069C R	     1	DIGS   DD  DOCOL
 				                           
- 00002463 0000240C R		DIGS1      DD      DIG     ;BEGIN
- 00002467  00000523 R		        DD      OVER
- 0000246B  00000523 R		        DD      OVER
- 0000246F  00000396 R		        DD      LOR
- 00002473  00000484 R		        DD      ZEQU
- 00002477  0000005E R		        DD      ZBRAN
- 0000247B  FFFFFFE8		        DD      DIGS1-$ ;UNTIL
- 0000247F  0000041D R		        DD      SEMIS
+ 0000236A 00002313 R		DIGS1      DD      DIG     ;BEGIN
+ 0000236E  00000523 R		        DD      OVER
+ 00002372  00000523 R		        DD      OVER
+ 00002376  00000396 R		        DD      LOR
+ 0000237A  00000484 R		        DD      ZEQU
+ 0000237E  0000005E R		        DD      ZBRAN
+ 00002382  FFFFFFE8		        DD      DIGS1-$ ;UNTIL
+ 00002386  0000041D R		        DD      SEMIS
 				;
 
 				;  *********** 
@@ -5217,26 +5208,26 @@ forth32.asm						     Page 1 - 1
 				;  *********** 
 				;  
 				        ENTRY   DDOTR, 80H+3, "D.", "R"+80H, DOCOL
- 00002483 83		     1	N_DDOTR DB  80H+3
- 00002484  44 2E	     1	        DB  "D."
- 00002486  D2		     1	        DB  "R"+80H
- 00002487  00002458 R	     1	        DD  Link
- 0000248B 0000069C R	     1	DDOTR   DD  DOCOL
+ 0000238A 83		     1	N_DDOTR DB  80H+3
+ 0000238B  44 2E	     1	        DB  "D."
+ 0000238D  D2		     1	        DB  "R"+80H
+ 0000238E  0000235F R	     1	        DD  Link
+ 00002392 0000069C R	     1	DDOTR   DD  DOCOL
 				                           
- 0000248F  0000044C R		        DD      TOR
- 00002493  0000054D R		        DD      SWAP
- 00002497  00000523 R		        DD      OVER
- 0000249B  000018FA R		        DD      DABS
- 0000249F  0000239A R		        DD      BDIGS
- 000024A3  0000245F R		        DD      DIGS
- 000024A7  000023E2 R		        DD      SIGN
- 000024AB  000023B5 R		        DD      EDIGS
- 000024AF  00000463 R		        DD      FROMR
- 000024B3  00000523 R		        DD      OVER
- 000024B7  00000A58 R		        DD      LSUB
- 000024BB  00002363 R		        DD      SPACES
- 000024BF  00001E86 R		        DD      LTYPE
- 000024C3  0000041D R		        DD      SEMIS
+ 00002396  0000044C R		        DD      TOR
+ 0000239A  0000054D R		        DD      SWAP
+ 0000239E  00000523 R		        DD      OVER
+ 000023A2  000018F6 R		        DD      DABS
+ 000023A6  000022A1 R		        DD      BDIGS
+ 000023AA  00002366 R		        DD      DIGS
+ 000023AE  000022E9 R		        DD      SIGN
+ 000023B2  000022BC R		        DD      EDIGS
+ 000023B6  00000463 R		        DD      FROMR
+ 000023BA  00000523 R		        DD      OVER
+ 000023BE  00000A58 R		        DD      LSUB
+ 000023C2  0000226A R		        DD      SPACES
+ 000023C6  00001ECB R		        DD      LTYPE
+ 000023CA  0000041D R		        DD      SEMIS
 				;
 
 				;  ********** 
@@ -5244,17 +5235,17 @@ forth32.asm						     Page 1 - 1
 				;  ********** 
 				;  
 				        ENTRY   DOTR, 80H+2, ".", "R"+80H, DOCOL
- 000024C7 82		     1	N_DOTR DB  80H+2
- 000024C8  2E		     1	        DB  "."
- 000024C9  D2		     1	        DB  "R"+80H
- 000024CA  00002483 R	     1	        DD  Link
- 000024CE 0000069C R	     1	DOTR   DD  DOCOL
+ 000023CE 82		     1	N_DOTR DB  80H+2
+ 000023CF  2E		     1	        DB  "."
+ 000023D0  D2		     1	        DB  "R"+80H
+ 000023D1  0000238A R	     1	        DD  Link
+ 000023D5 0000069C R	     1	DOTR   DD  DOCOL
 				                           
- 000024D2  0000044C R		        DD      TOR
- 000024D6  00001887 R		        DD      STOD
- 000024DA  00000463 R		        DD      FROMR
- 000024DE  0000248B R		        DD      DDOTR
- 000024E2  0000041D R		        DD      SEMIS
+ 000023D9  0000044C R		        DD      TOR
+ 000023DD  00001883 R		        DD      STOD
+ 000023E1  00000463 R		        DD      FROMR
+ 000023E5  00002392 R		        DD      DDOTR
+ 000023E9  0000041D R		        DD      SEMIS
 				;
 
 				;  ********** 
@@ -5262,16 +5253,16 @@ forth32.asm						     Page 1 - 1
 				;  ********** 
 				;  
 				        ENTRY   DDOT, 80H+2, "D", "."+80H, DOCOL
- 000024E6 82		     1	N_DDOT DB  80H+2
- 000024E7  44		     1	        DB  "D"
- 000024E8  AE		     1	        DB  "."+80H
- 000024E9  000024C7 R	     1	        DD  Link
- 000024ED 0000069C R	     1	DDOT   DD  DOCOL
+ 000023ED 82		     1	N_DDOT DB  80H+2
+ 000023EE  44		     1	        DB  "D"
+ 000023EF  AE		     1	        DB  "."+80H
+ 000023F0  000023CE R	     1	        DD  Link
+ 000023F4 0000069C R	     1	DDOT   DD  DOCOL
 				                           
- 000024F1  00000745 R		        DD      ZERO
- 000024F5  0000248B R		        DD      DDOTR
- 000024F9  00000B16 R		        DD      SPACE
- 000024FD  0000041D R		        DD      SEMIS
+ 000023F8  00000745 R		        DD      ZERO
+ 000023FC  00002392 R		        DD      DDOTR
+ 00002400  00000B16 R		        DD      SPACE
+ 00002404  0000041D R		        DD      SEMIS
 				;
 
 				;  ********* 
@@ -5279,14 +5270,14 @@ forth32.asm						     Page 1 - 1
 				;  ********* 
 				;  
 				        ENTRY_1   DOT, 80H+1, "."+80H, DOCOL
- 00002501 81		     1	N_DOT DB  80H+1
- 00002502  AE		     1	        DB  "."+80H
- 00002503  000024E6 R	     1	        DD  Link
- 00002507 0000069C R	     1	DOT   DD  DOCOL
+ 00002408 81		     1	N_DOT DB  80H+1
+ 00002409  AE		     1	        DB  "."+80H
+ 0000240A  000023ED R	     1	        DD  Link
+ 0000240E 0000069C R	     1	DOT   DD  DOCOL
 				                           
- 0000250B  00001887 R		        DD      STOD
- 0000250F  000024ED R		        DD      DDOT
- 00002513  0000041D R		        DD      SEMIS
+ 00002412  00001883 R		        DD      STOD
+ 00002416  000023F4 R		        DD      DDOT
+ 0000241A  0000041D R		        DD      SEMIS
 				;
 
 				;  ********* 
@@ -5294,14 +5285,14 @@ forth32.asm						     Page 1 - 1
 				;  ********* 
 				;  
 				        ENTRY_1   QUES, 80H+1, "?"+80H, DOCOL
- 00002517 81		     1	N_QUES DB  80H+1
- 00002518  BF		     1	        DB  "?"+80H
- 00002519  00002501 R	     1	        DD  Link
- 0000251D 0000069C R	     1	QUES   DD  DOCOL
+ 0000241E 81		     1	N_QUES DB  80H+1
+ 0000241F  BF		     1	        DB  "?"+80H
+ 00002420  00002408 R	     1	        DD  Link
+ 00002424 0000069C R	     1	QUES   DD  DOCOL
 				                           
- 00002521  000005B8 R		        DD      FETCH
- 00002525  00002507 R		        DD      DOT
- 00002529  0000041D R		        DD      SEMIS
+ 00002428  000005B8 R		        DD      FETCH
+ 0000242C  0000240E R		        DD      DOT
+ 00002430  0000041D R		        DD      SEMIS
 				;
 
 				;  ********** 
@@ -5309,15 +5300,15 @@ forth32.asm						     Page 1 - 1
 				;  ********** 
 				;  
 				        ENTRY   UDOT, 80H+2, "U", "."+80H, DOCOL
- 0000252D 82		     1	N_UDOT DB  80H+2
- 0000252E  55		     1	        DB  "U"
- 0000252F  AE		     1	        DB  "."+80H
- 00002530  00002517 R	     1	        DD  Link
- 00002534 0000069C R	     1	UDOT   DD  DOCOL
+ 00002434 82		     1	N_UDOT DB  80H+2
+ 00002435  55		     1	        DB  "U"
+ 00002436  AE		     1	        DB  "."+80H
+ 00002437  0000241E R	     1	        DD  Link
+ 0000243B 0000069C R	     1	UDOT   DD  DOCOL
 				                           
- 00002538  00000745 R		        DD      ZERO
- 0000253C  000024ED R		        DD      DDOT
- 00002540  0000041D R		        DD      SEMIS
+ 0000243F  00000745 R		        DD      ZERO
+ 00002443  000023F4 R		        DD      DDOT
+ 00002447  0000041D R		        DD      SEMIS
 				;
 
 				;
@@ -5327,101 +5318,101 @@ forth32.asm						     Page 1 - 1
 				; *************
 				;
 				        ENTRY   VLIST, 80H+5, "VLIS", "T"+80H, DOCOL
- 00002544 85		     1	N_VLIST DB  80H+5
- 00002545  56 4C 49 53	     1	        DB  "VLIS"
- 00002549  D4		     1	        DB  "T"+80H
- 0000254A  0000252D R	     1	        DD  Link
- 0000254E 0000069C R	     1	VLIST   DD  DOCOL
- 00002552  0000001E R		        DD      LIT
- 00002556  00000080		        DD      80H
- 0000255A  00000986 R		        DD      LOUT
- 0000255E  000005F9 R		        DD      STORE
- 00002562  000008E1 R		        DD      CONT
- 00002566  000005B8 R		        DD      FETCH
- 0000256A  000005B8 R		        DD      FETCH
- 0000256E 00000986 R		VLIS1   DD      LOUT            ; BEGIN
- 00002572  000005B8 R		        DD      FETCH
- 00002576  000007A7 R		        DD      CSLL
- 0000257A  00000AE5 R		        DD      GREAT
- 0000257E  0000005E R		        DD      ZBRAN            ; IF
- 00002582  00000014		        DD      VLIS2-$
- 00002586  00000308 R		        DD      CR
- 0000258A  00000745 R		        DD      ZERO
- 0000258E  00000986 R		        DD      LOUT
- 00002592  000005F9 R		        DD      STORE             ; ENDIF
- 00002596 00000562 R		VLIS2   DD      LDUP
- 0000259A  000013AF R		        DD      IDDOT
- 0000259E  00000B16 R		        DD      SPACE
- 000025A2  00000B16 R		        DD      SPACE
- 000025A6  00000C13 R		        DD      PFA
- 000025AA  00000BB3 R		        DD      LFA
- 000025AE  000005B8 R		        DD      FETCH
- 000025B2  00000562 R		        DD      LDUP
- 000025B6  00000484 R		        DD      ZEQU
- 000025BA  00001EDA R		        DD      QTERM
- 000025BE  00000396 R		        DD      LOR
- 000025C2  0000005E R		        DD      ZBRAN             ; UNTIL
- 000025C6  FFFFFFA8		        DD      VLIS1-$
- 000025CA  0000053A R		        DD      DROP
- 000025CE  0000041D R		        DD      SEMIS
+ 0000244B 85		     1	N_VLIST DB  80H+5
+ 0000244C  56 4C 49 53	     1	        DB  "VLIS"
+ 00002450  D4		     1	        DB  "T"+80H
+ 00002451  00002434 R	     1	        DD  Link
+ 00002455 0000069C R	     1	VLIST   DD  DOCOL
+ 00002459  0000001E R		        DD      LIT
+ 0000245D  00000080		        DD      80H
+ 00002461  00000986 R		        DD      LOUT
+ 00002465  000005F9 R		        DD      STORE
+ 00002469  000008E1 R		        DD      CONT
+ 0000246D  000005B8 R		        DD      FETCH
+ 00002471  000005B8 R		        DD      FETCH
+ 00002475 00000986 R		VLIS1   DD      LOUT            ; BEGIN
+ 00002479  000005B8 R		        DD      FETCH
+ 0000247D  000007A7 R		        DD      CSLL
+ 00002481  00000AE5 R		        DD      GREAT
+ 00002485  0000005E R		        DD      ZBRAN            ; IF
+ 00002489  00000014		        DD      VLIS2-$
+ 0000248D  00000308 R		        DD      CR
+ 00002491  00000745 R		        DD      ZERO
+ 00002495  00000986 R		        DD      LOUT
+ 00002499  000005F9 R		        DD      STORE             ; ENDIF
+ 0000249D 00000562 R		VLIS2   DD      LDUP
+ 000024A1  000013AF R		        DD      IDDOT
+ 000024A5  00000B16 R		        DD      SPACE
+ 000024A9  00000B16 R		        DD      SPACE
+ 000024AD  00000C13 R		        DD      PFA
+ 000024B1  00000BB3 R		        DD      LFA
+ 000024B5  000005B8 R		        DD      FETCH
+ 000024B9  00000562 R		        DD      LDUP
+ 000024BD  00000484 R		        DD      ZEQU
+ 000024C1  00001F1F R		        DD      QTERM
+ 000024C5  00000396 R		        DD      LOR
+ 000024C9  0000005E R		        DD      ZBRAN             ; UNTIL
+ 000024CD  FFFFFFA8		        DD      VLIS1-$
+ 000024D1  0000053A R		        DD      DROP
+ 000024D5  0000041D R		        DD      SEMIS
 
 				;  *********** 
 				;  *   BYE   *
 				;  *********** 
 				;  
 				        CODE_ENTRY   BYE, 80H+3, "BY", "E"+80H
- 000025D2 83		     1	N_BYE DB  80H+3
- 000025D3  42 59	     1	        DB  "BY"
- 000025D5  C5		     1	        DB  "E"+80H
- 000025D6  00002544 R	     1	        DD  Link
- 000025DA 000025DE R	     1	BYE   DD  C_BYE
- 000025DE		     1	C_BYE:
+ 000024D9 83		     1	N_BYE DB  80H+3
+ 000024DA  42 59	     1	        DB  "BY"
+ 000024DC  C5		     1	        DB  "E"+80H
+ 000024DD  0000244B R	     1	        DD  Link
+ 000024E1 000024E5 R	     1	BYE   DD  C_BYE
+ 000024E5		     1	C_BYE:
 				                           
- 000025DE  E8 00000000 E	        CALL c_exit
+ 000024E5  E8 00000000 E	        CALL c_exit
 				  
 				;  ************ 
 				;  *   LIST   *
 				;  ************ 
 				;  
 				        ENTRY   LLIST, 80H+4, "LIS", "T"+80H, DOCOL
- 000025E3 84		     1	N_LLIST DB  80H+4
- 000025E4  4C 49 53	     1	        DB  "LIS"
- 000025E7  D4		     1	        DB  "T"+80H
- 000025E8  000025D2 R	     1	        DD  Link
- 000025EC 0000069C R	     1	LLIST   DD  DOCOL
+ 000024EA 84		     1	N_LLIST DB  80H+4
+ 000024EB  4C 49 53	     1	        DB  "LIS"
+ 000024EE  D4		     1	        DB  "T"+80H
+ 000024EF  000024D9 R	     1	        DD  Link
+ 000024F3 0000069C R	     1	LLIST   DD  DOCOL
 				                           
- 000025F0  00000DFF R		        DD      DECA
- 000025F4  00000308 R		        DD      CR,LDUP
+ 000024F7  00000DFF R		        DD      DECA
+ 000024FB  00000308 R		        DD      CR,LDUP
 	   00000562 R
- 000025FC  000008CD R		        DD      SCR,STORE
+ 00002503  000008CD R		        DD      SCR,STORE
 	   000005F9 R
- 00002604  00000F46 R		        DD      PDOTQ
+ 0000250B  00000F46 R		        DD      PDOTQ
 				        
- 00002608  06			        DB      6
- 00002609  53 43 52 20 23	        DB      "SCR # "
+ 0000250F  06			        DB      6
+ 00002510  53 43 52 20 23	        DB      "SCR # "
 	   20
- 0000260F  00002507 R		        DD      DOT
- 00002613  0000001E R		        DD      LIT,10H
+ 00002516  0000240E R		        DD      DOT
+ 0000251A  0000001E R		        DD      LIT,10H
 	   00000010
- 0000261B  00000745 R		        DD      ZERO,XDO
+ 00002522  00000745 R		        DD      ZERO,XDO
 	   000000C9 R
- 00002623 00000308 R		LIST1      DD      CR,IDO
+ 0000252A 00000308 R		LIST1      DD      CR,IDO
 	   000000E0 R
- 0000262B  0000001E R		        DD      LIT,3
+ 00002532  0000001E R		        DD      LIT,3
 	   00000003
- 00002633  000024CE R		        DD      DOTR,SPACE
+ 0000253A  000023D5 R		        DD      DOTR,SPACE
 	   00000B16 R
- 0000263B  000000E0 R		        DD      IDO,SCR
+ 00002542  000000E0 R		        DD      IDO,SCR
 	   000008CD R
- 00002643  000005B8 R		        DD      FETCH,DLINE
-	   00001B05 R
- 0000264B  00001EDA R		        DD      QTERM   ; ?TERMINAL
- 0000264F  0000005E R		        DD      ZBRAN
- 00002653  00000008		        DD      LIST2-$
- 00002657  00000436 R		        DD      LLEAV
- 0000265B 0000008C R		LIST2      DD      XLOOP
- 0000265F  FFFFFFC4		        DD      LIST1-$
- 00002663  00000308 R		        DD      CR,SEMIS
+ 0000254A  000005B8 R		        DD      FETCH,DLINE
+	   00001B01 R
+ 00002552  00001F1F R		        DD      QTERM   ; ?TERMINAL
+ 00002556  0000005E R		        DD      ZBRAN
+ 0000255A  00000008		        DD      LIST2-$
+ 0000255E  00000436 R		        DD      LLEAV
+ 00002562 0000008C R		LIST2      DD      XLOOP
+ 00002566  FFFFFFC4		        DD      LIST1-$
+ 0000256A  00000308 R		        DD      CR,SEMIS
 	   0000041D R
 				;
 
@@ -5430,35 +5421,35 @@ forth32.asm						     Page 1 - 1
 				;  ************* 
 				;  
 				        ENTRY   INDEX, 80H+5, "INDE", "X"+80H, DOCOL
- 0000266B 85		     1	N_INDEX DB  80H+5
- 0000266C  49 4E 44 45	     1	        DB  "INDE"
- 00002670  D8		     1	        DB  "X"+80H
- 00002671  000025E3 R	     1	        DD  Link
- 00002675 0000069C R	     1	INDEX   DD  DOCOL
+ 00002572 85		     1	N_INDEX DB  80H+5
+ 00002573  49 4E 44 45	     1	        DB  "INDE"
+ 00002577  D8		     1	        DB  "X"+80H
+ 00002578  000024EA R	     1	        DD  Link
+ 0000257C 0000069C R	     1	INDEX   DD  DOCOL
 				                           
- 00002679  0000001E R		        DD      LIT,FF
+ 00002580  0000001E R		        DD      LIT,FF
 	   0000000C
- 00002681  00001EF2 R		        DD      EMIT,CR
+ 00002588  00001F37 R		        DD      EMIT,CR
 	   00000308 R
- 00002689  000009A5 R		        DD      ONEP,SWAP
+ 00002590  000009A5 R		        DD      ONEP,SWAP
 	   0000054D R
- 00002691  000000C9 R		        DD      XDO
- 00002695 00000308 R		INDE1      DD      CR,IDO
+ 00002598  000000C9 R		        DD      XDO
+ 0000259C 00000308 R		INDE1      DD      CR,IDO
 	   000000E0 R
- 0000269D  0000001E R		        DD      LIT,3
+ 000025A4  0000001E R		        DD      LIT,3
 	   00000003
- 000026A5  000024CE R		        DD      DOTR,SPACE
+ 000025AC  000023D5 R		        DD      DOTR,SPACE
 	   00000B16 R
- 000026AD  00000745 R		        DD      ZERO,IDO
+ 000025B4  00000745 R		        DD      ZERO,IDO
 	   000000E0 R
- 000026B5  00001B05 R		        DD      DLINE,QTERM
-	   00001EDA R
- 000026BD  0000005E R		        DD      ZBRAN
- 000026C1  00000008		        DD      INDE2-$
- 000026C5  00000436 R		        DD      LLEAV
- 000026C9 0000008C R		INDE2      DD      XLOOP
- 000026CD  FFFFFFC8		        DD      INDE1-$
- 000026D1  0000041D R		        DD      SEMIS
+ 000025BC  00001B01 R		        DD      DLINE,QTERM
+	   00001F1F R
+ 000025C4  0000005E R		        DD      ZBRAN
+ 000025C8  00000008		        DD      INDE2-$
+ 000025CC  00000436 R		        DD      LLEAV
+ 000025D0 0000008C R		INDE2      DD      XLOOP
+ 000025D4  FFFFFFC8		        DD      INDE1-$
+ 000025D8  0000041D R		        DD      SEMIS
 				;
 
 				;  ************* 
@@ -5466,38 +5457,38 @@ forth32.asm						     Page 1 - 1
 				;  ************* 
 				;  
 				        ENTRY   TRIAD, 80H+5, "TRIA", "D"+80H, DOCOL
- 000026D5 85		     1	N_TRIAD DB  80H+5
- 000026D6  54 52 49 41	     1	        DB  "TRIA"
- 000026DA  C4		     1	        DB  "D"+80H
- 000026DB  0000266B R	     1	        DD  Link
- 000026DF 0000069C R	     1	TRIAD   DD  DOCOL
+ 000025DC 85		     1	N_TRIAD DB  80H+5
+ 000025DD  54 52 49 41	     1	        DB  "TRIA"
+ 000025E1  C4		     1	        DB  "D"+80H
+ 000025E2  00002572 R	     1	        DD  Link
+ 000025E6 0000069C R	     1	TRIAD   DD  DOCOL
 
- 000026E3  0000001E R		        DD      LIT,FF
+ 000025EA  0000001E R		        DD      LIT,FF
 	   0000000C
- 000026EB  00001EF2 R		        DD      EMIT
- 000026EF  0000001E R		        DD      LIT,3
+ 000025F2  00001F37 R		        DD      EMIT
+ 000025F6  0000001E R		        DD      LIT,3
 	   00000003
- 000026F7  00001A15 R		        DD      SLASH
- 000026FB  0000001E R		        DD      LIT,3
+ 000025FE  00001A11 R		        DD      SLASH
+ 00002602  0000001E R		        DD      LIT,3
 	   00000003
- 00002703  000019DE R		        DD      STAR
- 00002707  0000001E R		        DD      LIT,3
+ 0000260A  000019DA R		        DD      STAR
+ 0000260E  0000001E R		        DD      LIT,3
 	   00000003
- 0000270F  00000523 R		        DD      OVER,PLUS
+ 00002616  00000523 R		        DD      OVER,PLUS
 	   000004BB R
- 00002717  0000054D R		        DD      SWAP,XDO
+ 0000261E  0000054D R		        DD      SWAP,XDO
 	   000000C9 R
- 0000271F 00000308 R		TRIA1      DD      CR,IDO
+ 00002626 00000308 R		TRIA1      DD      CR,IDO
 	   000000E0 R
- 00002727  000025EC R		        DD      LLIST
- 0000272B  00001EDA R		        DD      QTERM   ; ?TERMINAL
- 0000272F  0000005E R		        DD      ZBRAN
- 00002733  00000008		        DD      TRIA2-$
- 00002737  00000436 R		        DD      LLEAV   ;LEAVE
- 0000273B 0000008C R		TRIA2      DD      XLOOP
- 0000273F  FFFFFFE0		        DD      TRIA1-$    ;ENDIF
- 00002743  00000308 R		        DD      CR
- 00002747  0000041D R		        DD      SEMIS
+ 0000262E  000024F3 R		        DD      LLIST
+ 00002632  00001F1F R		        DD      QTERM   ; ?TERMINAL
+ 00002636  0000005E R		        DD      ZBRAN
+ 0000263A  00000008		        DD      TRIA2-$
+ 0000263E  00000436 R		        DD      LLEAV   ;LEAVE
+ 00002642 0000008C R		TRIA2      DD      XLOOP
+ 00002646  FFFFFFE0		        DD      TRIA1-$    ;ENDIF
+ 0000264A  00000308 R		        DD      CR
+ 0000264E  0000041D R		        DD      SEMIS
 				; This word is not even fig!
 
 				;  ************ 
@@ -5505,34 +5496,34 @@ forth32.asm						     Page 1 - 1
 				;  ************ 
 				;  
 				        ENTRY   DOTCPU, 80H+4, ".CP", "U"+80H, DOCOL
- 0000274B 84		     1	N_DOTCPU DB  80H+4
- 0000274C  2E 43 50	     1	        DB  ".CP"
- 0000274F  D5		     1	        DB  "U"+80H
- 00002750  000026D5 R	     1	        DD  Link
- 00002754 0000069C R	     1	DOTCPU   DD  DOCOL
+ 00002652 84		     1	N_DOTCPU DB  80H+4
+ 00002653  2E 43 50	     1	        DB  ".CP"
+ 00002656  D5		     1	        DB  "U"+80H
+ 00002657  000025DC R	     1	        DD  Link
+ 0000265B 0000069C R	     1	DOTCPU   DD  DOCOL
 				                           
 				; PRINT CPU TYPE (80386)
- 00002758  00000918 R		        DD      BASE,FETCH
+ 0000265F  00000918 R		        DD      BASE,FETCH
 	   000005B8 R
- 00002760  0000001E R		        DD      LIT,36
+ 00002667  0000001E R		        DD      LIT,36
 	   00000024
- 00002768  00000918 R		        DD      BASE,STORE
+ 0000266F  00000918 R		        DD      BASE,STORE
 	   000005F9 R
- 00002770  0000001E R		        DD      LIT,(CW*12),PORIG ;
+ 00002677  0000001E R		        DD      LIT,(CW*12),PORIG ;
 	   00000030
 	   000000F9 R
- 0000277C  000005E2 R		        DD      TFET
+ 00002683  000005E2 R		        DD      TFET
 
- 00002780  0000001E R		        DD      LIT, 10000H, STAR, PLUS, ZERO
+ 00002687  0000001E R		        DD      LIT, 10000H, STAR, PLUS, ZERO
 	   00010000
-	   000019DE R
+	   000019DA R
 	   000004BB R
 	   00000745 R
 				;
- 00002794  000024ED R		        DD      DDOT
- 00002798  00000918 R		        DD      BASE,STORE
+ 0000269B  000023F4 R		        DD      DDOT
+ 0000269F  00000918 R		        DD      BASE,STORE
 	   000005F9 R
- 000027A0  0000041D R		        DD      SEMIS
+ 000026A7  0000041D R		        DD      SEMIS
 				;
 				;
 				;
@@ -5543,13 +5534,13 @@ forth32.asm						     Page 1 - 1
 				;  ************ 
 				;  
 				        ENTRY   TASK, 80H+4, "TAS", "K"+80H, DOCOL
- 000027A4 84		     1	N_TASK DB  80H+4
- 000027A5  54 41 53	     1	        DB  "TAS"
- 000027A8  CB		     1	        DB  "K"+80H
- 000027A9  0000274B R	     1	        DD  Link
- 000027AD 0000069C R	     1	TASK   DD  DOCOL
+ 000026AB 84		     1	N_TASK DB  80H+4
+ 000026AC  54 41 53	     1	        DB  "TAS"
+ 000026AF  CB		     1	        DB  "K"+80H
+ 000026B0  00002652 R	     1	        DD  Link
+ 000026B4 0000069C R	     1	TASK   DD  DOCOL
 				                           
- 000027B1  0000041D R		        DD      SEMIS
+ 000026B8  0000041D R		        DD      SEMIS
 				;
 				 ;
 
@@ -5562,37 +5553,37 @@ forth32.asm						     Page 1 - 1
 				;       However now we must teach the linker to keep the
 				;       two sections together.
 
- 000027B5 = 000027B5		FORTHSIZE       EQU     $-figforth
+ 000026BC = 000026BC		FORTHSIZE       EQU     $-figforth
 
 				       ;  section dictionary nobits write exec alloc
 
- 000027B5			INITDP:                 ;  It may be that it is not consecutive with TASK
+ 000026BC			INITDP:                 ;  It may be that it is not consecutive with TASK
 				                        ;  And that is a hell of a problem.
- = 00000810			        BUFFERSIZE      EQU  (KBBUF+2*CW)*NBUF
+ = 00002040			        BUFFERSIZE      EQU  (KBBUF+2*CW)*NBUF
 
 				; Allow 1MB (1048576) for dictionary growth.
- 000027B5  000ECF3B [		       BYTE        1048576 - FORTHSIZE - RTS - US - BUFFERSIZE DUP(?)
+ 000026BC  000EB804 [		       BYTE        1048576 - FORTHSIZE - RTS - US - BUFFERSIZE DUP(?)
 	    00
 	   ]
- 000EF6F0			INITS0:                         ; Grows down
- 000EF6F0			STRTIB: 
- 000EF6F0  00010000 [		        BYTE        RTS DUP(?)            ; Start return stack area
+ 000EDEC0			INITS0:                         ; Grows down
+ 000EDEC0			STRTIB: 
+ 000EDEC0  00010000 [		        BYTE        RTS DUP(?)            ; Start return stack area
 	    00
 	   ]
- 000FF6F0			INITR0:                         ; Grows down
- 000FF6F0			STRUSA: 
- 000FF6F0  00000100 [		        BYTE        US DUP(?)             ; User area
+ 000FDEC0			INITR0:                         ; Grows down
+ 000FDEC0			STRUSA: 
+ 000FDEC0  00000100 [		        BYTE        US DUP(?)             ; User area
 	    00
 	   ]
- 000FF7F0			BUF1:   
- 000FF7F0  00000810 [		        BYTE        BUFFERSIZE DUP(?)     ; FIRST DISK BUFFER
+ 000FDFC0			BUF1:   
+ 000FDFC0  00002040 [		        BYTE        BUFFERSIZE DUP(?)     ; FIRST DISK BUFFER
 	    00
 	   ]
  00100000			EM:
 
  00100000			figforth endp
 				end 
-Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/09/26 12:34:21
+Microsoft (R) Macro Assembler Version 14.29.30159.0	    10/10/26 11:16:02
 forth32.asm						     Symbols 2 - 1
 
 
@@ -5714,22 +5705,22 @@ figforth . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000000 Public 
   WRM  . . . . . . . . . . . . .	L Near	 000017D6 _TEXT	
   LCLD . . . . . . . . . . . . .	L Near	 000017FA _TEXT	
   CLD1 . . . . . . . . . . . . .	L Near	 00001811 _TEXT	
-  C_STOD . . . . . . . . . . . .	L Near	 0000188B _TEXT	
-  STOD1  . . . . . . . . . . . .	L Near	 00001893 _TEXT	
-  C_LTYPE  . . . . . . . . . . .	L Near	 00001E8A _TEXT	
-  C_EXPEC  . . . . . . . . . . .	L Near	 00001EA7 _TEXT	
-  C_LKEY . . . . . . . . . . . .	L Near	 00001EC1 _TEXT	
-  C_QTERM  . . . . . . . . . . .	L Near	 00001EDE _TEXT	
-  C_BLINI  . . . . . . . . . . .	L Near	 00002060 _TEXT	
-  C_BLEXI  . . . . . . . . . . .	L Near	 00002095 _TEXT	
-  C_RSLW . . . . . . . . . . . .	L Near	 000020AB _TEXT	
-  C_BYE  . . . . . . . . . . . .	L Near	 000025DE _TEXT	
-  INITDP . . . . . . . . . . . .	L Near	 000027B5 _TEXT	
-  INITS0 . . . . . . . . . . . .	L Near	 000EF6F0 _TEXT	
-  STRTIB . . . . . . . . . . . .	L Near	 000EF6F0 _TEXT	
-  INITR0 . . . . . . . . . . . .	L Near	 000FF6F0 _TEXT	
-  STRUSA . . . . . . . . . . . .	L Near	 000FF6F0 _TEXT	
-  BUF1 . . . . . . . . . . . . .	L Near	 000FF7F0 _TEXT	
+  C_STOD . . . . . . . . . . . .	L Near	 00001887 _TEXT	
+  STOD1  . . . . . . . . . . . .	L Near	 0000188F _TEXT	
+  C_LTYPE  . . . . . . . . . . .	L Near	 00001ECF _TEXT	
+  C_EXPEC  . . . . . . . . . . .	L Near	 00001EEC _TEXT	
+  C_LKEY . . . . . . . . . . . .	L Near	 00001F06 _TEXT	
+  C_QTERM  . . . . . . . . . . .	L Near	 00001F23 _TEXT	
+  C_FOPEN  . . . . . . . . . . .	L Near	 00001F78 _TEXT	
+  C_FCLOSE . . . . . . . . . . .	L Near	 00001F9C _TEXT	
+  C_RSLW . . . . . . . . . . . .	L Near	 00001FB7 _TEXT	
+  C_BYE  . . . . . . . . . . . .	L Near	 000024E5 _TEXT	
+  INITDP . . . . . . . . . . . .	L Near	 000026BC _TEXT	
+  INITS0 . . . . . . . . . . . .	L Near	 000EDEC0 _TEXT	
+  STRTIB . . . . . . . . . . . .	L Near	 000EDEC0 _TEXT	
+  INITR0 . . . . . . . . . . . .	L Near	 000FDEC0 _TEXT	
+  STRUSA . . . . . . . . . . . .	L Near	 000FDEC0 _TEXT	
+  BUF1 . . . . . . . . . . . . .	L Near	 000FDFC0 _TEXT	
   EM . . . . . . . . . . . . . .	L Near	 00100000 _TEXT	
 
 
@@ -5750,38 +5741,35 @@ ABL  . . . . . . . . . . . . . .	Number	 00000020h
 ABORT  . . . . . . . . . . . . .	DWord	 0000177B _TEXT	
 ACR  . . . . . . . . . . . . . .	Number	 0000000Dh   
 ADOT . . . . . . . . . . . . . .	Number	 0000002Eh   
-AGAIN  . . . . . . . . . . . . .	DWord	 0000228B _TEXT	
+AGAIN  . . . . . . . . . . . . .	DWord	 00002192 _TEXT	
 ALLOT  . . . . . . . . . . . . .	DWord	 00000A01 _TEXT	
-ARROW  . . . . . . . . . . . . .	DWord	 00001E45 _TEXT	
-BACK . . . . . . . . . . . . . .	DWord	 00002164 _TEXT	
+BACK . . . . . . . . . . . . . .	DWord	 0000206B _TEXT	
 BASE . . . . . . . . . . . . . .	DWord	 00000918 _TEXT	
 BBUF . . . . . . . . . . . . . .	DWord	 000007EC _TEXT	
 BCOMP  . . . . . . . . . . . . .	DWord	 000014C0 _TEXT	
-BDIGS  . . . . . . . . . . . . .	DWord	 0000239A _TEXT	
-BEGIN  . . . . . . . . . . . . .	DWord	 00002182 _TEXT	
+BDIGS  . . . . . . . . . . . . .	DWord	 000022A1 _TEXT	
+BEGIN  . . . . . . . . . . . . .	DWord	 00002089 _TEXT	
 BELL . . . . . . . . . . . . . .	Number	 00000007h   
-BHAN . . . . . . . . . . . . . .	DWord	 0000202E _TEXT	
 BLANK  . . . . . . . . . . . . .	DWord	 000010AE _TEXT	
-BLEXI  . . . . . . . . . . . . .	DWord	 00002091 _TEXT	
-BLFL . . . . . . . . . . . . . .	DWord	 00001F19 _TEXT	
-BLINI  . . . . . . . . . . . . .	DWord	 0000205C _TEXT	
 BLK  . . . . . . . . . . . . . .	DWord	 00000996 _TEXT	
-BLOC1  . . . . . . . . . . . . .	DWord	 00001D96 _TEXT	
-BLOC2  . . . . . . . . . . . . .	DWord	 00001D2E _TEXT	
-BLOC3  . . . . . . . . . . . . .	DWord	 00001D66 _TEXT	
-BLOCK  . . . . . . . . . . . . .	DWord	 00001CE6 _TEXT	
+BLOC1  . . . . . . . . . . . . .	DWord	 00001DE6 _TEXT	
+BLOC2  . . . . . . . . . . . . .	DWord	 00001D7E _TEXT	
+BLOC3  . . . . . . . . . . . . .	DWord	 00001DB6 _TEXT	
+BLOCK  . . . . . . . . . . . . .	DWord	 00001D36 _TEXT	
 BLS  . . . . . . . . . . . . . .	DWord	 00000797 _TEXT	
 BMASK  . . . . . . . . . . . . .	Number	 -80000000h   
 BRAN . . . . . . . . . . . . . .	DWord	 00000047 _TEXT	
 BSCR . . . . . . . . . . . . . .	DWord	 000007FE _TEXT	
 BSIN . . . . . . . . . . . . . .	Number	 00000008h   
 BSOUT  . . . . . . . . . . . . .	Number	 00000008h   
-BUFF1  . . . . . . . . . . . . .	DWord	 00001C70 _TEXT	
-BUFF2  . . . . . . . . . . . . .	DWord	 00001CBC _TEXT	
-BUFFERSIZE . . . . . . . . . . .	Number	 00000810h   
-BUFFE  . . . . . . . . . . . . .	DWord	 00001C5C _TEXT	
+BUFF1  . . . . . . . . . . . . .	DWord	 00001CC0 _TEXT	
+BUFF2  . . . . . . . . . . . . .	DWord	 00001D0C _TEXT	
+BUFFERSIZE . . . . . . . . . . .	Number	 00002040h   
+BUFFE  . . . . . . . . . . . . .	DWord	 00001CAC _TEXT	
+BUFFS  . . . . . . . . . . . . .	DWord	 00001BF4 _TEXT	
+BUFS1  . . . . . . . . . . . . .	DWord	 00001C0C _TEXT	
 BUILD  . . . . . . . . . . . . .	DWord	 00000E71 _TEXT	
-BYE  . . . . . . . . . . . . . .	DWord	 000025DA _TEXT	
+BYE  . . . . . . . . . . . . . .	DWord	 000024E1 _TEXT	
 CCOMM  . . . . . . . . . . . . .	DWord	 00000A3A _TEXT	
 CELLP  . . . . . . . . . . . . .	DWord	 000009D0 _TEXT	
 CFA  . . . . . . . . . . . . . .	DWord	 00000BCF _TEXT	
@@ -5801,52 +5789,53 @@ CSLL . . . . . . . . . . . . . .	DWord	 000007A7 _TEXT
 CSTOR  . . . . . . . . . . . . .	DWord	 0000060D _TEXT	
 CURR . . . . . . . . . . . . . .	DWord	 000008F5 _TEXT	
 CW . . . . . . . . . . . . . . .	Number	 00000004h   
-DABS . . . . . . . . . . . . . .	DWord	 000018FA _TEXT	
-DDOTR  . . . . . . . . . . . . .	DWord	 0000248B _TEXT	
-DDOT . . . . . . . . . . . . . .	DWord	 000024ED _TEXT	
+DABS . . . . . . . . . . . . . .	DWord	 000018F6 _TEXT	
+DDOTR  . . . . . . . . . . . . .	DWord	 00002392 _TEXT	
+DDOT . . . . . . . . . . . . . .	DWord	 000023F4 _TEXT	
 DDUP1  . . . . . . . . . . . . .	DWord	 00000B43 _TEXT	
 DDUP . . . . . . . . . . . . . .	DWord	 00000B2F _TEXT	
 DECA . . . . . . . . . . . . . .	DWord	 00000DFF _TEXT	
 DEFIN  . . . . . . . . . . . . .	DWord	 000016EF _TEXT	
-DERR . . . . . . . . . . . . . .	DWord	 00002045 _TEXT	
+DERR . . . . . . . . . . . . . .	DWord	 00001F5E _TEXT	
 DFIN1  . . . . . . . . . . . . .	DWord	 00001326 _TEXT	
 DFIND  . . . . . . . . . . . . .	DWord	 000012E6 _TEXT	
-DIG1 . . . . . . . . . . . . . .	DWord	 00002444 _TEXT	
+DIG1 . . . . . . . . . . . . . .	DWord	 0000234B _TEXT	
 DIGIT  . . . . . . . . . . . . .	DWord	 0000022F _TEXT	
-DIGS1  . . . . . . . . . . . . .	DWord	 00002463 _TEXT	
-DIGS . . . . . . . . . . . . . .	DWord	 0000245F _TEXT	
-DIG  . . . . . . . . . . . . . .	DWord	 0000240C _TEXT	
-DLINE  . . . . . . . . . . . . .	DWord	 00001B05 _TEXT	
+DIGS1  . . . . . . . . . . . . .	DWord	 0000236A _TEXT	
+DIGS . . . . . . . . . . . . . .	DWord	 00002366 _TEXT	
+DIG  . . . . . . . . . . . . . .	DWord	 00002313 _TEXT	
+DLINE  . . . . . . . . . . . . .	DWord	 00001B01 _TEXT	
 DLIT1  . . . . . . . . . . . . .	DWord	 00001541 _TEXT	
 DLITE  . . . . . . . . . . . . .	DWord	 00001521 _TEXT	
 DMINU  . . . . . . . . . . . . .	DWord	 00000505 _TEXT	
 DOES . . . . . . . . . . . . . .	DWord	 00000E8B _TEXT	
-DOTCPU . . . . . . . . . . . . .	DWord	 00002754 _TEXT	
+DOTCPU . . . . . . . . . . . . .	DWord	 0000265B _TEXT	
 DOTQ1  . . . . . . . . . . . . .	DWord	 00000FB5 _TEXT	
 DOTQ2  . . . . . . . . . . . . .	DWord	 00000FC5 _TEXT	
 DOTQ . . . . . . . . . . . . . .	DWord	 00000F75 _TEXT	
-DOTR . . . . . . . . . . . . . .	DWord	 000024CE _TEXT	
-DOT  . . . . . . . . . . . . . .	DWord	 00002507 _TEXT	
+DOTR . . . . . . . . . . . . . .	DWord	 000023D5 _TEXT	
+DOT  . . . . . . . . . . . . . .	DWord	 0000240E _TEXT	
 DOVOC  . . . . . . . . . . . . .	DWord	 000016B3 _TEXT	
-DO . . . . . . . . . . . . . . .	DWord	 000021E4 _TEXT	
+DO . . . . . . . . . . . . . . .	DWord	 000020EB _TEXT	
 DPLUS  . . . . . . . . . . . . .	DWord	 000004D0 _TEXT	
 DPL  . . . . . . . . . . . . . .	DWord	 00000928 _TEXT	
-DPM1 . . . . . . . . . . . . . .	DWord	 000018D5 _TEXT	
-DPM  . . . . . . . . . . . . . .	DWord	 000018C1 _TEXT	
+DPM1 . . . . . . . . . . . . . .	DWord	 000018D1 _TEXT	
+DPM  . . . . . . . . . . . . . .	DWord	 000018BD _TEXT	
 DROP . . . . . . . . . . . . . .	DWord	 0000053A _TEXT	
 DTRA1  . . . . . . . . . . . . .	DWord	 00000EF5 _TEXT	
 DTRA2  . . . . . . . . . . . . .	DWord	 00000F29 _TEXT	
 DTRA3  . . . . . . . . . . . . .	DWord	 00000F31 _TEXT	
 DTRAI  . . . . . . . . . . . . .	DWord	 00000EE5 _TEXT	
-EDIGS  . . . . . . . . . . . . .	DWord	 000023B5 _TEXT	
-EMIT . . . . . . . . . . . . . .	DWord	 00001EF2 _TEXT	
+EDIGS  . . . . . . . . . . . . .	DWord	 000022BC _TEXT	
+EMIT . . . . . . . . . . . . . .	DWord	 00001F37 _TEXT	
 ENCL . . . . . . . . . . . . . .	DWord	 000002C0 _TEXT	
 EQUAL  . . . . . . . . . . . . .	DWord	 00000A6C _TEXT	
 ERRO1  . . . . . . . . . . . . .	DWord	 00001368 _TEXT	
 ERRO2  . . . . . . . . . . . . .	DWord	 000013A3 _TEXT	
 ERROR  . . . . . . . . . . . . .	DWord	 0000134C _TEXT	
 EXEC . . . . . . . . . . . . . .	DWord	 00000035 _TEXT	
-EXPEC  . . . . . . . . . . . . .	DWord	 00001EA3 _TEXT	
+EXPEC  . . . . . . . . . . . . .	DWord	 00001EE8 _TEXT	
+FCLOSE . . . . . . . . . . . . .	DWord	 00001F98 _TEXT	
 FENCE  . . . . . . . . . . . . .	DWord	 00000886 _TEXT	
 FETCH  . . . . . . . . . . . . .	DWord	 000005B8 _TEXT	
 FF . . . . . . . . . . . . . . .	Number	 0000000Ch   
@@ -5854,10 +5843,11 @@ FIGREL . . . . . . . . . . . . .	Number	 00000002h
 FIGREV . . . . . . . . . . . . .	Number	 00000000h   
 FILL . . . . . . . . . . . . . .	DWord	 0000107A _TEXT	
 FIRST  . . . . . . . . . . . . .	DWord	 000007B9 _TEXT	
-FLUS1  . . . . . . . . . . . . .	DWord	 00001DC4 _TEXT	
-FLUSH  . . . . . . . . . . . . .	DWord	 00001DB0 _TEXT	
-FORG . . . . . . . . . . . . . .	DWord	 000020EF _TEXT	
-FORTHSIZE  . . . . . . . . . . .	Number	 000027B5h   
+FLUS1  . . . . . . . . . . . . .	DWord	 00001E14 _TEXT	
+FLUSH  . . . . . . . . . . . . .	DWord	 00001E00 _TEXT	
+FOPEN  . . . . . . . . . . . . .	DWord	 00001F74 _TEXT	
+FORG . . . . . . . . . . . . . .	DWord	 00001FF6 _TEXT	
+FORTHSIZE  . . . . . . . . . . .	Number	 000026BCh   
 FORTH  . . . . . . . . . . . . .	DWord	 000016CD _TEXT	
 FROMR  . . . . . . . . . . . . .	DWord	 00000463 _TEXT	
 GREAT  . . . . . . . . . . . . .	DWord	 00000AE5 _TEXT	
@@ -5868,9 +5858,9 @@ HOLD . . . . . . . . . . . . . .	DWord	 000010C7 _TEXT
 IDDOT  . . . . . . . . . . . . .	DWord	 000013AF _TEXT	
 IDO  . . . . . . . . . . . . . .	DWord	 000000E0 _TEXT	
 IMMED  . . . . . . . . . . . . .	DWord	 00001638 _TEXT	
-INDE1  . . . . . . . . . . . . .	DWord	 00002695 _TEXT	
-INDE2  . . . . . . . . . . . . .	DWord	 000026C9 _TEXT	
-INDEX  . . . . . . . . . . . . .	DWord	 00002675 _TEXT	
+INDE1  . . . . . . . . . . . . .	DWord	 0000259C _TEXT	
+INDE2  . . . . . . . . . . . . .	DWord	 000025D0 _TEXT	
+INDEX  . . . . . . . . . . . . .	DWord	 0000257C _TEXT	
 INTE1  . . . . . . . . . . . . .	DWord	 000015AA _TEXT	
 INTE2  . . . . . . . . . . . . .	DWord	 000015EE _TEXT	
 INTE3  . . . . . . . . . . . . .	DWord	 000015DA _TEXT	
@@ -5880,7 +5870,7 @@ INTE6  . . . . . . . . . . . . .	DWord	 00001616 _TEXT
 INTE7  . . . . . . . . . . . . .	DWord	 0000161E _TEXT	
 INTER  . . . . . . . . . . . . .	DWord	 000015A6 _TEXT	
 KBBUF  . . . . . . . . . . . . .	Number	 00000400h   
-LABS . . . . . . . . . . . . . .	DWord	 000018E1 _TEXT	
+LABS . . . . . . . . . . . . . .	DWord	 000018DD _TEXT	
 LAND . . . . . . . . . . . . . .	DWord	 00000381 _TEXT	
 LATES  . . . . . . . . . . . . .	DWord	 00000B97 _TEXT	
 LBRAC  . . . . . . . . . . . . .	DWord	 00000D7E _TEXT	
@@ -5888,54 +5878,54 @@ LCMOVE . . . . . . . . . . . . .	DWord	 00000326 _TEXT
 LCSP . . . . . . . . . . . . . .	DWord	 00000948 _TEXT	
 LDP  . . . . . . . . . . . . . .	DWord	 00000895 _TEXT	
 LDUP . . . . . . . . . . . . . .	DWord	 00000562 _TEXT	
-LELSE  . . . . . . . . . . . . .	DWord	 0000230A _TEXT	
+LELSE  . . . . . . . . . . . . .	DWord	 00002211 _TEXT	
 LEM  . . . . . . . . . . . . . .	DWord	 000007DA _TEXT	
-LENDIF . . . . . . . . . . . . .	DWord	 000021A0 _TEXT	
-LEND . . . . . . . . . . . . . .	DWord	 00002275 _TEXT	
+LENDIF . . . . . . . . . . . . .	DWord	 000020A7 _TEXT	
+LEND . . . . . . . . . . . . . .	DWord	 0000217C _TEXT	
 LERASE . . . . . . . . . . . . .	DWord	 00001093 _TEXT	
 LESS . . . . . . . . . . . . . .	DWord	 00000A82 _TEXT	
 LFA  . . . . . . . . . . . . . .	DWord	 00000BB3 _TEXT	
 LFET . . . . . . . . . . . . . .	DWord	 00000639 _TEXT	
 LFLD . . . . . . . . . . . . . .	DWord	 00000938 _TEXT	
 LF . . . . . . . . . . . . . . .	Number	 0000000Ah   
-LIF  . . . . . . . . . . . . . .	DWord	 000022E1 _TEXT	
+LIF  . . . . . . . . . . . . . .	DWord	 000021E8 _TEXT	
 LIMIT  . . . . . . . . . . . . .	DWord	 000007CB _TEXT	
 LIN  . . . . . . . . . . . . . .	DWord	 00000976 _TEXT	
-LIST1  . . . . . . . . . . . . .	DWord	 00002623 _TEXT	
-LIST2  . . . . . . . . . . . . .	DWord	 0000265B _TEXT	
+LIST1  . . . . . . . . . . . . .	DWord	 0000252A _TEXT	
+LIST2  . . . . . . . . . . . . .	DWord	 00002562 _TEXT	
 LITE1  . . . . . . . . . . . . .	DWord	 00001510 _TEXT	
 LITER  . . . . . . . . . . . . .	DWord	 000014F0 _TEXT	
 LIT  . . . . . . . . . . . . . .	DWord	 0000001E _TEXT	
-LKEY . . . . . . . . . . . . . .	DWord	 00001EBD _TEXT	
+LKEY . . . . . . . . . . . . . .	DWord	 00001F02 _TEXT	
 LLEAV  . . . . . . . . . . . . .	DWord	 00000436 _TEXT	
-LLIST  . . . . . . . . . . . . .	DWord	 000025EC _TEXT	
-LLOOP  . . . . . . . . . . . . .	DWord	 00002205 _TEXT	
-LMOD . . . . . . . . . . . . . .	DWord	 00001A31 _TEXT	
-LOAD . . . . . . . . . . . . . .	DWord	 00001DE5 _TEXT	
+LLIST  . . . . . . . . . . . . .	DWord	 000024F3 _TEXT	
+LLOOP  . . . . . . . . . . . . .	DWord	 0000210C _TEXT	
+LMOD . . . . . . . . . . . . . .	DWord	 00001A2D _TEXT	
+LOAD . . . . . . . . . . . . . .	DWord	 00001E6A _TEXT	
 LOR  . . . . . . . . . . . . . .	DWord	 00000396 _TEXT	
 LOUT . . . . . . . . . . . . . .	DWord	 00000986 _TEXT	
 LSTORE . . . . . . . . . . . . .	DWord	 00000657 _TEXT	
 LSUB . . . . . . . . . . . . . .	DWord	 00000A58 _TEXT	
-LTYPE  . . . . . . . . . . . . .	DWord	 00001E86 _TEXT	
+LTYPE  . . . . . . . . . . . . .	DWord	 00001ECB _TEXT	
 LWORD  . . . . . . . . . . . . .	DWord	 00001114 _TEXT	
 LXOR . . . . . . . . . . . . . .	DWord	 000003AC _TEXT	
-Link . . . . . . . . . . . . . .	Number	 000027A4h   
-MAX1 . . . . . . . . . . . . . .	DWord	 00001952 _TEXT	
-MAX  . . . . . . . . . . . . . .	DWord	 0000193A _TEXT	
-MESS1  . . . . . . . . . . . . .	DWord	 00001B5D _TEXT	
-MESS2  . . . . . . . . . . . . .	DWord	 00001B55 _TEXT	
-MESS3  . . . . . . . . . . . . .	DWord	 00001B6C _TEXT	
-MESS . . . . . . . . . . . . . .	DWord	 00001B25 _TEXT	
-MIN1 . . . . . . . . . . . . . .	DWord	 0000192A _TEXT	
+Link . . . . . . . . . . . . . .	Number	 000026ABh   
+MAX1 . . . . . . . . . . . . . .	DWord	 0000194E _TEXT	
+MAX  . . . . . . . . . . . . . .	DWord	 00001936 _TEXT	
+MESS1  . . . . . . . . . . . . .	DWord	 00001B59 _TEXT	
+MESS2  . . . . . . . . . . . . .	DWord	 00001B51 _TEXT	
+MESS3  . . . . . . . . . . . . .	DWord	 00001B68 _TEXT	
+MESS . . . . . . . . . . . . . .	DWord	 00001B21 _TEXT	
+MIN1 . . . . . . . . . . . . . .	DWord	 00001926 _TEXT	
 MINUS  . . . . . . . . . . . . .	DWord	 000004ED _TEXT	
-MIN  . . . . . . . . . . . . . .	DWord	 00001912 _TEXT	
-MSLAS  . . . . . . . . . . . . .	DWord	 00001994 _TEXT	
-MSMOD  . . . . . . . . . . . . .	DWord	 00001A88 _TEXT	
-MSTAR  . . . . . . . . . . . . .	DWord	 00001961 _TEXT	
-MTBUF  . . . . . . . . . . . . .	DWord	 00001C35 _TEXT	
-NBUF . . . . . . . . . . . . . .	Number	 00000002h   
+MIN  . . . . . . . . . . . . . .	DWord	 0000190E _TEXT	
+MSLAS  . . . . . . . . . . . . .	DWord	 00001990 _TEXT	
+MSMOD  . . . . . . . . . . . . .	DWord	 00001A84 _TEXT	
+MSTAR  . . . . . . . . . . . . .	DWord	 0000195D _TEXT	
+MTBUF  . . . . . . . . . . . . .	DWord	 00001C85 _TEXT	
+NBUF . . . . . . . . . . . . . .	Number	 00000008h   
 NFA  . . . . . . . . . . . . . .	DWord	 00000BEB _TEXT	
-NOBUF  . . . . . . . . . . . . .	DWord	 00001B9B _TEXT	
+NOBUF  . . . . . . . . . . . . .	DWord	 00001B97 _TEXT	
 NOOP . . . . . . . . . . . . . .	DWord	 00000078 _TEXT	
 NULL1  . . . . . . . . . . . . .	DWord	 00001065 _TEXT	
 NULL2  . . . . . . . . . . . . .	DWord	 0000105D _TEXT	
@@ -5946,28 +5936,24 @@ NUMB2  . . . . . . . . . . . . .	DWord	 000012C4 _TEXT
 NUMB3  . . . . . . . . . . . . .	DWord	 000012D8 _TEXT	
 NUMB . . . . . . . . . . . . . .	DWord	 0000123C _TEXT	
 N_ABORT  . . . . . . . . . . . .	Byte	 00001771 _TEXT	
-N_AGAIN  . . . . . . . . . . . .	Byte	 00002281 _TEXT	
+N_AGAIN  . . . . . . . . . . . .	Byte	 00002188 _TEXT	
 N_ALLOT  . . . . . . . . . . . .	Byte	 000009F7 _TEXT	
-N_ARROW  . . . . . . . . . . . .	Byte	 00001E3D _TEXT	
-N_BACK . . . . . . . . . . . . .	Byte	 0000215B _TEXT	
+N_BACK . . . . . . . . . . . . .	Byte	 00002062 _TEXT	
 N_BASE . . . . . . . . . . . . .	Byte	 0000090F _TEXT	
 N_BBUF . . . . . . . . . . . . .	Byte	 000007E2 _TEXT	
 N_BCOMP  . . . . . . . . . . . .	Byte	 000014B2 _TEXT	
-N_BDIGS  . . . . . . . . . . . .	Byte	 00002393 _TEXT	
-N_BEGIN  . . . . . . . . . . . .	Byte	 00002178 _TEXT	
-N_BHAN . . . . . . . . . . . . .	Byte	 0000201D _TEXT	
+N_BDIGS  . . . . . . . . . . . .	Byte	 0000229A _TEXT	
+N_BEGIN  . . . . . . . . . . . .	Byte	 0000207F _TEXT	
 N_BLANK  . . . . . . . . . . . .	Byte	 000010A3 _TEXT	
-N_BLEXI  . . . . . . . . . . . .	Byte	 00002082 _TEXT	
-N_BLFL . . . . . . . . . . . . .	Byte	 00001F0A _TEXT	
-N_BLINI  . . . . . . . . . . . .	Byte	 0000204D _TEXT	
 N_BLK  . . . . . . . . . . . . .	Byte	 0000098E _TEXT	
-N_BLOCK  . . . . . . . . . . . .	Byte	 00001CDC _TEXT	
+N_BLOCK  . . . . . . . . . . . .	Byte	 00001D2C _TEXT	
 N_BLS  . . . . . . . . . . . . .	Byte	 00000790 _TEXT	
 N_BRAN . . . . . . . . . . . . .	Byte	 0000003C _TEXT	
 N_BSCR . . . . . . . . . . . . .	Byte	 000007F4 _TEXT	
-N_BUFFE  . . . . . . . . . . . .	Byte	 00001C51 _TEXT	
+N_BUFFE  . . . . . . . . . . . .	Byte	 00001CA1 _TEXT	
+N_BUFFS  . . . . . . . . . . . .	Byte	 00001BE8 _TEXT	
 N_BUILD  . . . . . . . . . . . .	Byte	 00000E65 _TEXT	
-N_BYE  . . . . . . . . . . . . .	Byte	 000025D2 _TEXT	
+N_BYE  . . . . . . . . . . . . .	Byte	 000024D9 _TEXT	
 N_CCOMM  . . . . . . . . . . . .	Byte	 00000A33 _TEXT	
 N_CELLP  . . . . . . . . . . . .	Byte	 000009C6 _TEXT	
 N_CFA  . . . . . . . . . . . . .	Byte	 00000BC7 _TEXT	
@@ -5984,44 +5970,46 @@ N_CR . . . . . . . . . . . . . .	Byte	 00000301 _TEXT
 N_CSLL . . . . . . . . . . . . .	Byte	 0000079F _TEXT	
 N_CSTOR  . . . . . . . . . . . .	Byte	 00000606 _TEXT	
 N_CURR . . . . . . . . . . . . .	Byte	 000008E9 _TEXT	
-N_DABS . . . . . . . . . . . . .	Byte	 000018F1 _TEXT	
-N_DDOTR  . . . . . . . . . . . .	Byte	 00002483 _TEXT	
-N_DDOT . . . . . . . . . . . . .	Byte	 000024E6 _TEXT	
+N_DABS . . . . . . . . . . . . .	Byte	 000018ED _TEXT	
+N_DDOTR  . . . . . . . . . . . .	Byte	 0000238A _TEXT	
+N_DDOT . . . . . . . . . . . . .	Byte	 000023ED _TEXT	
 N_DDUP . . . . . . . . . . . . .	Byte	 00000B26 _TEXT	
 N_DECA . . . . . . . . . . . . .	Byte	 00000DF3 _TEXT	
 N_DEFIN  . . . . . . . . . . . .	Byte	 000016DF _TEXT	
-N_DERR . . . . . . . . . . . . .	Byte	 00002036 _TEXT	
+N_DERR . . . . . . . . . . . . .	Byte	 00001F4F _TEXT	
 N_DFIND  . . . . . . . . . . . .	Byte	 000012DC _TEXT	
 N_DIGIT  . . . . . . . . . . . .	Byte	 00000225 _TEXT	
-N_DIGS . . . . . . . . . . . . .	Byte	 00002458 _TEXT	
-N_DIG  . . . . . . . . . . . . .	Byte	 00002406 _TEXT	
-N_DLINE  . . . . . . . . . . . .	Byte	 00001AFB _TEXT	
+N_DIGS . . . . . . . . . . . . .	Byte	 0000235F _TEXT	
+N_DIG  . . . . . . . . . . . . .	Byte	 0000230D _TEXT	
+N_DLINE  . . . . . . . . . . . .	Byte	 00001AF7 _TEXT	
 N_DLITE  . . . . . . . . . . . .	Byte	 00001514 _TEXT	
 N_DMINU  . . . . . . . . . . . .	Byte	 000004FA _TEXT	
 N_DOES . . . . . . . . . . . . .	Byte	 00000E81 _TEXT	
-N_DOTCPU . . . . . . . . . . . .	Byte	 0000274B _TEXT	
+N_DOTCPU . . . . . . . . . . . .	Byte	 00002652 _TEXT	
 N_DOTQ . . . . . . . . . . . . .	Byte	 00000F6E _TEXT	
-N_DOTR . . . . . . . . . . . . .	Byte	 000024C7 _TEXT	
-N_DOT  . . . . . . . . . . . . .	Byte	 00002501 _TEXT	
-N_DO . . . . . . . . . . . . . .	Byte	 000021DD _TEXT	
+N_DOTR . . . . . . . . . . . . .	Byte	 000023CE _TEXT	
+N_DOT  . . . . . . . . . . . . .	Byte	 00002408 _TEXT	
+N_DO . . . . . . . . . . . . . .	Byte	 000020E4 _TEXT	
 N_DPLUS  . . . . . . . . . . . .	Byte	 000004C9 _TEXT	
 N_DPL  . . . . . . . . . . . . .	Byte	 00000920 _TEXT	
-N_DPM  . . . . . . . . . . . . .	Byte	 000018B9 _TEXT	
+N_DPM  . . . . . . . . . . . . .	Byte	 000018B5 _TEXT	
 N_DROP . . . . . . . . . . . . .	Byte	 00000531 _TEXT	
 N_DTRAI  . . . . . . . . . . . .	Byte	 00000ED7 _TEXT	
-N_EDIGS  . . . . . . . . . . . .	Byte	 000023AE _TEXT	
-N_EMIT . . . . . . . . . . . . .	Byte	 00001EE9 _TEXT	
+N_EDIGS  . . . . . . . . . . . .	Byte	 000022B5 _TEXT	
+N_EMIT . . . . . . . . . . . . .	Byte	 00001F2E _TEXT	
 N_ENCL . . . . . . . . . . . . .	Byte	 000002B4 _TEXT	
 N_EQUAL  . . . . . . . . . . . .	Byte	 00000A66 _TEXT	
 N_ERROR  . . . . . . . . . . . .	Byte	 00001342 _TEXT	
 N_EXEC . . . . . . . . . . . . .	Byte	 00000029 _TEXT	
-N_EXPEC  . . . . . . . . . . . .	Byte	 00001E98 _TEXT	
+N_EXPEC  . . . . . . . . . . . .	Byte	 00001EDD _TEXT	
+N_FCLOSE . . . . . . . . . . . .	Byte	 00001F89 _TEXT	
 N_FENCE  . . . . . . . . . . . .	Byte	 0000087C _TEXT	
 N_FETCH  . . . . . . . . . . . .	Byte	 000005B2 _TEXT	
 N_FILL . . . . . . . . . . . . .	Byte	 00001071 _TEXT	
 N_FIRST  . . . . . . . . . . . .	Byte	 000007AF _TEXT	
-N_FLUSH  . . . . . . . . . . . .	Byte	 00001DA6 _TEXT	
-N_FORG . . . . . . . . . . . . .	Byte	 000020E4 _TEXT	
+N_FLUSH  . . . . . . . . . . . .	Byte	 00001DF6 _TEXT	
+N_FOPEN  . . . . . . . . . . . .	Byte	 00001F66 _TEXT	
+N_FORG . . . . . . . . . . . . .	Byte	 00001FEB _TEXT	
 N_FORTH  . . . . . . . . . . . .	Byte	 000016C3 _TEXT	
 N_FROMR  . . . . . . . . . . . .	Byte	 0000045C _TEXT	
 N_GREAT  . . . . . . . . . . . .	Byte	 00000ADF _TEXT	
@@ -6032,9 +6020,9 @@ N_HOLD . . . . . . . . . . . . .	Byte	 000010BE _TEXT
 N_IDDOT  . . . . . . . . . . . .	Byte	 000013A7 _TEXT	
 N_IDO  . . . . . . . . . . . . .	Byte	 000000DA _TEXT	
 N_IMMED  . . . . . . . . . . . .	Byte	 0000162A _TEXT	
-N_INDEX  . . . . . . . . . . . .	Byte	 0000266B _TEXT	
+N_INDEX  . . . . . . . . . . . .	Byte	 00002572 _TEXT	
 N_INTER  . . . . . . . . . . . .	Byte	 00001598 _TEXT	
-N_LABS . . . . . . . . . . . . .	Byte	 000018D9 _TEXT	
+N_LABS . . . . . . . . . . . . .	Byte	 000018D5 _TEXT	
 N_LAND . . . . . . . . . . . . .	Byte	 00000379 _TEXT	
 N_LATES  . . . . . . . . . . . .	Byte	 00000B8C _TEXT	
 N_LBRAC  . . . . . . . . . . . .	Byte	 00000D78 _TEXT	
@@ -6042,64 +6030,65 @@ N_LCMOVE . . . . . . . . . . . .	Byte	 0000031C _TEXT
 N_LCSP . . . . . . . . . . . . .	Byte	 00000940 _TEXT	
 N_LDP  . . . . . . . . . . . . .	Byte	 0000088E _TEXT	
 N_LDUP . . . . . . . . . . . . .	Byte	 0000055A _TEXT	
-N_LELSE  . . . . . . . . . . . .	Byte	 00002301 _TEXT	
+N_LELSE  . . . . . . . . . . . .	Byte	 00002208 _TEXT	
 N_LEM  . . . . . . . . . . . . .	Byte	 000007D3 _TEXT	
-N_LENDIF . . . . . . . . . . . .	Byte	 00002196 _TEXT	
-N_LEND . . . . . . . . . . . . .	Byte	 0000226D _TEXT	
+N_LENDIF . . . . . . . . . . . .	Byte	 0000209D _TEXT	
+N_LEND . . . . . . . . . . . . .	Byte	 00002174 _TEXT	
 N_LERASE . . . . . . . . . . . .	Byte	 00001089 _TEXT	
 N_LESS . . . . . . . . . . . . .	Byte	 00000A7C _TEXT	
 N_LFA  . . . . . . . . . . . . .	Byte	 00000BAB _TEXT	
 N_LFET . . . . . . . . . . . . .	Byte	 00000632 _TEXT	
 N_LFLD . . . . . . . . . . . . .	Byte	 00000930 _TEXT	
-N_LIF  . . . . . . . . . . . . .	Byte	 000022DA _TEXT	
+N_LIF  . . . . . . . . . . . . .	Byte	 000021E1 _TEXT	
 N_LIMIT  . . . . . . . . . . . .	Byte	 000007C1 _TEXT	
 N_LIN  . . . . . . . . . . . . .	Byte	 0000096F _TEXT	
 N_LITER  . . . . . . . . . . . .	Byte	 000014E4 _TEXT	
 N_LIT  . . . . . . . . . . . . .	Byte	 00000016 _TEXT	
-N_LKEY . . . . . . . . . . . . .	Byte	 00001EB5 _TEXT	
+N_LKEY . . . . . . . . . . . . .	Byte	 00001EFA _TEXT	
 N_LLEAV  . . . . . . . . . . . .	Byte	 0000042C _TEXT	
-N_LLIST  . . . . . . . . . . . .	Byte	 000025E3 _TEXT	
-N_LLOOP  . . . . . . . . . . . .	Byte	 000021FC _TEXT	
-N_LMOD . . . . . . . . . . . . .	Byte	 00001A29 _TEXT	
-N_LOAD . . . . . . . . . . . . .	Byte	 00001DDC _TEXT	
+N_LLIST  . . . . . . . . . . . .	Byte	 000024EA _TEXT	
+N_LLOOP  . . . . . . . . . . . .	Byte	 00002103 _TEXT	
+N_LMOD . . . . . . . . . . . . .	Byte	 00001A25 _TEXT	
+N_LOAD . . . . . . . . . . . . .	Byte	 00001E61 _TEXT	
 N_LOR  . . . . . . . . . . . . .	Byte	 0000038F _TEXT	
 N_LOUT . . . . . . . . . . . . .	Byte	 0000097E _TEXT	
 N_LSTORE . . . . . . . . . . . .	Byte	 00000650 _TEXT	
 N_LSUB . . . . . . . . . . . . .	Byte	 00000A52 _TEXT	
-N_LTYPE  . . . . . . . . . . . .	Byte	 00001E7D _TEXT	
+N_LTYPE  . . . . . . . . . . . .	Byte	 00001EC2 _TEXT	
 N_LWORD  . . . . . . . . . . . .	Byte	 0000110B _TEXT	
 N_LXOR . . . . . . . . . . . . .	Byte	 000003A4 _TEXT	
-N_MAX  . . . . . . . . . . . . .	Byte	 00001932 _TEXT	
-N_MESS . . . . . . . . . . . . .	Byte	 00001B19 _TEXT	
+N_MAX  . . . . . . . . . . . . .	Byte	 0000192E _TEXT	
+N_MESS . . . . . . . . . . . . .	Byte	 00001B15 _TEXT	
 N_MINUS  . . . . . . . . . . . .	Byte	 000004E3 _TEXT	
-N_MIN  . . . . . . . . . . . . .	Byte	 0000190A _TEXT	
-N_MSLAS  . . . . . . . . . . . .	Byte	 0000198D _TEXT	
-N_MSMOD  . . . . . . . . . . . .	Byte	 00001A7E _TEXT	
-N_MSTAR  . . . . . . . . . . . .	Byte	 0000195A _TEXT	
-N_MTBUF  . . . . . . . . . . . .	Byte	 00001C23 _TEXT	
+N_MIN  . . . . . . . . . . . . .	Byte	 00001906 _TEXT	
+N_MSLAS  . . . . . . . . . . . .	Byte	 00001989 _TEXT	
+N_MSMOD  . . . . . . . . . . . .	Byte	 00001A7A _TEXT	
+N_MSTAR  . . . . . . . . . . . .	Byte	 00001956 _TEXT	
+N_MTBUF  . . . . . . . . . . . .	Byte	 00001C73 _TEXT	
 N_NFA  . . . . . . . . . . . . .	Byte	 00000BE3 _TEXT	
-N_NOBUF  . . . . . . . . . . . .	Byte	 00001B91 _TEXT	
+N_NOBUF  . . . . . . . . . . . .	Byte	 00001B8D _TEXT	
 N_NOOP . . . . . . . . . . . . .	Byte	 0000006F _TEXT	
 N_NULL . . . . . . . . . . . . .	Byte	 00000FFB _TEXT	
 N_NUMB . . . . . . . . . . . . .	Byte	 00001231 _TEXT	
 N_OFSET  . . . . . . . . . . . .	Byte	 000008B2 _TEXT	
 N_ONEP . . . . . . . . . . . . .	Byte	 0000099E _TEXT	
 N_ONE  . . . . . . . . . . . . .	Byte	 00000751 _TEXT	
+N_OPENF  . . . . . . . . . . . .	Byte	 00001E2C _TEXT	
 N_OVER . . . . . . . . . . . . .	Byte	 0000051A _TEXT	
 N_PABOR  . . . . . . . . . . . .	Byte	 0000132A _TEXT	
 N_PAD  . . . . . . . . . . . . .	Byte	 000010EB _TEXT	
 N_PAREN  . . . . . . . . . . . .	Byte	 00001707 _TEXT	
-N_PBUF . . . . . . . . . . . . .	Byte	 00001BA3 _TEXT	
+N_PBUF . . . . . . . . . . . . .	Byte	 00001B9F _TEXT	
 N_PDOTQ  . . . . . . . . . . . .	Byte	 00000F3D _TEXT	
 N_PFA  . . . . . . . . . . . . .	Byte	 00000C0B _TEXT	
 N_PFIND  . . . . . . . . . . . .	Byte	 0000025C _TEXT	
-N_PLINE  . . . . . . . . . . . .	Byte	 00001AB4 _TEXT	
-N_PLOOP  . . . . . . . . . . . .	Byte	 00002221 _TEXT	
+N_PLINE  . . . . . . . . . . . .	Byte	 00001AB0 _TEXT	
+N_PLOOP  . . . . . . . . . . . .	Byte	 00002128 _TEXT	
 N_PLUS . . . . . . . . . . . . .	Byte	 000004B5 _TEXT	
-N_PM . . . . . . . . . . . . . .	Byte	 0000189A _TEXT	
+N_PM . . . . . . . . . . . . . .	Byte	 00001896 _TEXT	
 N_PNUMB  . . . . . . . . . . . .	Byte	 000011A0 _TEXT	
 N_PORIG  . . . . . . . . . . . .	Byte	 000000ED _TEXT	
-N_PREV . . . . . . . . . . . . .	Byte	 00001B80 _TEXT	
+N_PREV . . . . . . . . . . . . .	Byte	 00001B7C _TEXT	
 N_PSCOD  . . . . . . . . . . . .	Byte	 00000E17 _TEXT	
 N_PSTOR  . . . . . . . . . . . .	Byte	 00000586 _TEXT	
 N_QCOMP  . . . . . . . . . . . .	Byte	 00000C7B _TEXT	
@@ -6109,18 +6098,18 @@ N_QEXEC  . . . . . . . . . . . .	Byte	 00000CA5 _TEXT
 N_QLOAD  . . . . . . . . . . . .	Byte	 00000D1B _TEXT	
 N_QPAIR  . . . . . . . . . . . .	Byte	 00000CCB _TEXT	
 N_QSTAC  . . . . . . . . . . . .	Byte	 00001545 _TEXT	
-N_QTERM  . . . . . . . . . . . .	Byte	 00001ECC _TEXT	
+N_QTERM  . . . . . . . . . . . .	Byte	 00001F11 _TEXT	
 N_QUERY  . . . . . . . . . . . .	Byte	 00000FC9 _TEXT	
-N_QUES . . . . . . . . . . . . .	Byte	 00002517 _TEXT	
+N_QUES . . . . . . . . . . . . .	Byte	 0000241E _TEXT	
 N_QUIT . . . . . . . . . . . . .	Byte	 00001721 _TEXT	
 N_RBRAC  . . . . . . . . . . . .	Byte	 00000D92 _TEXT	
-N_REPEA  . . . . . . . . . . . .	Byte	 000022A7 _TEXT	
+N_REPEA  . . . . . . . . . . . .	Byte	 000021AE _TEXT	
 N_RNUM . . . . . . . . . . . . .	Byte	 00000950 _TEXT	
 N_ROT  . . . . . . . . . . . . .	Byte	 00000AF5 _TEXT	
 N_RPFET  . . . . . . . . . . . .	Byte	 000003E8 _TEXT	
 N_RPSTO  . . . . . . . . . . . .	Byte	 000003FC _TEXT	
 N_RR . . . . . . . . . . . . . .	Byte	 00000473 _TEXT	
-N_RSLW . . . . . . . . . . . . .	Byte	 0000209F _TEXT	
+N_RSLW . . . . . . . . . . . . .	Byte	 00001FAB _TEXT	
 N_RUBOUT . . . . . . . . . . . .	Byte	 00000815 _TEXT	
 N_RZERO  . . . . . . . . . . . .	Byte	 00000837 _TEXT	
 N_SCR  . . . . . . . . . . . . .	Byte	 000008C5 _TEXT	
@@ -6128,52 +6117,52 @@ N_SCSP . . . . . . . . . . . . .	Byte	 00000C2F _TEXT
 N_SEMIC  . . . . . . . . . . . .	Byte	 00000E3F _TEXT	
 N_SEMIS  . . . . . . . . . . . .	Byte	 00000416 _TEXT	
 N_SEMI . . . . . . . . . . . . .	Byte	 000006AA _TEXT	
-N_SIGN . . . . . . . . . . . . .	Byte	 000023D9 _TEXT	
-N_SLASH  . . . . . . . . . . . .	Byte	 00001A0F _TEXT	
-N_SLMOD  . . . . . . . . . . . .	Byte	 000019EE _TEXT	
+N_SIGN . . . . . . . . . . . . .	Byte	 000022E0 _TEXT	
+N_SLASH  . . . . . . . . . . . .	Byte	 00001A0B _TEXT	
+N_SLMOD  . . . . . . . . . . . .	Byte	 000019EA _TEXT	
 N_SMUDG  . . . . . . . . . . . .	Byte	 00000DB0 _TEXT	
-N_SPACES . . . . . . . . . . . .	Byte	 00002358 _TEXT	
+N_SPACES . . . . . . . . . . . .	Byte	 0000225F _TEXT	
 N_SPACE  . . . . . . . . . . . .	Byte	 00000B0C _TEXT	
 N_SPFET  . . . . . . . . . . . .	Byte	 000003BA _TEXT	
 N_SPSTO  . . . . . . . . . . . .	Byte	 000003CE _TEXT	
-N_SSLA . . . . . . . . . . . . .	Byte	 00001A63 _TEXT	
-N_SSMOD  . . . . . . . . . . . .	Byte	 00001A41 _TEXT	
-N_STAR . . . . . . . . . . . . .	Byte	 000019D8 _TEXT	
+N_SSLA . . . . . . . . . . . . .	Byte	 00001A5F _TEXT	
+N_SSMOD  . . . . . . . . . . . .	Byte	 00001A3D _TEXT	
+N_STAR . . . . . . . . . . . . .	Byte	 000019D4 _TEXT	
 N_STATE  . . . . . . . . . . . .	Byte	 000008FD _TEXT	
-N_STOD . . . . . . . . . . . . .	Byte	 0000187E _TEXT	
+N_STOD . . . . . . . . . . . . .	Byte	 0000187A _TEXT	
 N_STORE  . . . . . . . . . . . .	Byte	 000005F3 _TEXT	
 N_SWAP . . . . . . . . . . . . .	Byte	 00000544 _TEXT	
 N_SZERO  . . . . . . . . . . . .	Byte	 00000828 _TEXT	
-N_TASK . . . . . . . . . . . . .	Byte	 000027A4 _TEXT	
+N_TASK . . . . . . . . . . . . .	Byte	 000026AB _TEXT	
 N_TDUP . . . . . . . . . . . . .	Byte	 0000056E _TEXT	
 N_TFET . . . . . . . . . . . . .	Byte	 000005DB _TEXT	
-N_THEN . . . . . . . . . . . . .	Byte	 000021C8 _TEXT	
+N_THEN . . . . . . . . . . . . .	Byte	 000020CF _TEXT	
 N_THREE  . . . . . . . . . . . .	Byte	 0000077B _TEXT	
 N_TIB  . . . . . . . . . . . . .	Byte	 00000846 _TEXT	
-N_TICK . . . . . . . . . . . . .	Byte	 000020BE _TEXT	
+N_TICK . . . . . . . . . . . . .	Byte	 00001FC5 _TEXT	
 N_TOGGL  . . . . . . . . . . . .	Byte	 0000059A _TEXT	
 N_TOR  . . . . . . . . . . . . .	Byte	 00000445 _TEXT	
 N_TRAV . . . . . . . . . . . . .	Byte	 00000B47 _TEXT	
-N_TRIAD  . . . . . . . . . . . .	Byte	 000026D5 _TEXT	
+N_TRIAD  . . . . . . . . . . . .	Byte	 000025DC _TEXT	
 N_TSTOR  . . . . . . . . . . . .	Byte	 0000061A _TEXT	
 N_TWOP . . . . . . . . . . . . .	Byte	 000009B1 _TEXT	
 N_TWO  . . . . . . . . . . . . .	Byte	 00000766 _TEXT	
-N_UDOT . . . . . . . . . . . . .	Byte	 0000252D _TEXT	
+N_UDOT . . . . . . . . . . . . .	Byte	 00002434 _TEXT	
 N_ULESS  . . . . . . . . . . . .	Byte	 00000AA0 _TEXT	
-N_UNTIL  . . . . . . . . . . . .	Byte	 00002247 _TEXT	
-N_UPDAT  . . . . . . . . . . . .	Byte	 00001BEC _TEXT	
+N_UNTIL  . . . . . . . . . . . .	Byte	 0000214E _TEXT	
+N_UPDAT  . . . . . . . . . . . .	Byte	 00001C3C _TEXT	
 N_USER . . . . . . . . . . . . .	Byte	 00000718 _TEXT	
-N_USE  . . . . . . . . . . . . .	Byte	 00001B70 _TEXT	
+N_USE  . . . . . . . . . . . . .	Byte	 00001B6C _TEXT	
 N_USLAS  . . . . . . . . . . . .	Byte	 00000350 _TEXT	
 N_USTAR  . . . . . . . . . . . .	Byte	 00000339 _TEXT	
 N_UZERO  . . . . . . . . . . . .	Byte	 00000806 _TEXT	
 N_VAR  . . . . . . . . . . . . .	Byte	 000006F6 _TEXT	
-N_VLIST  . . . . . . . . . . . .	Byte	 00002544 _TEXT	
+N_VLIST  . . . . . . . . . . . .	Byte	 0000244B _TEXT	
 N_VOCAB  . . . . . . . . . . . .	Byte	 00001650 _TEXT	
 N_VOCL . . . . . . . . . . . . .	Byte	 0000089D _TEXT	
 N_WARM . . . . . . . . . . . . .	Byte	 000017E5 _TEXT	
 N_WARN . . . . . . . . . . . . .	Byte	 00000868 _TEXT	
-N_WHIL . . . . . . . . . . . . .	Byte	 0000233E _TEXT	
+N_WHIL . . . . . . . . . . . . .	Byte	 00002245 _TEXT	
 N_WIDTHE . . . . . . . . . . . .	Byte	 00000856 _TEXT	
 N_XDO  . . . . . . . . . . . . .	Byte	 000000C0 _TEXT	
 N_XLOOP  . . . . . . . . . . . .	Byte	 00000081 _TEXT	
@@ -6185,27 +6174,28 @@ N_ZLESS  . . . . . . . . . . . .	Byte	 00000499 _TEXT
 OFSET  . . . . . . . . . . . . .	DWord	 000008BD _TEXT	
 ONEP . . . . . . . . . . . . . .	DWord	 000009A5 _TEXT	
 ONE  . . . . . . . . . . . . . .	DWord	 00000757 _TEXT	
+OPENF  . . . . . . . . . . . . .	DWord	 00001E39 _TEXT	
 OVER . . . . . . . . . . . . . .	DWord	 00000523 _TEXT	
 PABOR  . . . . . . . . . . . . .	DWord	 00001336 _TEXT	
 PAD  . . . . . . . . . . . . . .	DWord	 000010F3 _TEXT	
 PAREN  . . . . . . . . . . . . .	DWord	 0000170D _TEXT	
-PBUF1  . . . . . . . . . . . . .	DWord	 00001BD8 _TEXT	
-PBUF . . . . . . . . . . . . . .	DWord	 00001BAC _TEXT	
+PBUF1  . . . . . . . . . . . . .	DWord	 00001BD4 _TEXT	
+PBUF . . . . . . . . . . . . . .	DWord	 00001BA8 _TEXT	
 PDOTQ  . . . . . . . . . . . . .	DWord	 00000F46 _TEXT	
 PFA  . . . . . . . . . . . . . .	DWord	 00000C13 _TEXT	
 PFIND  . . . . . . . . . . . . .	DWord	 00000267 _TEXT	
-PLINE  . . . . . . . . . . . . .	DWord	 00001ABF _TEXT	
-PLOOP  . . . . . . . . . . . . .	DWord	 0000222B _TEXT	
+PLINE  . . . . . . . . . . . . .	DWord	 00001ABB _TEXT	
+PLOOP  . . . . . . . . . . . . .	DWord	 00002132 _TEXT	
 PLUS . . . . . . . . . . . . . .	DWord	 000004BB _TEXT	
-PM1  . . . . . . . . . . . . . .	DWord	 000018B5 _TEXT	
+PM1  . . . . . . . . . . . . . .	DWord	 000018B1 _TEXT	
 PMASK  . . . . . . . . . . . . .	Number	 000000FFh   
-PM . . . . . . . . . . . . . . .	DWord	 000018A1 _TEXT	
+PM . . . . . . . . . . . . . . .	DWord	 0000189D _TEXT	
 PNUM1  . . . . . . . . . . . . .	DWord	 000011B1 _TEXT	
 PNUM2  . . . . . . . . . . . . .	DWord	 00001229 _TEXT	
 PNUM3  . . . . . . . . . . . . .	DWord	 0000121D _TEXT	
 PNUMB  . . . . . . . . . . . . .	DWord	 000011AD _TEXT	
 PORIG  . . . . . . . . . . . . .	DWord	 000000F9 _TEXT	
-PREV . . . . . . . . . . . . . .	DWord	 00001B89 _TEXT	
+PREV . . . . . . . . . . . . . .	DWord	 00001B85 _TEXT	
 PSCOD  . . . . . . . . . . . . .	DWord	 00000E23 _TEXT	
 PSTOR  . . . . . . . . . . . . .	DWord	 0000058D _TEXT	
 QCOMP  . . . . . . . . . . . . .	DWord	 00000C85 _TEXT	
@@ -6217,88 +6207,88 @@ QEXEC  . . . . . . . . . . . . .	DWord	 00000CAF _TEXT
 QLOAD  . . . . . . . . . . . . .	DWord	 00000D28 _TEXT	
 QPAIR  . . . . . . . . . . . . .	DWord	 00000CD6 _TEXT	
 QSTAC  . . . . . . . . . . . . .	DWord	 00001550 _TEXT	
-QTERM  . . . . . . . . . . . . .	DWord	 00001EDA _TEXT	
+QTERM  . . . . . . . . . . . . .	DWord	 00001F1F _TEXT	
 QUERY  . . . . . . . . . . . . .	DWord	 00000FD3 _TEXT	
-QUES . . . . . . . . . . . . . .	DWord	 0000251D _TEXT	
+QUES . . . . . . . . . . . . . .	DWord	 00002424 _TEXT	
 QUIT1  . . . . . . . . . . . . .	DWord	 0000173E _TEXT	
 QUIT2  . . . . . . . . . . . . .	DWord	 00001769 _TEXT	
 QUIT . . . . . . . . . . . . . .	DWord	 0000172A _TEXT	
 RBRAC  . . . . . . . . . . . . .	DWord	 00000D98 _TEXT	
-REPEA  . . . . . . . . . . . . .	DWord	 000022B2 _TEXT	
+REPEA  . . . . . . . . . . . . .	DWord	 000021B9 _TEXT	
 RNUM . . . . . . . . . . . . . .	DWord	 00000957 _TEXT	
 ROT  . . . . . . . . . . . . . .	DWord	 00000AFD _TEXT	
 RPFET  . . . . . . . . . . . . .	DWord	 000003F0 _TEXT	
 RPSTO  . . . . . . . . . . . . .	DWord	 00000404 _TEXT	
 RR . . . . . . . . . . . . . . .	DWord	 00000479 _TEXT	
-RSLW . . . . . . . . . . . . . .	DWord	 000020A7 _TEXT	
+RSLW . . . . . . . . . . . . . .	DWord	 00001FB3 _TEXT	
 RTS  . . . . . . . . . . . . . .	Number	 00010000h   
 RUBOUT . . . . . . . . . . . . .	DWord	 00000820 _TEXT	
 RZERO  . . . . . . . . . . . . .	DWord	 0000083E _TEXT	
-SCREEN . . . . . . . . . . . . .	DWord	 00001E21 _TEXT	
+SCREEN . . . . . . . . . . . . .	DWord	 00001EA6 _TEXT	
 SCR  . . . . . . . . . . . . . .	DWord	 000008CD _TEXT	
 SCSP . . . . . . . . . . . . . .	DWord	 00000C38 _TEXT	
 SEMI1  . . . . . . . . . . . . .	DWord	 00000E5D _TEXT	
 SEMIC  . . . . . . . . . . . . .	DWord	 00000E49 _TEXT	
 SEMIS  . . . . . . . . . . . . .	DWord	 0000041D _TEXT	
 SEMI . . . . . . . . . . . . . .	DWord	 000006B0 _TEXT	
-SIGN1  . . . . . . . . . . . . .	DWord	 00002402 _TEXT	
-SIGN . . . . . . . . . . . . . .	DWord	 000023E2 _TEXT	
-SLASH  . . . . . . . . . . . . .	DWord	 00001A15 _TEXT	
-SLMOD  . . . . . . . . . . . . .	DWord	 000019F7 _TEXT	
+SIGN1  . . . . . . . . . . . . .	DWord	 00002309 _TEXT	
+SIGN . . . . . . . . . . . . . .	DWord	 000022E9 _TEXT	
+SLASH  . . . . . . . . . . . . .	DWord	 00001A11 _TEXT	
+SLMOD  . . . . . . . . . . . . .	DWord	 000019F3 _TEXT	
 SMUDG  . . . . . . . . . . . . .	DWord	 00000DBB _TEXT	
-SPACES . . . . . . . . . . . . .	DWord	 00002363 _TEXT	
+SPACES . . . . . . . . . . . . .	DWord	 0000226A _TEXT	
 SPACE  . . . . . . . . . . . . .	DWord	 00000B16 _TEXT	
-SPAX1  . . . . . . . . . . . . .	DWord	 0000238F _TEXT	
-SPAX2  . . . . . . . . . . . . .	DWord	 00002383 _TEXT	
+SPAX1  . . . . . . . . . . . . .	DWord	 00002296 _TEXT	
+SPAX2  . . . . . . . . . . . . .	DWord	 0000228A _TEXT	
 SPFET  . . . . . . . . . . . . .	DWord	 000003C2 _TEXT	
 SPSTO  . . . . . . . . . . . . .	DWord	 000003D6 _TEXT	
-SSLA . . . . . . . . . . . . . .	DWord	 00001A6A _TEXT	
-SSMOD  . . . . . . . . . . . . .	DWord	 00001A4B _TEXT	
-STAR . . . . . . . . . . . . . .	DWord	 000019DE _TEXT	
+SSLA . . . . . . . . . . . . . .	DWord	 00001A66 _TEXT	
+SSMOD  . . . . . . . . . . . . .	DWord	 00001A47 _TEXT	
+STAR . . . . . . . . . . . . . .	DWord	 000019DA _TEXT	
 STATE  . . . . . . . . . . . . .	DWord	 00000907 _TEXT	
-STOD . . . . . . . . . . . . . .	DWord	 00001887 _TEXT	
+STOD . . . . . . . . . . . . . .	DWord	 00001883 _TEXT	
 STORE  . . . . . . . . . . . . .	DWord	 000005F9 _TEXT	
 SWAP . . . . . . . . . . . . . .	DWord	 0000054D _TEXT	
 SZERO  . . . . . . . . . . . . .	DWord	 0000082F _TEXT	
-TASK . . . . . . . . . . . . . .	DWord	 000027AD _TEXT	
+TASK . . . . . . . . . . . . . .	DWord	 000026B4 _TEXT	
 TDUP . . . . . . . . . . . . . .	DWord	 00000577 _TEXT	
 TFET . . . . . . . . . . . . . .	DWord	 000005E2 _TEXT	
-THEN . . . . . . . . . . . . . .	DWord	 000021D1 _TEXT	
+THEN . . . . . . . . . . . . . .	DWord	 000020D8 _TEXT	
 THREE  . . . . . . . . . . . . .	DWord	 00000781 _TEXT	
 TIB  . . . . . . . . . . . . . .	DWord	 0000084E _TEXT	
-TICK . . . . . . . . . . . . . .	DWord	 000020C4 _TEXT	
+TICK . . . . . . . . . . . . . .	DWord	 00001FCB _TEXT	
 TOGGL  . . . . . . . . . . . . .	DWord	 000005A5 _TEXT	
 TOR  . . . . . . . . . . . . . .	DWord	 0000044C _TEXT	
 TRAV1  . . . . . . . . . . . . .	DWord	 00000B5C _TEXT	
 TRAV . . . . . . . . . . . . . .	DWord	 00000B54 _TEXT	
-TRIA1  . . . . . . . . . . . . .	DWord	 0000271F _TEXT	
-TRIA2  . . . . . . . . . . . . .	DWord	 0000273B _TEXT	
-TRIAD  . . . . . . . . . . . . .	DWord	 000026DF _TEXT	
+TRIA1  . . . . . . . . . . . . .	DWord	 00002626 _TEXT	
+TRIA2  . . . . . . . . . . . . .	DWord	 00002642 _TEXT	
+TRIAD  . . . . . . . . . . . . .	DWord	 000025E6 _TEXT	
 TSTOR  . . . . . . . . . . . . .	DWord	 00000621 _TEXT	
 TWOP . . . . . . . . . . . . . .	DWord	 000009B8 _TEXT	
 TWO  . . . . . . . . . . . . . .	DWord	 0000076C _TEXT	
-UDOT . . . . . . . . . . . . . .	DWord	 00002534 _TEXT	
+UDOT . . . . . . . . . . . . . .	DWord	 0000243B _TEXT	
 ULES1  . . . . . . . . . . . . .	DWord	 00000AD3 _TEXT	
 ULES2  . . . . . . . . . . . . .	DWord	 00000ADB _TEXT	
 ULESS  . . . . . . . . . . . . .	DWord	 00000AA7 _TEXT	
-UNTIL  . . . . . . . . . . . . .	DWord	 00002251 _TEXT	
-UPDAT  . . . . . . . . . . . . .	DWord	 00001BF7 _TEXT	
+UNTIL  . . . . . . . . . . . . .	DWord	 00002158 _TEXT	
+UPDAT  . . . . . . . . . . . . .	DWord	 00001C47 _TEXT	
 USER . . . . . . . . . . . . . .	DWord	 00000721 _TEXT	
-USE  . . . . . . . . . . . . . .	DWord	 00001B78 _TEXT	
+USE  . . . . . . . . . . . . . .	DWord	 00001B74 _TEXT	
 USLAS  . . . . . . . . . . . . .	DWord	 00000357 _TEXT	
 USRVER . . . . . . . . . . . . .	Number	 00000022h   
 USTAR  . . . . . . . . . . . . .	DWord	 00000340 _TEXT	
 US . . . . . . . . . . . . . . .	Number	 00000100h   
 UZERO  . . . . . . . . . . . . .	DWord	 0000080D _TEXT	
 VAR  . . . . . . . . . . . . . .	DWord	 00000703 _TEXT	
-VLIS1  . . . . . . . . . . . . .	DWord	 0000256E _TEXT	
-VLIS2  . . . . . . . . . . . . .	DWord	 00002596 _TEXT	
-VLIST  . . . . . . . . . . . . .	DWord	 0000254E _TEXT	
+VLIS1  . . . . . . . . . . . . .	DWord	 00002475 _TEXT	
+VLIS2  . . . . . . . . . . . . .	DWord	 0000249D _TEXT	
+VLIST  . . . . . . . . . . . . .	DWord	 00002455 _TEXT	
 VOCAB  . . . . . . . . . . . . .	DWord	 0000165F _TEXT	
 VOCL . . . . . . . . . . . . . .	DWord	 000008AA _TEXT	
 WARM . . . . . . . . . . . . . .	DWord	 000017EE _TEXT	
 WARN . . . . . . . . . . . . . .	DWord	 00000874 _TEXT	
-WHIL . . . . . . . . . . . . . .	DWord	 00002348 _TEXT	
+WHIL . . . . . . . . . . . . . .	DWord	 0000224F _TEXT	
 WIDTHE . . . . . . . . . . . . .	DWord	 00000860 _TEXT	
 WORD1  . . . . . . . . . . . . .	DWord	 0000113C _TEXT	
 WORD2  . . . . . . . . . . . . .	DWord	 00001144 _TEXT	
@@ -6310,13 +6300,14 @@ ZBRAN  . . . . . . . . . . . . .	DWord	 0000005E _TEXT
 ZEQU . . . . . . . . . . . . . .	DWord	 00000484 _TEXT	
 ZERO . . . . . . . . . . . . . .	DWord	 00000745 _TEXT	
 ZLESS  . . . . . . . . . . . . .	DWord	 000004A0 _TEXT	
-c_block_exit . . . . . . . . . .	L Near	 00000000 FLAT	External C
-c_block_init . . . . . . . . . .	L Near	 00000000 FLAT	External C
 c_exit . . . . . . . . . . . . .	L Near	 00000000 FLAT	External C
 c_expect . . . . . . . . . . . .	L Near	 00000000 FLAT	External C
+c_file_close . . . . . . . . . .	L Near	 00000000 FLAT	External C
+c_file_open  . . . . . . . . . .	L Near	 00000000 FLAT	External C
+c_file_read  . . . . . . . . . .	L Near	 00000000 FLAT	External C
+c_file_write . . . . . . . . . .	L Near	 00000000 FLAT	External C
 c_key  . . . . . . . . . . . . .	L Near	 00000000 FLAT	External C
 c_qterminal  . . . . . . . . . .	L Near	 00000000 FLAT	External C
-c_readwrite  . . . . . . . . . .	L Near	 00000000 FLAT	External C
 c_type . . . . . . . . . . . . .	L Near	 00000000 FLAT	External C
 
 	   0 Warnings
